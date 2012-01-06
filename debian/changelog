@@ -1,0 +1,11 @@
+capi-media-camera (0.1.0-7) unstable; urgency=low
+
+  * Update version
+
+ -- Seungkeun Lee <sngn.lee@samsung.com>  Thu, 15 Dec 2011 12:52:02 +0900
+
+capi-media-camera (0.0.1-1) unstable; urgency=low
+
+  * Initial release.
+
+ -- Seungkeun Lee <sngn.lee@samsung.com>  Wed, 07 Dec 2011 12:42:07 +0900

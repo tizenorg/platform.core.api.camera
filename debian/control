@@ -1,0 +1,22 @@
+
+Source: capi-media-camera
+Section: libs
+Priority: extra
+Maintainer: Seungkeun Lee <sngn.lee@samsung.com>, Kangho Hur<kagho.hur@samsung.com>
+Build-Depends: debhelper (>= 5), libmm-camcorder-dev, libmm-common-dev, libmm-session-dev, capi-base-common-dev
+
+Package: capi-media-camera
+Architecture: any
+Depends: ${shilbs:Depends}, ${misc:Depends}
+Description: A Camera library in Tizen Native API
+
+Package: capi-media-camera-dev
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, capi-media-camera (= ${Source-Version}), dlog-dev, capi-base-common-dev, libmm-camcorder-dev
+Description: A Camera library in Tizen Native API (DEV)
+
+Package: capi-media-camera-dbg
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, capi-media-camera (= ${Source-Version})
+Description: A Camera library in Tizen Native API (DBG)
+
