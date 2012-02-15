@@ -1,8 +1,10 @@
-capi-media-camera (0.1.0-7) unstable; urgency=low
+capi-media-camera (0.1.0-8) unstable; urgency=low
 
-  * Update version
+  * add so version
+  * Git: slp-source.sec.samsung.net:slp/api/camera
+  * Tag: capi-media-camera_0.1.0-8
 
- -- Seungkeun Lee <sngn.lee@samsung.com>  Thu, 15 Dec 2011 12:52:02 +0900
+ -- Seungkeun Lee <sngn.lee@samsung.com>  Tue, 14 Feb 2012 16:43:04 +0900
 
 capi-media-camera (0.0.1-1) unstable; urgency=low
 

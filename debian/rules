@@ -1,5 +1,8 @@
 #!/usr/bin/make -f
 
+FULLVER ?= $(shell dpkg-parsechangelog | grep Version: | cut -d ' ' -f 2 | cut -d '-' -f 1)
+MAJORVER ?= $(shell echo $(FULLVER) | cut -d '.' -f 1)
+
 CFLAGS = -Wall -g
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
@@ -13,7 +16,7 @@ CMAKE_BUILD_DIR ?= $(CURDIR)/cmake_build_tmp
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
-	mkdir -p $(CMAKE_BUILD_DIR) && cd $(CMAKE_BUILD_DIR) && cmake ..
+	mkdir -p $(CMAKE_BUILD_DIR) && cd $(CMAKE_BUILD_DIR) && cmake .. -DFULLVER=${FULLVER} -DMAJORVER=${MAJORVER}
 	touch configure-stamp
 
 
