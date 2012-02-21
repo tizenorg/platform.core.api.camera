@@ -55,11 +55,7 @@ typedef enum {
 
 
 
-
-gboolean mm_videostream_callback(MMCamcorderVideoStreamDataType * stream, void *user_data);
-gboolean mm_capture_callback(MMCamcorderCaptureDataType *frame, MMCamcorderCaptureDataType *thumbnail, void *user_data);
-
-int mm_message_callback(int message, void *param, void *user_data);
+int __mm_camera_message_callback(int message, void *param, void *user_data);
 
 #ifdef __cplusplus
 }

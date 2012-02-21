@@ -32,7 +32,11 @@
 #endif
 #define LOG_TAG "TIZEN_N_CAMERA"
 
-int _convert_camera_error_code(const char* func, int code){
+static gboolean __mm_videostream_callback(MMCamcorderVideoStreamDataType * stream, void *user_data);
+static gboolean __mm_capture_callback(MMCamcorderCaptureDataType *frame, MMCamcorderCaptureDataType *thumbnail, void *user_data);
+
+
+static int __convert_camera_error_code(const char* func, int code){
 	int ret = CAMERA_ERROR_NONE;
 	char *errorstr = NULL;
 	switch(code)
@@ -119,7 +123,7 @@ int _convert_camera_error_code(const char* func, int code){
 }
 
 
-gboolean mm_videostream_callback(MMCamcorderVideoStreamDataType * stream, void *user_data){
+static gboolean __mm_videostream_callback(MMCamcorderVideoStreamDataType * stream, void *user_data){
 
 	if( user_data == NULL || stream == NULL)
 		return 0;
@@ -129,7 +133,7 @@ gboolean mm_videostream_callback(MMCamcorderVideoStreamDataType * stream, void *
 		((camera_preview_cb)handle->user_cb[_CAMERA_EVENT_TYPE_PREVIEW])(stream->data, stream->length, stream->width, stream->height, stream->format, handle->user_data[_CAMERA_EVENT_TYPE_PREVIEW]);
 	return 1;
 }
-gboolean mm_capture_callback(MMCamcorderCaptureDataType *frame, MMCamcorderCaptureDataType *thumbnail, void *user_data){
+static gboolean __mm_capture_callback(MMCamcorderCaptureDataType *frame, MMCamcorderCaptureDataType *thumbnail, void *user_data){
 	if( user_data == NULL || frame == NULL)
 		return 0;
 	
@@ -140,7 +144,7 @@ gboolean mm_capture_callback(MMCamcorderCaptureDataType *frame, MMCamcorderCaptu
 	return 1;
 }
 
-camera_state_e _camera_state_convert(MMCamcorderStateType mm_state)
+static camera_state_e __camera_state_convert(MMCamcorderStateType mm_state)
 {
 	camera_state_e state = CAMERA_STATE_NONE;
 	
@@ -176,7 +180,7 @@ camera_state_e _camera_state_convert(MMCamcorderStateType mm_state)
 }
 
 
-int mm_message_callback(int message, void *param, void *user_data){
+int __mm_camera_message_callback(int message, void *param, void *user_data){
 	if( user_data == NULL || param == NULL )
 		return 0;
 	
@@ -195,7 +199,7 @@ int mm_message_callback(int message, void *param, void *user_data){
 			}
 			
 			previous_state = handle->state;
-			handle->state = _camera_state_convert(m->state.current );
+			handle->state = __camera_state_convert(m->state.current );
 			
 			if( previous_state != handle->state && handle->user_cb[_CAMERA_EVENT_TYPE_STATE_CHANGE] ){
 				((camera_state_changed_cb)handle->user_cb[_CAMERA_EVENT_TYPE_STATE_CHANGE])(previous_state, handle->state, message == MM_MESSAGE_CAMCORDER_STATE_CHANGED ? 0 : 1 , handle->user_data[_CAMERA_EVENT_TYPE_STATE_CHANGE]);
@@ -245,7 +249,7 @@ int mm_message_callback(int message, void *param, void *user_data){
 		case MM_MESSAGE_CAMCORDER_ERROR: 
 		{
 			int errorcode = m->code;
-			errorcode = _convert_camera_error_code("NOTIFY", errorcode);
+			errorcode = __convert_camera_error_code("NOTIFY", errorcode);
 			if( handle->user_cb[_CAMERA_EVENT_TYPE_ERROR] )
 				((camera_error_cb)handle->user_cb[_CAMERA_EVENT_TYPE_ERROR])(errorcode, handle->state , handle->user_data[_CAMERA_EVENT_TYPE_ERROR]);
 			
@@ -286,7 +290,7 @@ int camera_create( camera_device_e device, camera_h* camera){
 	ret = mm_camcorder_create(&handle->mm_handle, &info);
 	if( ret != MM_ERROR_NONE){
 		free(handle);
-		return _convert_camera_error_code(__func__,ret);
+		return __convert_camera_error_code(__func__,ret);
 	}
 
 	preview_format = MM_PIXEL_FORMAT_YUYV;
@@ -312,17 +316,17 @@ int camera_create( camera_device_e device, camera_h* camera){
 		mm_camcorder_destroy(handle->mm_handle);
 		free(error);
 		free(handle);
-		return _convert_camera_error_code(__func__, ret);
+		return __convert_camera_error_code(__func__, ret);
 	}	
 
 	handle->state = CAMERA_STATE_CREATED;
-	mm_camcorder_set_message_callback(handle->mm_handle, mm_message_callback, (void*)handle);
+	mm_camcorder_set_message_callback(handle->mm_handle, __mm_camera_message_callback, (void*)handle);
 		
 		
 	if( ret == MM_ERROR_NONE)
 		*camera = (camera_h)handle;
 
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -340,7 +344,7 @@ int camera_create( camera_device_e device, camera_h* camera){
 	if( ret == MM_ERROR_NONE)
 		free(handle);
 
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 
 }
 
@@ -357,16 +361,16 @@ int camera_start_preview(camera_h camera){
 	if( handle->state == CAMERA_STATE_CAPTURED )
 	{
 		ret = mm_camcorder_capture_stop(handle->mm_handle);
-		return _convert_camera_error_code(__func__, ret);
+		return __convert_camera_error_code(__func__, ret);
 	}
 
 	
 
 	//for receving MM_MESSAGE_CAMCORDER_CAPTURED evnet must be seted capture callback
-	mm_camcorder_set_video_capture_callback( handle->mm_handle, (mm_camcorder_video_capture_callback)mm_capture_callback, (void*)handle);
+	mm_camcorder_set_video_capture_callback( handle->mm_handle, (mm_camcorder_video_capture_callback)__mm_capture_callback, (void*)handle);
 
 	if( handle->user_cb[_CAMERA_EVENT_TYPE_PREVIEW] )
-		mm_camcorder_set_video_stream_callback( handle->mm_handle, (mm_camcorder_video_stream_callback)mm_videostream_callback, (void*)handle);
+		mm_camcorder_set_video_stream_callback( handle->mm_handle, (mm_camcorder_video_stream_callback)__mm_videostream_callback, (void*)handle);
 	else
 		mm_camcorder_set_video_stream_callback( handle->mm_handle, (mm_camcorder_video_stream_callback)NULL, (void*)NULL);
 
@@ -375,7 +379,7 @@ int camera_start_preview(camera_h camera){
 	if( state != MM_CAMCORDER_STATE_READY){
 		ret = mm_camcorder_realize(handle->mm_handle);	
 		if( ret != MM_ERROR_NONE )
-			return _convert_camera_error_code(__func__, ret);
+			return __convert_camera_error_code(__func__, ret);
 	}
 	
 	ret = mm_camcorder_start(handle->mm_handle);
@@ -385,7 +389,7 @@ int camera_start_preview(camera_h camera){
 		mm_camcorder_unrealize(handle->mm_handle);
 	}
 	
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_stop_preview(camera_h camera){
@@ -403,11 +407,11 @@ int camera_stop_preview(camera_h camera){
 	if( state == MM_CAMCORDER_STATE_PREPARE ){
 		ret = mm_camcorder_stop(handle->mm_handle);	
 		if( ret != MM_ERROR_NONE)
-			return _convert_camera_error_code(__func__, ret);	
+			return __convert_camera_error_code(__func__, ret);	
 	}
 	
 	ret = mm_camcorder_unrealize(handle->mm_handle);
-	return _convert_camera_error_code(__func__, ret);	
+	return __convert_camera_error_code(__func__, ret);	
 }
 
 int camera_start_capture(camera_h camera){
@@ -430,7 +434,7 @@ int camera_get_state(camera_h camera, camera_state_e * state){
 	MMCamcorderStateType mmstate ;
 	mm_camcorder_get_state(handle->mm_handle, &mmstate);	
 
-	capi_state = _camera_state_convert(mmstate);
+	capi_state = __camera_state_convert(mmstate);
 
 	if( handle->state == CAMERA_STATE_CAPTURED && mmstate == MM_CAMCORDER_STATE_CAPTURING )
 		capi_state = CAMERA_STATE_CAPTURED;
@@ -446,14 +450,14 @@ int camera_start_focusing( camera_h camera ){
 		LOGE( "[%s] INVALID_PARAMETER(0x%08x)",__func__,CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-	return _convert_camera_error_code(__func__, mm_camcorder_start_focusing(((camera_s*)camera)->mm_handle));
+	return __convert_camera_error_code(__func__, mm_camcorder_start_focusing(((camera_s*)camera)->mm_handle));
 }
 int camera_cancel_focusing( camera_h camera ){
 	if( camera == NULL){
 		LOGE( "[%s] INVALID_PARAMETER(0x%08x)",__func__,CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-	return _convert_camera_error_code(__func__, mm_camcorder_stop_focusing(((camera_s*)camera)->mm_handle));	
+	return __convert_camera_error_code(__func__, mm_camcorder_stop_focusing(((camera_s*)camera)->mm_handle));	
 }
 int camera_set_display(camera_h camera, camera_display_type_e type, camera_display_h display){
 	if( camera == NULL){
@@ -469,7 +473,7 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 		MMCAM_DISPLAY_SURFACE  ,type,  
 		MMCAM_DISPLAY_HANDLE  , type == CAMERA_DISPLAY_TYPE_X11 ? &handle->display_handle : display , sizeof(display) , 
 		NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_set_preview_resolution(camera_h camera,  int width, int height){
@@ -480,7 +484,7 @@ int camera_set_preview_resolution(camera_h camera,  int width, int height){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_WIDTH  , width ,MMCAM_CAMERA_HEIGHT ,height,  NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 int camera_set_x11_display_rotation(camera_h camera,  camera_display_rotation_e rotation){
@@ -496,7 +500,7 @@ int camera_set_x11_display_rotation(camera_h camera,  camera_display_rotation_e 
 	camera_s * handle = (camera_s*)camera;
 
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_DISPLAY_ROTATION , rotation, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_set_capture_resolution(camera_h camera,  int width, int height){
@@ -507,7 +511,7 @@ int camera_set_capture_resolution(camera_h camera,  int width, int height){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_CAPTURE_WIDTH, width  ,MMCAM_CAPTURE_HEIGHT , height, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_set_capture_format(camera_h camera, camera_pixel_format_e format){
@@ -518,7 +522,7 @@ int camera_set_capture_format(camera_h camera, camera_pixel_format_e format){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_CAPTURE_FORMAT, format , NULL);
-	return _convert_camera_error_code(__func__, ret);	
+	return __convert_camera_error_code(__func__, ret);	
 }
 
 int camera_set_preview_format(camera_h camera, camera_pixel_format_e format){
@@ -529,7 +533,7 @@ int camera_set_preview_format(camera_h camera, camera_pixel_format_e format){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_FORMAT, format , NULL);
-	return _convert_camera_error_code(__func__, ret);	
+	return __convert_camera_error_code(__func__, ret);	
 }
 
 int camera_get_preview_resolution(camera_h camera,  int *width, int *height){
@@ -541,7 +545,7 @@ int camera_get_preview_resolution(camera_h camera,  int *width, int *height){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_WIDTH , width,MMCAM_CAMERA_HEIGHT, height,  NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -555,7 +559,7 @@ int camera_get_x11_display_rotation( camera_h camera,  camera_display_rotation_e
 	camera_s * handle = (camera_s*)camera;
 
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_DISPLAY_ROTATION , rotation, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_set_x11_display_visible(camera_h camera, bool visible){
@@ -567,7 +571,7 @@ int camera_set_x11_display_visible(camera_h camera, bool visible){
 	camera_s * handle = (camera_s*)camera;
 
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_DISPLAY_VISIBLE , visible, NULL);
-	return _convert_camera_error_code(__func__, ret);	
+	return __convert_camera_error_code(__func__, ret);	
 }
 
 int camera_is_x11_display_visible(camera_h camera, bool* visible){
@@ -583,7 +587,7 @@ int camera_is_x11_display_visible(camera_h camera, bool* visible){
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_DISPLAY_VISIBLE , &result, NULL);
 	if( ret == 0)
 		*visible = result;
-	return _convert_camera_error_code(__func__, ret);	
+	return __convert_camera_error_code(__func__, ret);	
 }
 
 int camera_set_x11_display_mode( camera_h camera , camera_display_mode_e ratio){
@@ -599,7 +603,7 @@ int camera_set_x11_display_mode( camera_h camera , camera_display_mode_e ratio){
 	camera_s * handle = (camera_s*)camera;
 
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_DISPLAY_GEOMETRY_METHOD , ratio, NULL);
-	return _convert_camera_error_code(__func__, ret);		
+	return __convert_camera_error_code(__func__, ret);		
 }
 
 int camera_get_x11_display_mode( camera_h camera , camera_display_mode_e* ratio){
@@ -612,7 +616,7 @@ int camera_get_x11_display_mode( camera_h camera , camera_display_mode_e* ratio)
 	camera_s * handle = (camera_s*)camera;
 
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_DISPLAY_GEOMETRY_METHOD , ratio, NULL);
-	return _convert_camera_error_code(__func__, ret);		
+	return __convert_camera_error_code(__func__, ret);		
 }
 
 
@@ -625,7 +629,7 @@ int camera_get_capture_resolution(camera_h camera, int *width, int *height){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_CAPTURE_WIDTH, width  ,MMCAM_CAPTURE_HEIGHT , height, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_get_capture_format(camera_h camera, camera_pixel_format_e *format){
@@ -637,7 +641,7 @@ int camera_get_capture_format(camera_h camera, camera_pixel_format_e *format){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_CAPTURE_FORMAT, format , NULL);
-	return _convert_camera_error_code(__func__, ret);	
+	return __convert_camera_error_code(__func__, ret);	
 }
 
 int camera_get_preview_format(camera_h camera, camera_pixel_format_e *format){
@@ -649,7 +653,7 @@ int camera_get_preview_format(camera_h camera, camera_pixel_format_e *format){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_FORMAT, format , NULL);
-	return _convert_camera_error_code(__func__, ret);	
+	return __convert_camera_error_code(__func__, ret);	
 }
 
 int camera_set_preview_cb( camera_h camera, camera_preview_cb callback, void* user_data ){
@@ -802,7 +806,7 @@ int camera_foreach_supported_preview_resolution(camera_h camera, camera_supporte
 	ret |= mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_HEIGHT , &preview_height);
 		
 	if( ret != CAMERA_ERROR_NONE )
-		return _convert_camera_error_code(__func__, ret);
+		return __convert_camera_error_code(__func__, ret);
 	
 	int i;
 	for( i=0 ; i < preview_width.int_array.count ; i++)
@@ -826,7 +830,7 @@ int camera_foreach_supported_capture_resolution(camera_h camera, camera_supporte
 	ret |= mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAPTURE_HEIGHT , &capture_height);
 		
 	if( ret != CAMERA_ERROR_NONE )
-		return _convert_camera_error_code(__func__, ret);
+		return __convert_camera_error_code(__func__, ret);
 	
 	int i;
 	for( i=0 ; i < capture_width.int_array.count ; i++)
@@ -849,7 +853,7 @@ int camera_foreach_supported_capture_format(camera_h camera, camera_supported_ca
 	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAPTURE_FORMAT , &format);
 
 	if( ret != CAMERA_ERROR_NONE )
-		return _convert_camera_error_code(__func__, ret);	
+		return __convert_camera_error_code(__func__, ret);	
 	
 	int i;
 	for( i=0 ; i < format.int_array.count ; i++)
@@ -873,7 +877,7 @@ int camera_foreach_supported_preview_format(camera_h camera, camera_supported_pr
 	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_FORMAT , &format);
 
 	if( ret != CAMERA_ERROR_NONE )
-		return _convert_camera_error_code(__func__, ret);	
+		return __convert_camera_error_code(__func__, ret);	
 	
 	int i;
 	for( i=0 ; i < format.int_array.count ; i++)
@@ -912,7 +916,7 @@ int camera_attr_get_lens_orientation(camera_h camera, int *angle) {
 			break;
 	}	
 	
-	return _convert_camera_error_code(__func__, ret);	
+	return __convert_camera_error_code(__func__, ret);	
 }
 
 
@@ -930,7 +934,7 @@ int camera_attr_set_preview_fps(camera_h camera,  camera_attr_fps_e fps){
 	else
 		ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_FPS_AUTO  , 0, MMCAM_CAMERA_FPS  , fps, NULL);
 	
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -945,7 +949,7 @@ int camera_attr_set_image_quality(camera_h camera,  int quality){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_IMAGE_ENCODER_QUALITY , quality, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 
 }
 int camera_attr_get_preview_fps(camera_h camera,  camera_attr_fps_e *fps){
@@ -964,7 +968,7 @@ int camera_attr_get_preview_fps(camera_h camera,  camera_attr_fps_e *fps){
 	else
 		*fps = mm_fps;
 	
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 int camera_attr_get_image_quality(camera_h camera,  int *quality){
@@ -976,7 +980,7 @@ int camera_attr_get_image_quality(camera_h camera,  int *quality){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_IMAGE_ENCODER_QUALITY   , quality, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -989,7 +993,7 @@ int camera_attr_set_zoom(camera_h camera,  int zoom){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_DIGITAL_ZOOM  , zoom, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 int camera_attr_set_af_mode(camera_h camera,  camera_attr_af_mode_e mode){
@@ -1022,7 +1026,7 @@ int camera_attr_set_af_mode(camera_h camera,  camera_attr_af_mode_e mode){
 			return ret;
 	}
 	
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_attr_set_exposure_mode(camera_h camera,  camera_attr_exposure_mode_e mode){
@@ -1040,7 +1044,7 @@ int camera_attr_set_exposure_mode(camera_h camera,  camera_attr_exposure_mode_e 
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_EXPOSURE_MODE  , maptable[abs(mode%5)], NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 
 }
 
@@ -1053,7 +1057,7 @@ int camera_attr_set_exposure(camera_h camera, int value){
 
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_EXPOSURE_VALUE  , value, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1065,7 +1069,7 @@ int camera_attr_set_iso(camera_h camera,  camera_attr_iso_e iso){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_ISO  , iso, NULL);
-	return _convert_camera_error_code(__func__, ret);	
+	return __convert_camera_error_code(__func__, ret);	
 }
 int camera_attr_set_brightness(camera_h camera,  int level){
 	if( camera == NULL){
@@ -1076,7 +1080,7 @@ int camera_attr_set_brightness(camera_h camera,  int level){
 		
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_FILTER_BRIGHTNESS  , level, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1090,7 +1094,7 @@ int camera_attr_set_contrast(camera_h camera,  int level){
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_FILTER_CONTRAST  , level, NULL);
 
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 int camera_attr_set_whitebalance(camera_h camera,  camera_attr_whitebalance_e wb){
@@ -1101,7 +1105,7 @@ int camera_attr_set_whitebalance(camera_h camera,  camera_attr_whitebalance_e wb
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_FILTER_WB  , wb, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1135,7 +1139,7 @@ int camera_attr_set_effect(camera_h camera, camera_attr_effect_mode_e effect){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_FILTER_COLOR_TONE , maptable[abs(effect%20)], NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 }
 int camera_attr_set_scene_mode(camera_h camera,  camera_attr_scene_mode_e mode){
 	if( camera == NULL){
@@ -1145,7 +1149,7 @@ int camera_attr_set_scene_mode(camera_h camera,  camera_attr_scene_mode_e mode){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_FILTER_SCENE_MODE  , mode, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1158,7 +1162,7 @@ int camera_attr_enable_tag(camera_h camera,  bool enable){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_TAG_ENABLE  , enable, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1170,7 +1174,7 @@ int camera_attr_set_tag_image_description(camera_h camera,  const char *descript
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_TAG_IMAGE_DESCRIPTION    , description, strlen(description), NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1182,7 +1186,7 @@ int camera_attr_set_tag_orientation(camera_h camera,  camera_attr_tag_orientatio
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_TAG_ORIENTATION  , orientation, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1194,7 +1198,7 @@ int camera_attr_set_tag_software(camera_h camera,  const char *software){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_TAG_SOFTWARE   , software, strlen(software), NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1206,7 +1210,7 @@ int camera_attr_set_tag_latitude(camera_h camera,  double latitude){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_TAG_LATITUDE  , latitude, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1218,7 +1222,7 @@ int camera_attr_set_tag_longitude(camera_h camera,  double longtitude){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_TAG_LONGITUDE  , longtitude, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1230,7 +1234,7 @@ int camera_attr_set_tag_altitude(camera_h camera,  double altitude){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_TAG_ALTITUDE  , altitude, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 int camera_attr_set_flash_mode(camera_h camera,  camera_attr_flash_mode_e mode){
@@ -1241,7 +1245,7 @@ int camera_attr_set_flash_mode(camera_h camera,  camera_attr_flash_mode_e mode){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_STROBE_MODE  , mode, NULL);
-	return _convert_camera_error_code(__func__, ret);	
+	return __convert_camera_error_code(__func__, ret);	
 }
 
 
@@ -1254,7 +1258,7 @@ int camera_attr_get_zoom(camera_h camera,  int *zoom){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_DIGITAL_ZOOM , zoom, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1273,7 +1277,7 @@ int camera_attr_get_zoom_range(camera_h camera , int *min , int *max){
 	if( max )
 		*max = ainfo.int_range.max;
 	
-	return _convert_camera_error_code(__func__, ret);	
+	return __convert_camera_error_code(__func__, ret);	
 }
 
 
@@ -1319,7 +1323,7 @@ int camera_attr_get_af_mode( camera_h camera,  camera_attr_af_mode_e *mode){
 		}
 		
 	}
-	return _convert_camera_error_code(__func__, ret);	
+	return __convert_camera_error_code(__func__, ret);	
 }
 
 int camera_attr_get_exposure_mode( camera_h camera,  camera_attr_exposure_mode_e *mode){
@@ -1346,7 +1350,7 @@ int camera_attr_get_exposure_mode( camera_h camera,  camera_attr_exposure_mode_e
 	if( ret == CAMERA_ERROR_NONE ){
 		*mode = maptable[abs(exposure_mode%9)];
 	}
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1359,7 +1363,7 @@ int camera_attr_get_exposure(camera_h camera, int *value){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_EXPOSURE_VALUE , value, NULL);
-	return _convert_camera_error_code(__func__, ret);	
+	return __convert_camera_error_code(__func__, ret);	
 }
 
 
@@ -1378,7 +1382,7 @@ int camera_attr_get_exposure_range(camera_h camera, int *min, int *max){
 	if( max )
 		*max = ainfo.int_range.max;
 	
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 }
 
 
@@ -1391,7 +1395,7 @@ int camera_attr_get_iso( camera_h camera,  camera_attr_iso_e *iso){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_ISO , iso, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1403,7 +1407,7 @@ int camera_attr_get_brightness(camera_h camera,  int *level){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_FILTER_BRIGHTNESS , level, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1422,7 +1426,7 @@ int camera_attr_get_brightness_range(camera_h camera, int *min, int *max){
 	if( max )
 		*max = ainfo.int_range.max;
 	
-	return _convert_camera_error_code(__func__, ret);	
+	return __convert_camera_error_code(__func__, ret);	
 }
 
 
@@ -1436,7 +1440,7 @@ int camera_attr_get_contrast(camera_h camera,  int *level){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_FILTER_CONTRAST , level, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_attr_get_contrast_range(camera_h camera, int *min , int *max){
@@ -1454,7 +1458,7 @@ int camera_attr_get_contrast_range(camera_h camera, int *min , int *max){
 	if( max )
 		*max = ainfo.int_range.max;
 	
-	return _convert_camera_error_code(__func__, ret);		
+	return __convert_camera_error_code(__func__, ret);		
 }
 
 
@@ -1467,7 +1471,7 @@ int camera_attr_get_whitebalance(camera_h camera,  camera_attr_whitebalance_e *w
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_FILTER_WB , wb, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1484,7 +1488,7 @@ int camera_attr_get_effect(camera_h camera, camera_attr_effect_mode_e *effect){
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_FILTER_COLOR_TONE , &tone, NULL);
 
 	if( ret != CAMERA_ERROR_NONE )
-		return _convert_camera_error_code(__func__, ret);
+		return __convert_camera_error_code(__func__, ret);
 
 	switch(tone){
 		case MM_CAMCORDER_COLOR_TONE_NONE:
@@ -1521,7 +1525,7 @@ int camera_attr_get_effect(camera_h camera, camera_attr_effect_mode_e *effect){
 			break;
 	}
 
-	return _convert_camera_error_code(__func__, ret);	
+	return __convert_camera_error_code(__func__, ret);	
 }
 
 int camera_attr_get_scene_mode(camera_h camera,  camera_attr_scene_mode_e *mode){
@@ -1534,7 +1538,7 @@ int camera_attr_get_scene_mode(camera_h camera,  camera_attr_scene_mode_e *mode)
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_FILTER_SCENE_MODE , mode, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1550,7 +1554,7 @@ int camera_attr_is_enabled_tag(camera_h camera,  bool *enable){
 
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_TAG_ENABLE , enable, NULL);
 
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1572,7 +1576,7 @@ int camera_attr_get_tag_image_description(camera_h camera,  char **description){
 			*description = strdup("");
 	}
 	
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1586,7 +1590,7 @@ int camera_attr_get_tag_orientation(camera_h camera,  camera_attr_tag_orientatio
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_TAG_ORIENTATION , orientation, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 int camera_attr_get_tag_software(camera_h camera,  char **software){
@@ -1607,7 +1611,7 @@ int camera_attr_get_tag_software(camera_h camera,  char **software){
 			*software = strdup("");
 	}
 	
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1620,7 +1624,7 @@ int camera_attr_get_tag_latitude(camera_h camera,  double *latitude){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_TAG_LATITUDE , latitude, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 	
 }
 
@@ -1633,7 +1637,7 @@ int camera_attr_get_tag_longitude(camera_h camera,  double *longtitude){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_TAG_LONGITUDE  , longtitude, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_attr_get_tag_altitude(camera_h camera,  double *altitude){
@@ -1645,7 +1649,7 @@ int camera_attr_get_tag_altitude(camera_h camera,  double *altitude){
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_TAG_ALTITUDE  , altitude, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 }
 int camera_attr_get_flash_mode(camera_h camera,  camera_attr_flash_mode_e *mode){
 	if( camera == NULL || mode == NULL){
@@ -1656,7 +1660,7 @@ int camera_attr_get_flash_mode(camera_h camera,  camera_attr_flash_mode_e *mode)
 	int ret;
 	camera_s * handle = (camera_s*)camera;
 	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_STROBE_MODE , mode, NULL);
-	return _convert_camera_error_code(__func__, ret);
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_attr_foreach_supported_af_mode( camera_h camera, camera_attr_supported_af_mode_cb foreach_cb , void *user_data){
@@ -1676,7 +1680,7 @@ int camera_attr_foreach_supported_af_mode( camera_h camera, camera_attr_supporte
 	ret |= mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_FOCUS_MODE , &focus_mode);	
 	
 	if( ret != CAMERA_ERROR_NONE )
-		return _convert_camera_error_code(__func__, ret);
+		return __convert_camera_error_code(__func__, ret);
 
 	for( i=0 ; i < af_range.int_array.count ; i++)
 	{
@@ -1713,7 +1717,7 @@ int camera_attr_foreach_supported_exposure_mode(camera_h camera, camera_attr_sup
 	MMCamAttrsInfo info;
 	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_EXPOSURE_MODE , &info);
 	if( ret != CAMERA_ERROR_NONE )
-		return _convert_camera_error_code(__func__, ret);
+		return __convert_camera_error_code(__func__, ret);
 	
 	int i;
 	for( i=0 ; i < info.int_array.count ; i++)
@@ -1736,7 +1740,7 @@ int camera_attr_foreach_supported_iso( camera_h camera, camera_attr_supported_is
 	MMCamAttrsInfo info;
 	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_ISO , &info);
 	if( ret != CAMERA_ERROR_NONE )
-		return _convert_camera_error_code(__func__, ret);
+		return __convert_camera_error_code(__func__, ret);
 	
 	int i;
 	for( i=0 ; i < info.int_array.count ; i++)
@@ -1758,7 +1762,7 @@ int camera_attr_foreach_supported_whitebalance(camera_h camera, camera_attr_supp
 	MMCamAttrsInfo info;
 	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_FILTER_WB , &info);
 	if( ret != CAMERA_ERROR_NONE )
-		return _convert_camera_error_code(__func__, ret);
+		return __convert_camera_error_code(__func__, ret);
 	
 	int i;
 	for( i=0 ; i < info.int_array.count ; i++)
@@ -1808,7 +1812,7 @@ int camera_attr_foreach_supported_effect(camera_h camera, camera_attr_supported_
 	MMCamAttrsInfo info;
 	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_FILTER_COLOR_TONE , &info);
 	if( ret != CAMERA_ERROR_NONE )
-		return _convert_camera_error_code(__func__, ret);
+		return __convert_camera_error_code(__func__, ret);
 	
 	int i;
 	for( i=0 ; i < info.int_array.count ; i++)
@@ -1832,7 +1836,7 @@ int camera_attr_foreach_supported_scene_mode(camera_h camera, camera_attr_suppor
 	MMCamAttrsInfo info;
 	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_FILTER_SCENE_MODE  , &info);
 	if( ret != CAMERA_ERROR_NONE )
-		return _convert_camera_error_code(__func__, ret);
+		return __convert_camera_error_code(__func__, ret);
 	
 	int i;
 	for( i=0 ; i < info.int_array.count ; i++)
@@ -1854,7 +1858,7 @@ int camera_attr_foreach_supported_flash_mode(camera_h camera, camera_attr_suppor
 	MMCamAttrsInfo info;
 	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_STROBE_MODE  , &info);
 	if( ret != CAMERA_ERROR_NONE )
-		return _convert_camera_error_code(__func__, ret);
+		return __convert_camera_error_code(__func__, ret);
 	
 	int i;
 	for( i=0 ; i < info.int_array.count ; i++)
@@ -1875,7 +1879,7 @@ int camera_attr_foreach_supported_fps(camera_h camera, camera_attr_supported_fps
 	MMCamAttrsInfo info;
 	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_FPS , &info);
 	if( ret != CAMERA_ERROR_NONE )
-		return _convert_camera_error_code(__func__, ret);
+		return __convert_camera_error_code(__func__, ret);
 	
 	int i;
 	//if (foreach_cb(CAMERA_ATTR_FPS_AUTO, user_data) < 0 )
