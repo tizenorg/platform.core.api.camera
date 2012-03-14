@@ -1,9 +1,9 @@
 Name:       capi-media-camera
 Summary:    A Camera library in Tizen Native API
-Version:    0.0.1
+Version:    0.1.0
 Release:    1
 Group:      TO_BE/FILLED_IN
-License:    TO BE FILLED IN
+License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
 BuildRequires:  cmake
 BuildRequires:  pkgconfig(dlog)
@@ -29,7 +29,9 @@ Requires: %{name} = %{version}-%{release}
 
 
 %build
-cmake . -DCMAKE_INSTALL_PREFIX=/usr
+FULLVER=%{version}
+MAJORVER=`echo ${FULLVER} | cut -d '.' -f 1`
+cmake . -DCMAKE_INSTALL_PREFIX=/usr -DFULLVER=${FULLVER} -DMAJORVER=${MAJORVER}
 
 
 make %{?jobs:-j%jobs}
@@ -44,7 +46,7 @@ rm -rf %{buildroot}
 
 
 %files
-%{_libdir}/libcapi-media-camera.so
+%{_libdir}/libcapi-media-camera.so*
 
 %files devel
 %{_includedir}/media/camera.h
