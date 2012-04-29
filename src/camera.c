@@ -11,7 +11,7 @@
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 * See the License for the specific language governing permissions and
-* limitations under the License. 
+* limitations under the License.
 */
 
 
@@ -187,7 +187,7 @@ int __mm_camera_message_callback(int message, void *param, void *user_data){
 	
 	camera_s * handle = (camera_s*)user_data;
 	MMMessageParamType *m = (MMMessageParamType*)param;
-	camera_state_e previous_state; 
+	camera_state_e previous_state;
 
 
 	switch(message){
@@ -246,7 +246,7 @@ int __mm_camera_message_callback(int message, void *param, void *user_data){
 			}
 			break;
 		}
-		case MM_MESSAGE_CAMCORDER_ERROR: 
+		case MM_MESSAGE_CAMCORDER_ERROR:
 		{
 			int errorcode = m->code;
 			errorcode = __convert_camera_error_code("NOTIFY", errorcode);
@@ -299,14 +299,14 @@ int camera_create( camera_device_e device, camera_h* camera){
 
 	
 	char *error;
-	ret = mm_camcorder_set_attributes(handle->mm_handle, &error, 
-																MMCAM_MODE , MM_CAMCORDER_MODE_IMAGE, 
+	ret = mm_camcorder_set_attributes(handle->mm_handle, &error,
+																MMCAM_MODE , MM_CAMCORDER_MODE_IMAGE,
 																MMCAM_CAMERA_FORMAT,  preview_format,
-																MMCAM_IMAGE_ENCODER , MM_IMAGE_CODEC_JPEG, 
+																MMCAM_IMAGE_ENCODER , MM_IMAGE_CODEC_JPEG,
 																MMCAM_CAPTURE_FORMAT,  MM_PIXEL_FORMAT_ENCODED ,
-																MMCAM_DISPLAY_SURFACE, MM_DISPLAY_SURFACE_NULL, 
-																MMCAM_DISPLAY_ROTATION, rotation, 
-																MMCAM_CAPTURE_COUNT, 1, 
+																MMCAM_DISPLAY_SURFACE, MM_DISPLAY_SURFACE_NULL,
+																MMCAM_DISPLAY_ROTATION, rotation,
+																MMCAM_CAPTURE_COUNT, 1,
 																(void*)NULL);
 
 	handle->display_type = CAMERA_DISPLAY_TYPE_NONE;
@@ -470,8 +470,8 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 	handle->display_type = type;
 	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL,
 		MMCAM_DISPLAY_DEVICE, MM_DISPLAY_DEVICE_MAINLCD,
-		MMCAM_DISPLAY_SURFACE  ,type,  
-		MMCAM_DISPLAY_HANDLE  , type == CAMERA_DISPLAY_TYPE_X11 ? &handle->display_handle : display , sizeof(display) , 
+		MMCAM_DISPLAY_SURFACE  ,type,
+		MMCAM_DISPLAY_HANDLE  , type == CAMERA_DISPLAY_TYPE_X11 ? &handle->display_handle : display , sizeof(display) ,
 		NULL);
 	return __convert_camera_error_code(__func__, ret);
 }
@@ -487,13 +487,13 @@ int camera_set_preview_resolution(camera_h camera,  int width, int height){
 	return __convert_camera_error_code(__func__, ret);
 	
 }
-int camera_set_x11_display_rotation(camera_h camera,  camera_display_rotation_e rotation){
+int camera_set_x11_display_rotation(camera_h camera,  camera_rotation_e rotation){
 	if( camera == NULL){
 		LOGE( "[%s] INVALID_PARAMETER(0x%08x)",__func__,CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if( rotation < CAMERA_DISPLAY_ROTATION_NONE || rotation > CAMERA_DISPLAY_ROTATION_270 )
+	if( rotation < CAMERA_ROTATION_NONE || rotation > CAMERA_ROTATION_270 )
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	
 	int ret;
@@ -549,7 +549,7 @@ int camera_get_preview_resolution(camera_h camera,  int *width, int *height){
 	
 }
 
-int camera_get_x11_display_rotation( camera_h camera,  camera_display_rotation_e *rotation){
+int camera_get_x11_display_rotation( camera_h camera,  camera_rotation_e *rotation){
 	if( camera == NULL || rotation == NULL ){
 		LOGE( "[%s] INVALID_PARAMETER(0x%08x)",__func__,CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
@@ -1008,17 +1008,17 @@ int camera_attr_set_af_mode(camera_h camera,  camera_attr_af_mode_e mode){
 		case CAMERA_ATTR_AF_NONE:
 			ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_FOCUS_MODE     , MM_CAMCORDER_FOCUS_MODE_NONE ,
 																														MMCAM_CAMERA_AF_SCAN_RANGE  , MM_CAMCORDER_AUTO_FOCUS_NORMAL , NULL);			
-			break; 
+			break;
 		case CAMERA_ATTR_AF_NORMAL:
-			ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_FOCUS_MODE  , MM_CAMCORDER_FOCUS_MODE_AUTO , 
+			ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_FOCUS_MODE  , MM_CAMCORDER_FOCUS_MODE_AUTO ,
 																														MMCAM_CAMERA_AF_SCAN_RANGE  , MM_CAMCORDER_AUTO_FOCUS_NORMAL , NULL);
 			break;
 		case CAMERA_ATTR_AF_MACRO:
-			ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_FOCUS_MODE  , MM_CAMCORDER_FOCUS_MODE_AUTO , 
+			ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_FOCUS_MODE  , MM_CAMCORDER_FOCUS_MODE_AUTO ,
 																														MMCAM_CAMERA_AF_SCAN_RANGE  , MM_CAMCORDER_AUTO_FOCUS_MACRO  , NULL);						
 			break;
 		case CAMERA_ATTR_AF_FULL:
-			ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_FOCUS_MODE  , MM_CAMCORDER_FOCUS_MODE_AUTO , 
+			ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_FOCUS_MODE  , MM_CAMCORDER_FOCUS_MODE_AUTO ,
 																														MMCAM_CAMERA_AF_SCAN_RANGE  , MM_CAMCORDER_AUTO_FOCUS_FULL  , NULL);						
 			break;
 			
@@ -1034,7 +1034,7 @@ int camera_attr_set_exposure_mode(camera_h camera,  camera_attr_exposure_mode_e 
 		LOGE( "[%s] INVALID_PARAMETER(0x%08x)",__func__,CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-	int maptable[] = {MM_CAMCORDER_AUTO_EXPOSURE_OFF, //CAMCORDER_EXPOSURE_MODE_OFF 
+	int maptable[] = {MM_CAMCORDER_AUTO_EXPOSURE_OFF, //CAMCORDER_EXPOSURE_MODE_OFF
 									MM_CAMCORDER_AUTO_EXPOSURE_ALL, //CAMCORDER_EXPOSURE_MODE_ALL
 									MM_CAMCORDER_AUTO_EXPOSURE_CENTER_1, //CAMCORDER_EXPOSURE_MODE_CENTER
 									MM_CAMCORDER_AUTO_EXPOSURE_SPOT_1, //CAMCORDER_EXPOSURE_MODE_SPOT
@@ -1780,7 +1780,7 @@ int camera_attr_foreach_supported_effect(camera_h camera, camera_attr_supported_
 	}		
 	int maptable[] = {
 		CAMERA_ATTR_EFFECT_NONE, //MM_CAMCORDER_COLOR_TONE_NONE
-		CAMERA_ATTR_EFFECT_MONO, //MM_CAMCORDER_COLOR_TONE_MONO, 
+		CAMERA_ATTR_EFFECT_MONO, //MM_CAMCORDER_COLOR_TONE_MONO,
 		CAMERA_ATTR_EFFECT_SEPIA, //MM_CAMCORDER_COLOR_TONE_SEPIA, 	/**< Sepia */
 		CAMERA_ATTR_EFFECT_NEGATIVE, //MM_CAMCORDER_COLOR_TONE_NEGATIVE, //,		/**< Negative */
 		CAMERA_ATTR_EFFECT_BLUE, //MM_CAMCORDER_COLOR_TONE_BLUE, /**< Blue */
@@ -1894,5 +1894,75 @@ int camera_attr_foreach_supported_fps(camera_h camera, camera_attr_supported_fps
 	
 }
 
+int camera_attr_set_stream_rotation(camera_h camera , camera_rotation_e rotation){
+	if( camera == NULL){
+		LOGE( "[%s] INVALID_PARAMETER(0x%08x)",__func__,CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}	
 
+	if( rotation < CAMERA_ROTATION_NONE || rotation > CAMERA_ROTATION_270 )
+		return CAMERA_ERROR_INVALID_PARAMETER;
 
+	int ret;
+	camera_s * handle = (camera_s*)camera;
+
+	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_ROTATION , rotation, NULL);
+	return __convert_camera_error_code(__func__, ret);
+}
+
+int camera_attr_get_stream_rotation(camera_h camera , camera_rotation_e *rotation){
+	if( camera == NULL || rotation == NULL ){
+		LOGE( "[%s] INVALID_PARAMETER(0x%08x)",__func__,CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	int ret;
+	camera_s * handle = (camera_s*)camera;
+
+	ret = mm_camcorder_get_attributes(handle->mm_handle ,NULL, MMCAM_CAMERA_ROTATION , rotation, NULL);
+	return __convert_camera_error_code(__func__, ret);	
+}
+
+int camera_attr_set_stream_flip(camera_h camera , camera_flip_e flip){
+	if( camera == NULL){
+		LOGE( "[%s] INVALID_PARAMETER(0x%08x)",__func__,CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}	
+
+	if( flip < CAMERA_FLIP_NONE || flip > CAMERA_FLIP_BOTH )
+		return CAMERA_ERROR_INVALID_PARAMETER;
+
+	int ret;
+	camera_s * handle = (camera_s*)camera;
+	int vflip = 0;
+	int hflip = 0;
+	vflip = (flip & CAMERA_FLIP_VERTICAL) == CAMERA_FLIP_VERTICAL;
+	hflip = (flip & CAMERA_FLIP_HORIZONTAL) == CAMERA_FLIP_HORIZONTAL;
+	ret = mm_camcorder_set_attributes(handle->mm_handle ,NULL, "" , hflip  , "" , vflip , NULL);
+	return __convert_camera_error_code(__func__, ret);	
+}
+
+int camera_attr_get_stream_flip(camera_h camera , camera_flip_e *flip){
+	if( camera == NULL || flip == NULL ){
+		LOGE( "[%s] INVALID_PARAMETER(0x%08x)",__func__,CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	int ret;
+	camera_s * handle = (camera_s*)camera;
+	int vflip =0;
+	int hflip = 0;
+	int result = 0;
+	char *error;
+	ret = mm_camcorder_get_attributes(handle->mm_handle ,&error, "" , &hflip  , "" , &vflip , NULL);
+
+	if( ret == 0){
+		if( vflip)
+			result = result | CAMERA_FLIP_VERTICAL;
+		if( hflip )
+			result = result | CAMERA_FLIP_HORIZONTAL;
+		*flip = result;
+	}
+	return __convert_camera_error_code(__func__, ret);	
+
+}

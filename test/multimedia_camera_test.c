@@ -11,7 +11,7 @@
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 * See the License for the specific language governing permissions and
-* limitations under the License. 
+* limitations under the License.
 */
 
 
@@ -84,7 +84,7 @@ int stillshot_test(){
 	camera_attr_set_image_quality(camera, 100);
 	camera_set_capturing_cb(camera, capturing_cb, "/mnt/nfs/test.jpg");
 	camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
-	camera_set_x11_display_rotation(camera, CAMERA_DISPLAY_ROTATION_270);
+	camera_set_x11_display_rotation(camera, CAMERA_ROTATION_270);
 	camera_attr_set_tag_orientation(camera,6);
 	//camera_attr_set_tag_orientation(camera,CAMERA_ATTR_TAG_ORT_0R_VT_0C_VR);	
 	//camera_attr_enable_tag(camera, true);
@@ -210,7 +210,7 @@ int zoom_test(camera_h camera){
 	return 0;
 }
 
-bool g_af_test_pass ; 
+bool g_af_test_pass ;
 bool _af_mode_test_cb(camera_attr_af_mode_e mode, void *user_data){
 	camera_h camera = (camera_h) user_data;
 	int ret;
@@ -536,7 +536,7 @@ int camera_attribute_test(){
 	camera_h camera ;
 	camera_create(CAMERA_DEVICE_CAMERA0 , &camera);
 	camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
-	camera_set_x11_display_rotation(camera, CAMERA_DISPLAY_ROTATION_270);	
+	camera_set_x11_display_rotation(camera, CAMERA_ROTATION_270);	
 	printf("-----------------------create camera-----------------------------\n");
 
 	preview_fps_test(camera);
@@ -600,7 +600,7 @@ int camera_preview_test(){
 	
 	camera_create(CAMERA_DEVICE_CAMERA0 , &camera);
 	camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
-	camera_set_x11_display_rotation(camera, CAMERA_DISPLAY_ROTATION_270);	
+	camera_set_x11_display_rotation(camera, CAMERA_ROTATION_270);	
 	camera_set_preview_cb(camera, 	 _camera_preview_test_cb	, &preview_test_data);
 
 	ret = camera_foreach_supported_preview_format(camera, _preview_format_test_cb,enable_preview_format);
@@ -667,7 +667,7 @@ int camera_state_change_test(){
 	
 	camera_create(CAMERA_DEVICE_CAMERA0 , &camera);
 	camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
-	camera_set_x11_display_rotation(camera, CAMERA_DISPLAY_ROTATION_270);
+	camera_set_x11_display_rotation(camera, CAMERA_ROTATION_270);
 	camera_set_state_changed_cb(camera, _state_change_test_cb, &data);
 	camera_set_capturing_cb(camera,_capture_test_cb, NULL);
 
@@ -740,7 +740,7 @@ int capture_test(){
 	
 	camera_create(CAMERA_DEVICE_CAMERA0 , &camera);
 	camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
-	camera_set_x11_display_rotation(camera, CAMERA_DISPLAY_ROTATION_270);	
+	camera_set_x11_display_rotation(camera, CAMERA_ROTATION_270);	
 	camera_set_capturing_cb(camera,_capture_test2_cb, &iscalled);
 	camera_start_preview(camera);
 	iscalled = 0;
@@ -804,7 +804,7 @@ int capture_resolution_test(){
 
 	camera_create(CAMERA_DEVICE_CAMERA0 , &camera);
 	camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
-	camera_set_x11_display_rotation(camera, CAMERA_DISPLAY_ROTATION_270);
+	camera_set_x11_display_rotation(camera, CAMERA_ROTATION_270);
 	resolution_list.count = 0;
 	camera_foreach_supported_capture_resolution(camera, capture_resolution_test_cb, &resolution_list);
 	//camera_set_state_changed_cb(camera, state_cb, NULL);
@@ -852,7 +852,7 @@ bool preview_resolution_cb(int width, int height, void *user_data)
 
 
 void preview_test(){
-	camera_h camera ; 
+	camera_h camera ;
 	camera_create(CAMERA_DEVICE_CAMERA0, &camera);
 	camera_set_display(camera, CAMERA_DISPLAY_TYPE_EVAS,img);
 	//camera_foreach_supported_preview_resolution(camera,preview_resolution_cb, NULL);
@@ -866,19 +866,19 @@ void rotation_test(){
 	ret = camera_create(CAMERA_DEVICE_CAMERA0, &camera);
 	printf("camera_create %d\n", ret);
 	camera_set_display(camera, CAMERA_DISPLAY_TYPE_X11 , GET_DISPLAY(preview_win));
-	camera_set_x11_display_rotation(camera, CAMERA_DISPLAY_ROTATION_NONE);
+	camera_set_x11_display_rotation(camera, CAMERA_ROTATION_NONE);
 	camera_start_preview(camera);
 	sleep(3);
 	printf("180\n");
-	camera_set_x11_display_rotation(camera, CAMERA_DISPLAY_ROTATION_180);
+	camera_set_x11_display_rotation(camera, CAMERA_ROTATION_180);
 
 	sleep(3);
 	printf("270\n");
-	camera_set_x11_display_rotation(camera, CAMERA_DISPLAY_ROTATION_270);
+	camera_set_x11_display_rotation(camera, CAMERA_ROTATION_270);
 
 	sleep(3);
 	printf("90\n");
-	camera_set_x11_display_rotation(camera, CAMERA_DISPLAY_ROTATION_90);
+	camera_set_x11_display_rotation(camera, CAMERA_ROTATION_90);
 
 	sleep(10);
 	camera_stop_preview(camera);
@@ -901,7 +901,7 @@ void focus_test(){
 	ret = camera_create(CAMERA_DEVICE_CAMERA0, &camera);
 	printf("camera_create %d\n", ret);
 	camera_set_display(camera, CAMERA_DISPLAY_TYPE_X11 , GET_DISPLAY(preview_win));
-	camera_set_x11_display_rotation(camera, CAMERA_DISPLAY_ROTATION_270);
+	camera_set_x11_display_rotation(camera, CAMERA_ROTATION_270);
 	camera_set_focus_changed_cb(camera, _focus_changed_cb2, NULL);
 	camera_start_preview(camera);
 
@@ -962,9 +962,37 @@ void contrast_test2(){
 	camera_attr_set_contrast(camera, 1);
 }
 
+void rotation_flip_test(){
+	camera_h camera;
+	camera_flip_e flip;
+	camera_create(CAMERA_DEVICE_CAMERA0, &camera);
+	printf("flip in = %d\n", CAMERA_FLIP_HORIZONTAL);	
+	camera_attr_set_stream_flip(camera, CAMERA_FLIP_HORIZONTAL);
+	camera_attr_get_stream_flip(camera, &flip);
+	printf("flip out = %d\n", flip);
+
+	printf("flip in = %d\n", CAMERA_FLIP_NONE);		
+	camera_attr_set_stream_flip(camera, CAMERA_FLIP_NONE);
+	camera_attr_get_stream_flip(camera, &flip);
+	printf("flip out = %d\n", flip);
+
+	printf("flip in = %d\n", CAMERA_FLIP_VERTICAL);		
+	camera_attr_set_stream_flip(camera, CAMERA_FLIP_VERTICAL);
+	camera_attr_get_stream_flip(camera, &flip);
+	printf("flip out = %d\n", flip);
+
+	printf("flip in = %d\n", CAMERA_FLIP_BOTH);		
+	camera_attr_set_stream_flip(camera, CAMERA_FLIP_BOTH);
+	camera_attr_get_stream_flip(camera, &flip);
+	printf("flip out = %d\n", flip);
+
+	
+}
+
 int camera_test(){
 	
 	int ret=0;
+	/*
 	ret = camera_attribute_test();
 	ret += camera_preview_test();
 	ret += camera_state_change_test();
@@ -974,7 +1002,8 @@ int camera_test(){
 	camera_lens_rotation_test();
 
 	contrast_test2();
-
+	*/
+	rotation_flip_test();
 
 	return ret;
 }

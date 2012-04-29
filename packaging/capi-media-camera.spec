@@ -29,9 +29,8 @@ Requires: %{name} = %{version}-%{release}
 
 
 %build
-FULLVER=%{version}
-MAJORVER=`echo ${FULLVER} | cut -d '.' -f 1`
-cmake . -DCMAKE_INSTALL_PREFIX=/usr -DFULLVER=${FULLVER} -DMAJORVER=${MAJORVER}
+MAJORVER=`echo %{version} | awk 'BEGIN {FS="."}{print $1}'`
+cmake . -DCMAKE_INSTALL_PREFIX=/usr -DFULLVER=%{version} -DMAJORVER=${MAJORVER}
 
 
 make %{?jobs:-j%jobs}
@@ -46,10 +45,11 @@ rm -rf %{buildroot}
 
 
 %files
-%{_libdir}/libcapi-media-camera.so*
+%{_libdir}/libcapi-media-camera.so.*
 
 %files devel
 %{_includedir}/media/camera.h
 %{_libdir}/pkgconfig/*.pc
+%{_libdir}/libcapi-media-camera.so
 
 

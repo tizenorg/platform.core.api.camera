@@ -11,7 +11,7 @@
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 * See the License for the specific language governing permissions and
-* limitations under the License. 
+* limitations under the License.
 */
 
 
@@ -104,7 +104,7 @@ typedef enum
 
 /**
  * @brief	Enumerations of the camera display type.
- */ 
+ */
 typedef enum
 {
   CAMERA_DISPLAY_TYPE_X11 = 0,		/**< X surface display */
@@ -129,7 +129,7 @@ typedef void *camera_display_h;
 #ifndef GET_DISPLAY
 
 /**
- * @brief	Gets a display handle from x window id or evas object 
+ * @brief	Gets a display handle from x window id or evas object
  */
 #define GET_DISPLAY(x) (void*)(x)
 
@@ -147,15 +147,27 @@ typedef void *camera_display_h;
 
 
 /**
- * @brief Enumerations of the camera display rotation type.
+ * @brief Enumerations of the camera rotation type.
  */
 typedef enum
 {
-	CAMERA_DISPLAY_ROTATION_NONE,	/**< No rotation of the display */
-	CAMERA_DISPLAY_ROTATION_90,		/**< 90 degree rotation */
-	CAMERA_DISPLAY_ROTATION_180,	/**< 180 degree rotation */
-	CAMERA_DISPLAY_ROTATION_270,	/**< 270 degree rotation */
-} camera_display_rotation_e;
+	CAMERA_ROTATION_NONE,	/**< No rotation */
+	CAMERA_ROTATION_90,		/**< 90 degree rotation */
+	CAMERA_ROTATION_180,	/**< 180 degree rotation */
+	CAMERA_ROTATION_270,	/**< 270 degree rotation */
+} camera_rotation_e;
+
+
+/**
+ * @brief Enumerations of the camera flip type.
+ */
+typedef enum
+{
+	CAMERA_FLIP_NONE,		/**< No Flip */
+	CAMERA_FLIP_HORIZONTAL, /**< Horizontal flip */
+	CAMERA_FLIP_VERTICAL, /**< Vertical flip */
+	CAMERA_FLIP_BOTH	/** Horizontal and vertical flip */
+}camera_flip_e;
 
 /**
  * @brief Enumerations of the camera display mode.
@@ -419,7 +431,7 @@ typedef void (*camera_preview_cb)(void *stream_buffer, int buffer_size, int widt
 
 
 /**
- * @brief	Called to get information about image data taken by the camera once per frame while capturing. 
+ * @brief	Called to get information about image data taken by the camera once per frame while capturing.
  *
  * @remarks This function is issued in the context of gstreamer (video source thread) so you should not directly invoke UI update code.
  * You must not call camera_stop_preview() within this callback.
@@ -645,10 +657,10 @@ int camera_stop_preview(camera_h camera);
  * @retval      #CAMERA_ERROR_INVALID_OPERATION Invalid operation
  *
  * @pre         The camera state must be #CAMERA_STATE_PREVIEW. \n
- * If needed, modify capture resolution(camera_set_capture_resolution()), 
+ * If needed, modify capture resolution(camera_set_capture_resolution()),
  * capture format(camera_set_capture_format()), or image quality(camera_attr_set_image_quality())
  * @post   If it succeeds the camera state will be #CAMERA_STATE_CAPTURED.
- * 
+ *
  * @see camera_start_preview()
  * @see camera_set_capturing_cb()
  * @see camera_set_capture_completed_cb()
@@ -710,7 +722,7 @@ int camera_start_focusing(camera_h camera);
  * @pre    The camera state should be #CAMERA_STATE_PREVIEW
  *
  * @see camera_start_focusing()
- * @see	camera_focus_changed_cb() 
+ * @see	camera_focus_changed_cb()
  */
 int camera_cancel_focusing(camera_h camera);
 
@@ -819,17 +831,17 @@ int camera_foreach_supported_preview_resolution(camera_h camera,
  * @retval      #CAMERA_ERROR_NONE Successful
  * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
  * @retval      #CAMERA_ERROR_INVALID_STATE Invalid state
- * @retval      #CAMERA_ERROR_INVALID_OPERATION Display type is not X11 
+ * @retval      #CAMERA_ERROR_INVALID_OPERATION Display type is not X11
  *
  * @see camera_start_preview()
  * @see	camera_get_x11_display_rotation()
  */
-int camera_set_x11_display_rotation(camera_h camera, camera_display_rotation_e rotation);
+int camera_set_x11_display_rotation(camera_h camera, camera_rotation_e rotation);
 
 /**
  * @brief Gets the display rotation.
  * @ingroup CAPI_MEDIA_CAMERA_X11_DISPLAY_MODULE
- * 
+ *
  * @remarks  This function is valid only for #CAMERA_DISPLAY_TYPE_X11.
  *
  * @param[in]	camera	The handle to the camera
@@ -840,7 +852,7 @@ int camera_set_x11_display_rotation(camera_h camera, camera_display_rotation_e r
  *
  * @see camera_set_x11_display_rotation()
  */
-int camera_get_x11_display_rotation(camera_h camera, camera_display_rotation_e *rotation);
+int camera_get_x11_display_rotation(camera_h camera, camera_rotation_e *rotation);
 
 /**
  * @brief Sets the visible property for X11 display.
@@ -1223,7 +1235,7 @@ int camera_set_state_changed_cb(camera_h camera, camera_state_changed_cb callbac
 int camera_unset_state_changed_cb(camera_h camera);
 
 /**
- * @brief	Registers a callback function to be called when auto-focus state changes. 
+ * @brief	Registers a callback function to be called when auto-focus state changes.
  *
  * @param[in] camera	The handle to the camera
  * @param[in] callback	The callback function to register
@@ -1256,7 +1268,7 @@ int camera_unset_focus_changed_cb(camera_h camera);
 
 
 /**
- * @brief	Registers a callback function to be called when capture completes. 
+ * @brief	Registers a callback function to be called when capture completes.
  *
  * @param[in] camera	The handle to the camera
  * @param[in] callback	The callback function to register
@@ -1288,7 +1300,7 @@ int camera_unset_capture_completed_cb(camera_h camera);
 
 
 /**
- * @brief	Registers a callback function to be called when an asynchronous operation error occurred. 
+ * @brief	Registers a callback function to be called when an asynchronous operation error occurred.
  *
  * @param[in]	camera	The handle to the camera
  * @param[in]	callback	The callback function to register
@@ -1497,7 +1509,7 @@ int camera_attr_foreach_supported_fps(camera_h camera, camera_attr_supported_fps
  * @addtogroup CAPI_MEDIA_CAMERA_ATTRIBUTES_MODULE
  * @{
  */
- 
+
 /**
  * @brief Sets the image quality.
  *
@@ -1540,7 +1552,7 @@ int camera_attr_get_image_quality(camera_h camera, int *quality);
  * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
  *
  * @see camera_attr_get_zoom()
- * @see camera_attr_get_zoom_range() 
+ * @see camera_attr_get_zoom_range()
  */
 int camera_attr_set_zoom(camera_h camera, int zoom);
 
@@ -1563,7 +1575,7 @@ int camera_attr_get_zoom(camera_h camera, int *zoom);
  *
  * @param[in] camera	The handle to the camera
  * @param[out] min	The minimum zoom level
- * @param[out] max	The maximum zoom level 
+ * @param[out] max	The maximum zoom level
  * @return	  0 on success, otherwise a negative error value.
  * @retval      #CAMERA_ERROR_NONE Successful
  * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
@@ -1676,7 +1688,7 @@ int camera_attr_get_exposure_mode(camera_h camera, camera_attr_exposure_mode_e *
  * @addtogroup CAPI_MEDIA_CAMERA_CAPABILITY_MODULE
  * @{
  */
- 
+
 /**
  * @brief Retrieves all supported exposure modes by invoking callback function once for each supported exposure mode.
  *
@@ -1735,7 +1747,7 @@ int camera_attr_get_exposure(camera_h camera, int *value);
  *
  * @param[in]	camera	The handle to the camera
  * @param[out]  min The minimum exposure value
- * @param[out]  max The maximum exposure value 
+ * @param[out]  max The maximum exposure value
  * @return	    0 on success, otherwise a negative error value.
  * @retval      #CAMERA_ERROR_NONE Successful
  * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
@@ -1843,7 +1855,7 @@ int camera_attr_get_brightness(camera_h camera, int *level);
  *
  * @param[in]	camera	The handle to the camera
  * @param[out]  min   The minimum brightness level
- * @param[out]  max   The maximum brightness level 
+ * @param[out]  max   The maximum brightness level
  * @return      0 on success, otherwise a negative error value.
  * @retval    #CAMERA_ERROR_NONE Successful
  * @retval    #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
@@ -1887,7 +1899,7 @@ int camera_attr_get_contrast(camera_h camera, int *level);
  *
  * @param[in]	camera	The handle to the camera
  * @param[out]  min   The minimum contrast level
- * @param[out]  max   The maximum contrast level 
+ * @param[out]  max   The maximum contrast level
  * @return      0 on success, otherwise a negative error value.
  * @retval    #CAMERA_ERROR_NONE Successful
  * @retval    #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
@@ -2353,6 +2365,69 @@ int camera_attr_foreach_supported_flash_mode(camera_h camera,
  * @see camera_set_x11_display_rotation()
  */
 int camera_attr_get_lens_orientation(camera_h camera, int *angle);
+
+
+/**
+ * @brief Sets stream rotation
+ *
+ * @param[in]	camera	The handle to the camera
+ * @param[in] rotation	The stream rotation
+ * @return	    0 on success, otherwise a negative error value.
+ * @retval      #CAMERA_ERROR_NONE Successful
+ * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @pre	The camera state must be CAMERA_STATE_CREATED.
+ *
+ * @see camera_attr_get_stream_rotation()
+ */
+int camera_attr_set_stream_rotation(camera_h camera , camera_rotation_e rotation);
+
+/**
+ * @brief Gets stream rotation
+ *
+ * @param[in]	camera	The handle to the camera
+ * @param[out] rotation	The stream rotation
+ * @return	    0 on success, otherwise a negative error value.
+ * @retval      #CAMERA_ERROR_NONE Successful
+ * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @pre	The camera state must be CAMERA_STATE_CREATED.
+ *
+ * @see camera_attr_set_stream_rotation()
+ */
+int camera_attr_get_stream_rotation(camera_h camera , camera_rotation_e *rotation);
+
+
+
+/**
+ * @brief Sets stream flip
+ *
+ * @param[in]	camera	The handle to the camera
+ * @param[in] flip  The stream flip
+ * @return	    0 on success, otherwise a negative error value.
+ * @retval      #CAMERA_ERROR_NONE Successful
+ * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @pre	The camera state must be CAMERA_STATE_CREATED.
+ *
+ * @see camera_attr_set_stream_rotation()
+ */
+int camera_attr_set_stream_flip(camera_h camera , camera_flip_e flip);
+
+/**
+ * @brief Gets stream flip
+ *
+ * @param[in]	camera	The handle to the camera
+ * @param[out] flip  The stream flip
+ * @return	    0 on success, otherwise a negative error value.
+ * @retval      #CAMERA_ERROR_NONE Successful
+ * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @pre	The camera state must be CAMERA_STATE_CREATED.
+ *
+ * @see camera_attr_set_stream_rotation()
+ */
+int camera_attr_get_stream_flip(camera_h camera , camera_flip_e *flip);
 
 
 /**
