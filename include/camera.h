@@ -53,6 +53,9 @@ typedef enum
     CAMERA_ERROR_DEVICE =            CAMERA_ERROR_CLASS | 0x04,    /**< Device error */
     CAMERA_ERROR_INVALID_OPERATION = TIZEN_ERROR_INVALID_OPERATION,  /**< Internal error */
     CAMERA_ERROR_SOUND_POLICY =      CAMERA_ERROR_CLASS | 0x06,    /**< Blocked by Audio Session Manager */
+    CAMERA_ERROR_SECURITY_RESTRICTED = CAMERA_ERROR_CLASS | 0x07,    /**< Restricted by security system policy */
+    CAMERA_ERROR_DEVICE_BUSY = CAMERA_ERROR_CLASS | 0x08,    /**< The device is using in other applications or working some operation */
+    CAMERA_ERROR_DEVICE_NOT_FOUND = CAMERA_ERROR_CLASS | 0x09, /**< No camera device */
 } camera_error_e;
 
 
@@ -179,6 +182,43 @@ typedef enum
 	CAMERA_DISPLAY_MODE_FULL,	/**< full screen*/
 	CAMERA_DISPLAY_MODE_CROPPED_FULL,	/**< Cropped full screen*/
 } camera_display_mode_e;
+
+/**
+ * @brief Enumerations of the camera policy.
+ */
+typedef enum
+{
+	CAMERA_POLICY_NONE = 0, /**< None */
+	CAMERA_POLICY_SOUND, /**< Sound policy */
+	CAMERA_POLICY_SECURITY /**< Security policy */
+} camera_policy_e;
+
+
+/**
+ * @brief Struct of the image data
+ */
+ typedef struct
+{
+	unsigned char *data;       				/**< The image buffer */
+	unsigned int size;            				/**< The size of buffer */
+	int width;                        			/**< The width of image */
+	int height;                      				/**< The height of image */
+	camera_pixel_format_e format; /**< The format of image pixel */
+}camera_image_data_s;
+
+
+/**
+ * @brief Struct of the face detection
+ */
+typedef struct
+{
+	int id;				/**< The id of each face */
+	int score;		/**< The confidence level for the detection of the face */
+	int x;				/**< The x coordinates of face */
+	int y;				/**< The y coordinates of face */
+	int width;		/**< The width of face */
+	int height;		/**< The height of face */
+}camera_detected_face_s;
 
 
 /**
@@ -321,12 +361,12 @@ typedef enum
 typedef enum
 {
     CAMERA_ATTR_TAG_ORIENTATION_TOP_LEFT = 1,      /**< Row #0 is top, Column #0 is left */
-    CAMERA_ATTR_TAG_ORIENTATION_TOP_RIGHT = 2,     /**< Row #0 is top, Column #0 is right */
+    CAMERA_ATTR_TAG_ORIENTATION_TOP_RIGHT = 2,     /**< Row #0 is top, Column #0 is right (flipped) */
     CAMERA_ATTR_TAG_ORIENTATION_BOTTOM_RIGHT = 3,  /**< Row #0 is bottom, Column #0 is right */
-    CAMERA_ATTR_TAG_ORIENTATION_BOTTOM_LEFT = 4,   /**< Row #0 is bottom, Column #0 is left */
-    CAMERA_ATTR_TAG_ORIENTATION_LEFT_TOP = 5,      /**< Row #0 is left, Column #0 is top */
+    CAMERA_ATTR_TAG_ORIENTATION_BOTTOM_LEFT = 4,   /**< Row #0 is bottom, Column #0 is left (flipped) */
+    CAMERA_ATTR_TAG_ORIENTATION_LEFT_TOP = 5,      /**< Row #0 is left, Column #0 is top (flipped) */
     CAMERA_ATTR_TAG_ORIENTATION_RIGHT_TOP = 6,     /**< Row #0 is right, Column #0 is top */
-    CAMERA_ATTR_TAG_ORIENTATION_RIGHT_BOTTOM = 7,  /**< Row #0 is right, Column #0 is bottom */
+    CAMERA_ATTR_TAG_ORIENTATION_RIGHT_BOTTOM = 7,  /**< Row #0 is right, Column #0 is bottom (flipped) */
     CAMERA_ATTR_TAG_ORIENTATION_LEFT_BOTTOM = 8,   /**< Row #0 is left, Column #0 is bottom */
 } camera_attr_tag_orientation_e;
 
@@ -362,6 +402,26 @@ typedef enum
     CAMERA_ATTR_FPS_120 = 120 /**< 120 FPS */
 } camera_attr_fps_e;
 
+/**
+ * @brief Enumerations of the theater mode
+ */
+typedef enum
+{
+	CAMERA_ATTR_THEATER_MODE_DISABLE = 0, /**< Disable theater mode - External display show same image with device display. */
+	CAMERA_ATTR_THEATER_MODE_ENABLE = 2,  /**< Enable theater mode - Preview image is displayed on external display with full screen mode. But preview image is not shown on device display. */
+	CAMERA_ATTR_THEATER_MODE_CLONE = 1    /**< Clone mode - Preview image is displayed on external display with full screen mode. Also preview image is shown with UI on device display*/
+} camera_attr_theater_mode_e;
+
+/**
+ * @brief Enumerations of HDR capture mode
+ */
+typedef enum
+{
+	CAMERA_ATTR_HDR_MODE_DISABLE = 0,   /**< Disable HDR capture */
+	CAMERA_ATTR_HDR_MODE_ENABLE,          /**< Enable HDR capture */
+	CAMERA_ATTR_HDR_MODE_KEEP_ORIGINAL /**< Enable HDR capture and keep original image data */
+} camera_attr_hdr_mode_e;
+
 
 /**
  * @}
@@ -376,11 +436,9 @@ typedef enum
 /**
  * @brief	Called when the camera state changes.
  *
- * @remarks	When camera is used as a recorder then this callback function won't be called.
- *
  * @param[in] previous      The previous state of the camera
  * @param[in] current       The current state of the camera
- * @param[in] by_policy     @c true if the state is changed by sound policy, otherwise @c false
+ * @param[in] by_policy     @c true if the state is changed by policy, otherwise @c false
  * @param[in] user_data     The user data passed from the callback registration function
  * @pre camera_start_preview(), camera_start_capture() or camera_stop_preview()
  * will invoke this callback if you registers this callback unsing camera_set_state_changed_cb().
@@ -388,6 +446,18 @@ typedef enum
  */
 typedef void (*camera_state_changed_cb)(camera_state_e previous, camera_state_e current,
         bool by_policy, void *user_data);
+
+/**
+ * @brief	Called when the camera interrupted by policy
+ *
+ * @param[in] policy     		The policy that interrupting the camera
+ * @param[in] previous      The previous state of the camera
+ * @param[in] current       The current state of the camera
+ * @param[in] user_data     The user data passed from the callback registration function
+ * @see	camera_set_interrupted_cb()
+ */
+typedef void (*camera_interrupted_cb)(camera_policy_e policy, camera_state_e previous, camera_state_e current, void *user_data);
+
 
 
 /**
@@ -429,26 +499,23 @@ typedef void (*camera_focus_changed_cb)(camera_focus_state_e state, void *user_d
 typedef void (*camera_preview_cb)(void *stream_buffer, int buffer_size, int width, int height,
         camera_pixel_format_e format, void *user_data);
 
-
 /**
  * @brief	Called to get information about image data taken by the camera once per frame while capturing.
  *
  * @remarks This function is issued in the context of gstreamer (video source thread) so you should not directly invoke UI update code.
- * You must not call camera_stop_preview() within this callback.
+ * You must not call camera_start_preview() within this callback.
  *
- * @param[in] image_buffer   The reference pointer to captured data
- * @param[in] buffer_size    The length of stream buffer (in bytes)
- * @param[in] width          The width of frame resolution
- * @param[in] height         The height of frame resolution
- * @param[in] format         The camera pixel format
+ * @param[in] image     The image data of captured picture
+ * @param[in] postview  The image data of postvew
+ * @param[in] thumbnail The image data of thumbnail ( It could be NULL, if available thumbnail data is not existed. )
  * @param[in] user_data     The user data passed from the callback registration function
- * @pre	camera_start_capture() will invoke this callback function if you register this callback using camera_set_capturing_cb().
- * @see	camera_set_capturing_cb()
- * @see	camera_unset_capturing_cb()
+ * @pre	camera_start_capture() or camera_start_continuous_capture() will invoke this callback function if you register this callback using camera_start_capture() or camera_start_continuous_capture()
  * @see	camera_start_capture()
+ * @see	camera_start_continuous_capture()
+ * @see	camera_capture_completed_cb()
  */
-typedef void (*camera_capturing_cb)(void *image_buffer, int buffer_size, int width, int height,
-        camera_pixel_format_e format, void *user_data);
+typedef void (*camera_capturing_cb)(camera_image_data_s* image, camera_image_data_s* postview, camera_image_data_s* thumbnail, void *user_data);
+
 
 
 /**
@@ -459,9 +526,9 @@ typedef void (*camera_capturing_cb)(void *image_buffer, int buffer_size, int wid
  *
  * @param[in] user_data     The user data passed from the callback registration function
  *
- * @pre	This callback function is invoked if you register this callback using camera_set_capture_completed_cb().
- * @see	camera_set_capture_completed_cb()
- * @see	camera_unset_capture_completed_cb()
+ * @pre	This callback function is invoked if you register this callback using camera_start_capture() or camera_start_continuous_capture().
+ * @see	camera_start_capture()
+ * @see	camera_start_continuous_capture()
  * @see	camera_capturing_cb()
  */
 typedef void (*camera_capture_completed_cb)(void *user_data);
@@ -470,8 +537,15 @@ typedef void (*camera_capture_completed_cb)(void *user_data);
 /**
  * @brief	Called when the error occurred.
  *
- * @remarks The callback is called when inform asynchronous operation error.
- * @param[in] error		The error message
+ * @remarks
+ * This callback inform critical error situation.\n
+ * When invoked this callback, user should release the resource and terminate application.\n
+ * These error code will be occurred\n
+ * #CAMERA_ERROR_DEVICE\n
+ * #CAMERA_ERROR_INVALID_OPERATION\n
+ * #CAMERA_ERROR_OUT_OF_MEMORY\n
+ *
+ * @param[in] error		The error code
  * @param[in] current_state	The current state of the camera
  * @param[in] user_data		The user data passed from the callback registration function
  *
@@ -479,7 +553,18 @@ typedef void (*camera_capture_completed_cb)(void *user_data);
  * @see	camera_set_error_cb()
  * @see	camera_unset_error_cb()
  */
-typedef void (*camera_error_cb)(int error, camera_state_e current_state, void *user_data);
+typedef void (*camera_error_cb)(camera_error_e error, camera_state_e current_state, void *user_data);
+
+/**
+ * @brief Called when face detected in the preview frame
+ *
+ * @param[in] faces The detected face array
+ * @param[in] count The length of array
+ * @param[in] user_data The user data passed from the callback registration function
+ *
+ * @see	camera_start_face_detection()
+ */
+typedef void (*camera_face_detected_cb)(camera_detected_face_s *faces, int count, void *user_data);
 
 /**
  * @}
@@ -601,6 +686,8 @@ int camera_destroy(camera_h camera);
  * @retval      #CAMERA_ERROR_INVALID_STATE Invalid state
  * @retval      #CAMERA_ERROR_SOUND_POLICY Sound policy error
  * @retval      #CAMERA_ERROR_INVALID_OPERATION Invalid operation
+ * @retval		#CAMERA_ERROR_DEVICE_BUSY The device is using in other applications or working some operation
+ * @retval		#CAMERA_ERROR_DEVICE_NOT_FOUND No camera device
  * @pre    The camera state should be #CAMERA_STATE_CREATED, or #CAMERA_STATE_CAPTURED.\n
  * You must set display handle. \n
  * If needed, modify preview fps(camera_attr_set_preview_fps()),
@@ -641,7 +728,7 @@ int camera_start_preview(camera_h camera);
 int camera_stop_preview(camera_h camera);
 
 /**
- * @brief Starts capturing of still images. (Image mode only)
+ * @brief Starts capturing of still images.
  *
  * @remarks  This function causes the transition of camera state from #CAMERA_STATE_CAPTURING to #CAMERA_STATE_CAPTURED automatically\n
  * and the corresponding callback function camera_capturing_cb() and camera_capture_completed_cb() will be invoked\n
@@ -650,6 +737,9 @@ int camera_stop_preview(camera_h camera);
  * You should restart camera's preview with calling camera_start_preview().
  *
  * @param[in]	camera	The handle to the camera
+ * @param[in] capturing_cb The callback for capturing data
+ * @param[in] completed_cb The callback for notification of completed
+ * @param[in] user_data The user data
  * @return      0 on success, otherwise a negative error value.
  * @retval      #CAMERA_ERROR_NONE Successful
  * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
@@ -662,8 +752,7 @@ int camera_stop_preview(camera_h camera);
  * @post   If it succeeds the camera state will be #CAMERA_STATE_CAPTURED.
  *
  * @see camera_start_preview()
- * @see camera_set_capturing_cb()
- * @see camera_set_capture_completed_cb()
+ * @see camera_start_continuous_capture();
  * @see camera_foreach_supported_capture_resolution()
  * @see camera_set_capture_resolution()
  * @see camera_get_capture_resolution()
@@ -673,7 +762,55 @@ int camera_stop_preview(camera_h camera);
  * @see camera_attr_set_image_quality()
  * @see camera_attr_get_image_quality()
  */
-int camera_start_capture(camera_h camera);
+int camera_start_capture(camera_h camera, camera_capturing_cb capturing_cb , camera_capture_completed_cb completed_cb , void *user_data);
+
+/**
+ * @brief Starts continuous capturing of still images.
+ *
+ * @remarks
+ * If not supported zero shutter lag. the capture resolution could be changed to the preview resolution.\n
+ * This function causes the transition of camera state from #CAMERA_STATE_CAPTURING to #CAMERA_STATE_CAPTURED automatically\n
+ * and the corresponding callback function camera_capturing_cb() and camera_capture_completed_cb() will be invoked\n
+ * Each Captured image will be delivered through camera_capturing_cb().\n
+ * You will be notified by camera_capture_completed_cb() callback when entire capture is completed.\n
+ * You should restart camera's preview with calling camera_start_preview().\n
+ *
+ * @param[in]	camera	The handle to the camera
+ * @param[in]	count	The number of still images
+ * @param[in] interval	The interval of capture ( millisecond )
+ * @param[in] capturing_cb The callback for capturing data
+ * @param[in] completed_cb The callback for notification of completed
+ * @param[in] user_data The user data
+ * @return      0 on success, otherwise a negative error value.
+ * @retval      #CAMERA_ERROR_NONE Successful
+ * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval      #CAMERA_ERROR_INVALID_STATE Invalid state
+ * @retval      #CAMERA_ERROR_INVALID_OPERATION Invalid operation
+ *
+ * @post   If it succeeds the camera state will be #CAMERA_STATE_CAPTURED.
+ *
+ * @see camera_start_preview()
+ * @see camera_start_capture();
+ * @see camera_stop_continuous_capture()
+ */
+int camera_start_continuous_capture(camera_h camera, int count, int interval, camera_capturing_cb capturing_cb, camera_capture_completed_cb completed_cb , void *user_data);
+
+/**
+ * @brief Abort continuous capturing.
+ *
+ * @remarks The camera state will be changed to the #CAMERA_STATE_CAPTURED state
+ * @param[in]	camera	The handle to the camera
+ * @return      0 on success, otherwise a negative error value.
+ * @retval      #CAMERA_ERROR_NONE Successful
+ * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval      #CAMERA_ERROR_INVALID_STATE Invalid state
+ * @retval      #CAMERA_ERROR_INVALID_OPERATION Invalid operation
+ * @pre    The camera state should be #CAMERA_STATE_PREVIEW
+ *
+ * @see camera_start_continuous_capture()
+ */
+int camera_stop_continuous_capture(camera_h camera);
+
 
 /**
  * @brief Gets the state of the camera.
@@ -694,7 +831,10 @@ int camera_get_state(camera_h camera, camera_state_e *state);
 /**
  * @brief Starts camera auto-focusing, Asynchronously
  *
+ * @remarks If continuous status is true, the camera continuously tries to focus
+ *
  * @param[in]	camera	The handle to the camera
+ * @param[in] continuous	The status of continuous focusing
  * @return      0 on success, otherwise a negative error value.
  * @retval      #CAMERA_ERROR_NONE Successful
  * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
@@ -708,7 +848,7 @@ int camera_get_state(camera_h camera, camera_state_e *state);
  * @see camera_focus_changed_cb()
  * @see camera_attr_set_af_mode()
  */
-int camera_start_focusing(camera_h camera);
+int camera_start_focusing(camera_h camera, bool continuous);
 
 /**
  * @brief Stops camera auto focusing.
@@ -779,6 +919,99 @@ int camera_set_preview_resolution(camera_h camera, int width, int height);
  * @see	camera_foreach_supported_preview_resolution()
  */
 int camera_get_preview_resolution(camera_h camera, int *width, int *height);
+
+/**
+ * @brief Gets the recommended preview resolution
+ *
+ * @remarks Depend on capture resolution aspect ratio and display resolution, the recommended preview resolution is determined.
+ *
+ * @param[in] camera	The handle to the camera
+ * @param[out] width	The preview width
+ * @param[out] height	The preview height
+ * @return	  0 on success, otherwise a negative error value.
+ * @retval    #CAMERA_ERROR_NONE Successful
+ * @retval    #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @see	camera_set_preview_resolution()
+ * @see	camera_foreach_supported_preview_resolution()
+ */
+int camera_get_recommended_preview_resolution(camera_h camera, int *width, int *height);
+
+/**
+ * @brief Starts the face detection.
+ * @remarks
+ * This should be called after preview is started.\n
+ * The callback will invoked when face detected in preview frame.\n
+ * Internally starting continuous focus and focusing on detected face.\n
+ * When the face detection is running, camera_start_focusing(), camera_cancel_focusing(), camera_attr_set_af_mode(), 	camera_attr_set_af_area(), camera_attr_set_exposure_mode() and camera_attr_set_whitebalance() settings are ignored.\n
+ * If invoke camera_stop_preview(), face detection is stopped. and then resuming preview with camera_start_preview(), you should call this method again to resume face detection.
+ *
+ * @param[in] camera	The handle to the camera
+ * @param[in] callback  The callback for notify detected face
+ * @param[in] user_data   The user data to be passed to the callback function
+ *
+ * @return	  0 on success, otherwise a negative error value.
+ * @retval    #CAMERA_ERROR_NONE Successful
+ * @retval    #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval    #CAMERA_ERROR_INVALID_STATE Not preview state
+ * @retval    #CAMERA_ERROR_INVALID_OPERATION Not supported this feature
+ *
+ * @pre    The camera state must be #CAMERA_STATE_PREVIEW
+ *
+ * @see camera_stop_face_detection()
+ * @see camera_face_detected_cb()
+ * @see camera_is_supported_face_detection()
+ */
+int camera_start_face_detection(camera_h camera, camera_face_detected_cb callback, void * user_data);
+
+/**
+ * @brief Stops the face detection.
+ *
+ * @param[in] camera	The handle to the camera
+ * @return	  0 on success, otherwise a negative error value.
+ * @retval    #CAMERA_ERROR_NONE Successful
+ * @retval    #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @pre    This should be called after face detection was started.
+ *
+ * @see camera_start_face_detection()
+ * @see camera_is_supported_face_detection()
+ */
+int camera_stop_face_detection(camera_h camera);
+
+/**
+ * @brief Zooming on the detected face
+ *
+ * @remarks The face id is getting from camera_face_detected_cb().\n
+ *
+ * @param[in]	camera	The handle to the camera
+ * @param[in] face_id	The face id to zoom
+ *
+ * @return	  0 on success, otherwise a negative error value.
+ * @retval    #CAMERA_ERROR_NONE Successful
+ * @retval    #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval    #CAMERA_ERROR_INVALID_STATE face zoom was already enabled.
+ * @retval    #CAMERA_ERROR_INVALID_OPERATION Not supported this feature
+ *
+ * @pre This should be called after face detection was started.
+ *
+ * @see camera_cancel_face_zoom()
+ * @see camera_start_face_detection()
+ */
+int camera_face_zoom(camera_h camera, int face_id);
+
+/**
+ * @brief Cancel zooming on the face
+ *
+ * @param[in]	camera	The handle to the camera
+ *
+ * @retval    #CAMERA_ERROR_NONE Successful
+ * @retval    #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @see camera_face_zoom()
+ * @see camera_start_face_detection()
+ */
+int camera_cancel_face_zoom(camera_h camera);
 
 /**
  * @}
@@ -1126,6 +1359,18 @@ int camera_get_preview_format(camera_h camera, camera_pixel_format_e *format);
 int camera_foreach_supported_preview_format(camera_h camera,
         camera_supported_preview_format_cb callback, void *user_data);
 
+
+/**
+ * @biref Gets face detection feature supported state
+ * @ingroup CAPI_MEDIA_CAMERA_CAPABILITY_MODULE
+ * @param[in]	camera The handle to the camera
+ * @return true on supported, otherwise false
+ *
+ * @see camera_start_face_detection()
+ * @see camera_stop_face_detection()
+ */
+bool camera_is_supported_face_detection(camera_h camera);
+
 /**
  * @}
  */
@@ -1172,39 +1417,6 @@ int camera_set_preview_cb(camera_h camera, camera_preview_cb callback, void *use
 int camera_unset_preview_cb(camera_h camera);
 
 /**
- * @brief	Registers a callback function to be called when capturing.
- *
- * @remarks	registered callback is called on internal thread of camera so you should not directly invoke UI update code in callback.
- * You will be notified when sending a message finisheds and check whether is succeeds using this function.\n
- * This function should be called before capturing (see camera_start_capture()).
- *
- * @param[in] camera	The handle to the camera
- * @param[in] callback    The callback function to register
- * @param[in] user_data   The user data to be passed to the callback function
- * @return	    0 on success, otherwise a negative error value.
- * @retval      #CAMERA_ERROR_NONE Successful
- * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
- * @retval      #CAMERA_ERROR_INVALID_STATE Invalid state
- *
- * @see	camera_start_capture()
- * @see	camera_unset_capturing_cb()
- * @see	camera_capturing_cb()
- */
-int camera_set_capturing_cb(camera_h camera, camera_capturing_cb callback, void *user_data);
-
-/**
- * @brief	Unregisters the callback function.
- *
- * @param[in]	camera	The handle to the camera
- * @return	    0 on success, otherwise a negative error value.
- * @retval      #CAMERA_ERROR_NONE Successful
- * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
- *
- * @see camera_set_capturing_cb()
- */
-int camera_unset_capturing_cb(camera_h camera);
-
-/**
  * @brief	Registers a callback function to be called when camera state changes.
  *
  * @param[in] camera	The handle to the camera
@@ -1233,6 +1445,36 @@ int camera_set_state_changed_cb(camera_h camera, camera_state_changed_cb callbac
  * @see     camera_set_state_changed_cb()
  */
 int camera_unset_state_changed_cb(camera_h camera);
+
+/**
+ * @brief	Registers a callback function to be called when camera interrupted by policy.
+ *
+ * @param[in] camera	The handle to the camera
+ * @param[in] callback	  The callback function to register
+ * @param[in] user_data   The user data to be passed to the callback function
+ *
+ * @return	  0 on success, otherwise a negative error value.
+ * @retval    #CAMERA_ERROR_NONE Successful
+ * @retval    #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @see camera_unset_interrupted_cb()
+ * @see	camera_interrupted_cb()
+ */
+int camera_set_interrupted_cb(camera_h camera, camera_interrupted_cb callback,
+	    void *user_data);
+
+/**
+ * @brief	Unregisters the callback function.
+ *
+ * @param[in]	camera	The handle to the camera
+ * @return	  0 on success, otherwise a negative error value.
+ * @retval    #CAMERA_ERROR_NONE Successful
+ * @retval    #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @see     camera_set_interrupted_cb()
+ */
+int camera_unset_interrupted_cb(camera_h camera);
+
 
 /**
  * @brief	Registers a callback function to be called when auto-focus state changes.
@@ -1266,41 +1508,16 @@ int camera_set_focus_changed_cb(camera_h camera, camera_focus_changed_cb callbac
  */
 int camera_unset_focus_changed_cb(camera_h camera);
 
-
-/**
- * @brief	Registers a callback function to be called when capture completes.
- *
- * @param[in] camera	The handle to the camera
- * @param[in] callback	The callback function to register
- * @param[in] user_data The user data to be passed to the callback function
- * @return	  0 on success, otherwise a negative error value.
- * @retval    #CAMERA_ERROR_NONE Successful
- * @retval    #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
- * @post	This function makes camera_capture_completed_cb() called when capturing completes.
- *
- * @see camera_start_capture()
- * @see	camera_unset_capture_completed_cb()
- * @see	camera_capture_completed_cb()
- */
-int camera_set_capture_completed_cb(camera_h camera, camera_capture_completed_cb callback,
-        void *user_data);
-
-
-/**
- * @brief	Unregisters the callback function.
- *
- * @param[in]	camera	The handle to the camera
- * @return	  0 on success, otherwise a negative error value.
- * @retval    #CAMERA_ERROR_NONE Successful
- * @retval    #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
- *
- * @see     camera_set_capture_completed_cb()
- */
-int camera_unset_capture_completed_cb(camera_h camera);
-
-
 /**
  * @brief	Registers a callback function to be called when an asynchronous operation error occurred.
+ *
+ * @remarks
+ * This callback inform critical error situation.\n
+ * When invoked this callback, user should release the resource and terminate application.\n
+ * These error code will be occurred\n
+ * #CAMERA_ERROR_DEVICE\n
+ * #CAMERA_ERROR_INVALID_OPERATION\n
+ * #CAMERA_ERROR_OUT_OF_MEMORY\n
  *
  * @param[in]	camera	The handle to the camera
  * @param[in]	callback	The callback function to register
@@ -1617,6 +1834,44 @@ int camera_attr_set_af_mode(camera_h camera, camera_attr_af_mode_e mode);
 int camera_attr_get_af_mode(camera_h camera, camera_attr_af_mode_e *mode);
 
 /**
+ * @brief Sets auto focus area
+ *
+ * @remarks This API is invalid in CAMERA_ATTR_AF_NONE mode.\n
+ * The coordinates are mapped into preview area
+ *
+ * @param[in]	camera	The handle to the camera
+ * @param[in] x The x coordinates of focus area
+ * @param[in] y The y coordinates of focus area
+ *
+ * @return	  0 on success, otherwise a negative error value.
+ * @retval      #CAMERA_ERROR_NONE Successful
+ * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval      #CAMERA_ERROR_INVALID_OPERATION Invalid operation
+ *
+ * @see camera_attr_set_af_mode()
+ * @see camera_attr_clear_af_area()
+ */
+int camera_attr_set_af_area(camera_h camera, int x, int y);
+
+/**
+ * @brief Clear the auto focus area.
+ *
+ * @remarks The focusing area set to the center area
+ *
+ * @param[in]	camera	The handle to the camera
+ *
+ * @return	  0 on success, otherwise a negative error value.
+ * @retval      #CAMERA_ERROR_NONE Successful
+ * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval      #CAMERA_ERROR_INVALID_OPERATION Invalid operation
+ *
+ * @see camera_attr_set_af_mode()
+ * @see camera_attr_set_af_area()
+ *
+ */
+int camera_attr_clear_af_area(camera_h camera);
+
+/**
  * @}
  */
 
@@ -1819,6 +2074,36 @@ int camera_attr_foreach_supported_iso(camera_h camera, camera_attr_supported_iso
  * @addtogroup CAPI_MEDIA_CAMERA_ATTRIBUTES_MODULE
  * @{
  */
+
+
+/**
+ * @brief Sets the theater mode
+ *
+ * @remarks If you want to display preview image on external display with full screen mode, use this function.
+ *
+ * @param[in]	camera	The handle to the camera
+ * @param[in]	mode	The mode to change
+ * @return	    0 on success, otherwise a negative error value.
+ * @retval      #CAMERA_ERROR_NONE Successful
+ * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @pre		This function is valid only when external display was connected.
+ *
+ * @see	camera_attr_get_theater_mode()
+ */
+int camera_attr_set_theater_mode(camera_h camera, camera_attr_theater_mode_e mode);
+
+/**
+ * @brief Gets the theater mode
+ *
+ * @param[in]	camera	The handle to the camera
+ * @param[in]	mode	Currnet theater mode
+ * @return	    0 on success, otherwise a negative error value.
+ * @retval      #CAMERA_ERROR_NONE Successful
+ * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @see	camera_attr_get_theater_mode()
+ */
+int camera_attr_get_theater_mode(camera_h camera, camera_attr_theater_mode_e *mode);
 
 
 /**
@@ -2212,82 +2497,49 @@ int camera_attr_set_tag_software(camera_h camera, const char *software);
 int camera_attr_get_tag_software(camera_h camera, char **software);
 
 /**
- * @brief Sets the GPS latitude data in EXIF(Exchangeable image file format) tag.
+ * @brief Sets the geotag(GPS data) in EXIF(Exchangeable image file format) tag.
  *
- * @param[in]	camera	The handle to the camera
- * @param[in]   latitude    Latitude data
+ * @param[in]	camera The handle to the camera
+ * @param[in] latitude Latitude data
+ * @param[in] longitude Longitude data
+ * @param[in] altitude Altitude data
  * @return      0 on success, otherwise a negative error value.
  * @retval      #CAMERA_ERROR_NONE Successful
  * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
  *
- * @see         camera_attr_get_tag_latitude()
+ * @see         camera_attr_get_geotag()
+ * @see         camera_attr_remove_geotag()
  */
-int camera_attr_set_tag_latitude(camera_h camera, double latitude);
+int camera_attr_set_geotag(camera_h camera, double latitude , double longitude, double altitude);
 
 /**
- * @brief Gets the GPS latitude data in EXIF(Exchangeable image file format) tag.
+ * @brief Gets the geotag(GPS data) in EXIF(Exchangeable image file format) tag.
  *
  * @param[in]	camera	The handle to the camera
- * @param[out]  latitude    The latitude data
+ * @param[out] latitude Latitude data
+ * @param[out] longitude Longitude data
+ * @param[out] altitude Altitude data
  * @return      0 on success, otherwise a negative error value.
  * @retval      #CAMERA_ERROR_NONE Successful
  * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
  *
- * @see         camera_attr_set_tag_latitude()
+ * @see         camera_attr_set_geotag()
+ * @see         camera_attr_remove_geotag()
  */
-int camera_attr_get_tag_latitude(camera_h camera, double *latitude);
+int camera_attr_get_geotag(camera_h camera, double *latitude , double *longitude, double *altitude);
 
 /**
- * @brief Sets the GPS longitude data in EXIF(Exchangeable image file format) tag.
+ * @brief Remove the geotag(GPS data) in EXIF(Exchangeable image file format) tag.
  *
  * @param[in]	camera	The handle to the camera
- * @param[in]   longitude  The longitude data
  * @return      0 on success, otherwise a negative error value.
  * @retval      #CAMERA_ERROR_NONE Successful
  * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
  *
- * @see         camera_attr_get_tag_longitude()
+ * @see         camera_attr_set_geotag()
+ * @see         camera_attr_get_geotag()
  */
-int camera_attr_set_tag_longitude(camera_h camera, double longitude);
-
-/**
- * @brief Gets the GPS longitude data in EXIF(Exchangeable image file format) tag.
- *
- * @param[in]	camera	The handle to the camera
- * @param[out]  longitude  The longitude data
- * @return      0 on success, otherwise a negative error value.
- * @retval      #CAMERA_ERROR_NONE Successful
- * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
- *
- * @see         camera_attr_set_tag_longitude()
- */
-int camera_attr_get_tag_longitude(camera_h camera, double *longitude);
-
-/**
- * @brief Sets the GPS altitude data in EXIF(Exchangeable image file format) tag.
- *
- * @param[in]	camera	The handle to the camera
- * @param[in]   altitude    The altitude data
- * @return      0 on success, otherwise a negative error value.
- * @retval      #CAMERA_ERROR_NONE Successful
- * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
- *
- * @see         camera_attr_get_tag_altitude()
- */
-int camera_attr_set_tag_altitude(camera_h camera, double altitude);
-
-/**
- * @brief Gets the GPS altitude data in EXIF(Exchangeable image file format) tag.
- *
- * @param[in]	camera	The handle to the camera
- * @param[out]  altitude    The altitude data
- * @return      0 on success, otherwise a negative error value.
- * @retval      #CAMERA_ERROR_NONE Successful
- * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
- *
- * @see  	    camera_attr_set_tag_altitude()
- */
-int camera_attr_get_tag_altitude(camera_h camera, double *altitude);
+int camera_attr_remove_geotag(camera_h camera);
 
 /**
  * @brief Sets the camera flash mode.
@@ -2428,6 +2680,183 @@ int camera_attr_set_stream_flip(camera_h camera , camera_flip_e flip);
  * @see camera_attr_set_stream_rotation()
  */
 int camera_attr_get_stream_flip(camera_h camera , camera_flip_e *flip);
+
+
+
+/**
+ * @brief	Called when HDR capture process was updated
+ *
+ * @param[in] percent         The progress percent of HDR capture
+ * @param[in] user_data     The user data passed from the callback registration function
+ * @pre camera_start_capture() will invoke this callback if you register it using camera_attr_set_hdr_capture_progress_cb().
+ *
+ * @see camera_attr_get_hdr_mode()
+ * @see camera_attr_set_hdr_capture_progress_cb()
+ * @see camera_attr_unset_hdr_capture_progress_cb()
+ * @see camera_attr_is_supported_hdr_capture()
+ */
+typedef void (*camera_attr_hdr_progress_cb)(int percent, void *user_data);
+
+
+/**
+ * @brief Sets the mode of HDR(High dynamic range) capture.
+ * @remarks
+ * Taking multiple pictures at different exposure level and intelligently stitching them together so that we eventually arrive at a picture that is representative in both dark and bright areas.\n
+ * If this attribute is setting true. camera_attr_hdr_progress_cb is invoked when capture.\n
+ * If you set #CAMERA_ATTR_HDR_MODE_KEEP_ORIGINAL, the capturing callback is invoked twice. The first callback is delivering origin image data. The second callback is delivering improved image data.
+ *
+ * @param[in]	camera The handle to the camera
+ * @param[in]	mode The mode of HDR capture
+ * @return	    0 on success, otherwise a negative error value.
+ * @retval      #CAMERA_ERROR_NONE Successful
+ * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @see camera_attr_get_hdr_mode()
+ * @see camera_attr_set_hdr_capture_progress_cb()
+ * @see camera_attr_unset_hdr_capture_progress_cb()
+ * @see camera_attr_is_supported_hdr_capture()
+ *
+ */
+int camera_attr_set_hdr_mode(camera_h camera, camera_attr_hdr_mode_e mode);
+
+/**
+ * @brief Gets the mode of HDR(High dynamic range) capture.
+ *
+ * @param[in]	camera The handle to the camera
+ * @param[out]	mode The mode of HDR capture
+ * @return	    0 on success, otherwise a negative error value.
+ * @retval      #CAMERA_ERROR_NONE Successful
+ * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @see camera_attr_set_hdr_mode()
+ * @see camera_attr_set_hdr_capture_progress_cb()
+ * @see camera_attr_unset_hdr_capture_progress_cb()
+ * @see camera_attr_is_supported_hdr_capture()
+ *
+ */
+int camera_attr_get_hdr_mode(camera_h camera, camera_attr_hdr_mode_e *mode);
+
+__attribute__ ((deprecated)) int camera_attr_enable_hdr_capture(camera_h camera, bool enable);
+__attribute__ ((deprecated)) int camera_attr_is_enabled_hdr_capture(camera_h camera, bool *enabled);
+
+/**
+ * @brief	Registers a callback function to be called when HDR capture is progressing.
+ * @remarks This callback notify progress of HDR process.
+ *
+ * @param[in]	camera The handle to the camera
+ * @param[in] callback The callback function to invoke
+ * @param[in] user_data The user data passed to the callback registration function
+ * @return	    0 on success, otherwise a negative error value.
+ * @retval      #CAMERA_ERROR_NONE Successful
+ * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @see camera_attr_set_hdr_mode()
+ * @see camera_attr_get_hdr_mode()
+ * @see camera_attr_unset_hdr_capture_progress_cb()
+ * @see camera_attr_is_supported_hdr_capture()
+ */
+int camera_attr_set_hdr_capture_progress_cb(camera_h camera, camera_attr_hdr_progress_cb callback, void* user_data);
+
+
+
+/**
+ * @brief	Unregisters the callback function.
+ *
+ * @param[in]	camera The handle to the camera
+ * @return	  0 on success, otherwise a negative error value.
+ * @retval    #CAMERA_ERROR_NONE Successful
+ * @retval    #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @see camera_attr_set_hdr_mode()
+ * @see camera_attr_get_hdr_mode()
+ * @see camera_attr_set_hdr_capture_progress_cb()
+ * @see camera_attr_is_supported_hdr_capture() 
+ */
+int camera_attr_unset_hdr_capture_progress_cb(camera_h camera);
+
+/**
+ * @biref Gets HDR capture supported state
+ * @ingroup CAPI_MEDIA_CAMERA_CAPABILITY_MODULE
+ * @param[in]	camera The handle to the camera
+ * @return true on supported, otherwise false
+ *
+ * @see camera_attr_set_hdr_mode()
+ * @see camera_attr_get_hdr_mode()
+ * @see camera_attr_set_hdr_capture_progress_cb()
+ * @see camera_attr_unset_hdr_capture_progress_cb()
+ */
+bool camera_attr_is_supported_hdr_capture(camera_h camera);
+
+/**
+ * @brief Enable/Disable Anti-shake feature
+ * @remarks
+ * If enabling anti-shake, zero shutter lag is disabling
+ *
+ * @param[in]	camera The handle to the camera
+ * @param[in]	enable The state of anti-shake
+ * @return	    0 on success, otherwise a negative error value.
+ * @retval      #CAMERA_ERROR_NONE Successful
+ * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @see camera_attr_is_enabled_anti_shake()
+ * @see camera_attr_is_supported_anti_shake()
+ *
+ */
+int camera_attr_enable_anti_shake(camera_h camera, bool enable);
+
+/**
+ * @brief Gets state of Anti-shake feature
+ *
+ * @param[in]	camera The handle to the camera
+ * @param[out]	enabled The state of anti-shake
+ * @return	    0 on success, otherwise a negative error value.
+ * @retval      #CAMERA_ERROR_NONE Successful
+ * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @see camera_attr_enable_anti_shake()
+ * @see camera_attr_is_supported_anti_shake()
+ *
+ */
+int camera_attr_is_enabled_anti_shake(camera_h camera , bool *enabled);
+
+/**
+ * @biref Gets Anti-shake feature supported state
+ * @ingroup CAPI_MEDIA_CAMERA_CAPABILITY_MODULE
+ * @param[in]	camera The handle to the camera
+ * @return true on supported, otherwise false
+ *
+ * @see camera_attr_enable_anti_shake()
+ * @see camera_attr_is_enabled_anti_shake()
+ */
+bool camera_attr_is_supported_anti_shake(camera_h camera);
+
+/**
+ * @brief Enable/Disable auto contrast
+ *
+ * @param[in]	camera The handle to the camera
+ * @param[in]	enable The state of auto contrast
+ *
+ * @return	    0 on success, otherwise a negative error value.
+ * @retval      #CAMERA_ERROR_NONE Successful
+ * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @see camera_attr_is_enabled_auto_contrast()
+ */
+int camera_attr_enable_auto_contrast(camera_h camera, bool enable);
+
+/**
+ * @brief Gets state of auto contrast
+ *
+ * @param[in]	camera The handle to the camera
+ * @param[out]	enabled The state of auto contrast
+ * @return	    0 on success, otherwise a negative error value.
+ * @retval      #CAMERA_ERROR_NONE Successful
+ * @retval      #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ *
+ * @see camera_attr_enable_auto_contrast()
+ *
+ */
+int camera_attr_is_enabled_auto_contrast(camera_h camera, bool *enabled);
 
 
 /**

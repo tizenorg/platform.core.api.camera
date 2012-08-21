@@ -49,15 +49,15 @@ void state_cb(camera_state_e previous , camera_state_e current , int by_asm, con
 }
 
 
-void capturing_cb(void *image_buffer, int buffer_size, int width, int height, camera_pixel_format_e format, void *user_data)
+void capturing_cb(camera_image_data_s* image, camera_image_data_s* postview, camera_image_data_s* thumbnail, void *user_data)
 {
 	char * filepath = (char*)user_data;
 	FILE* f = fopen(filepath, "w+");
 	bool ret;
-	if(f!=NULL && image_buffer !=NULL)
+	if(f!=NULL && image !=NULL)
 	{
-		fwrite(image_buffer,1,  buffer_size, f);
-		printf("capture(%s) %dx%d, buffer_size=%d\n", filepath, width, height, buffer_size);
+		fwrite(image->data,1,  image->size, f);
+		printf("capture(%s) %dx%d, buffer_size=%d\n", filepath, image->width, image->height, image->size);
 		ret = TRUE;
 	}
 	else
@@ -80,9 +80,8 @@ int capture_complete(void *user_data){
 
 int stillshot_test(){
 	camera_h camera;
-	camera_create(CAMERA_DEVICE_CAMERA1, &camera);
+	camera_create(CAMERA_DEVICE_CAMERA0, &camera);
 	camera_attr_set_image_quality(camera, 100);
-	camera_set_capturing_cb(camera, capturing_cb, "/mnt/nfs/test.jpg");
 	camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
 	camera_set_x11_display_rotation(camera, CAMERA_ROTATION_270);
 	camera_attr_set_tag_orientation(camera,6);
@@ -91,10 +90,10 @@ int stillshot_test(){
 	camera_set_capture_format(camera, CAMERA_PIXEL_FORMAT_JPEG);
 	
 	camera_start_preview(camera);
-	camera_start_focusing(camera);
+	camera_start_focusing(camera, false);
 
 	sleep(1);
-	camera_start_capture(camera);
+	camera_start_capture(camera, capturing_cb, NULL, "/mnt/nfs/test.jpg");
 	sleep(1);
 	camera_start_preview(camera);
 	camera_stop_preview(camera);
@@ -178,16 +177,19 @@ int zoom_test(camera_h camera){
 	int ret1 ;
 	int ret2 ;	
 	int i;
+	int min, max;
 	printf("------------- ZOOM TEST -------------\n");
-	
-	for( i = 0 ; i <= 40 ; i+=5 ){
+	camera_attr_get_zoom_range(camera, &min, &max);
+	if(max == -1 )
+		return 0;
+	for( i = min ; i <= max; i+=5 ){
 		int zoom;
 		ret1 = camera_attr_set_zoom(camera, i);
 		printf("-set zoom %d\tret=%x\n",i, ret1);
 		ret2 = camera_attr_get_zoom(camera,&zoom);
 		printf("-get zoom %d\tret=%x",zoom, ret2);
 
-		if( i >=10 && i <= 30 ){
+		if( i >=min && i <= max ){
 			if( i == zoom )
 				printf("\t\t\tpass\n");
 			else{
@@ -245,9 +247,11 @@ bool _exposure_mode_test_cb(camera_attr_exposure_mode_e mode, void *user_data){
 	ret = camera_attr_get_exposure_mode(camera,&get_mode);
 	printf("-get exposure mode %d\tret=%x\n", get_mode,ret);		
 	if( get_mode != mode ){
+		printf("\t\t\tFAIL\n");
 		g_exposure_mode_pass = false;
 		return false;
-	}
+	}else
+		printf("\t\t\tPASS\n");
 	return true;
 }
 
@@ -255,7 +259,6 @@ int exposure_mode_test(camera_h camera){
 	g_exposure_mode_pass = true;
 	camera_attr_foreach_supported_exposure_mode(camera,_exposure_mode_test_cb, camera);
 	camera_attr_set_exposure_mode(camera, CAMERA_ATTR_EXPOSURE_MODE_ALL);
-	
 	return g_exposure_mode_pass ? 0 : -1;
 }
 
@@ -263,14 +266,19 @@ int exposure_test(camera_h camera){
 	int i;
 	int ret1, ret2;
 	int default_value;
+	int min,max;
 	ret1 = camera_attr_get_exposure(camera, &default_value );	
-	for( i = 0; i < 13 ; i++ ){
+	camera_attr_get_exposure_range(camera, &min, &max);
+	printf("exposure range %d~%d\n", min, max);
+	if(max == -1 )
+		return 0;
+	for( i = 1; i < 13 ; i++ ){
 		int value;
 		ret1 = camera_attr_set_exposure(camera, i );
 		printf("-set exposure %d\tret=%x\n",i,ret1);
 		ret2 = camera_attr_get_exposure(camera, &value);
 		printf("-get exposure %d\tret=%x\n",value,ret2);
-		if( i >= 1 && i <= 7 ){
+		if( i >= min && i <= max ){
 			if( value != i)
 				return -1;
 		}else{ // out of bound error
@@ -308,15 +316,19 @@ int brightness_test(camera_h camera){
 	int i;
 	int ret1,ret2;
 	int default_value;
+	int min,max;
 	ret1 = camera_attr_get_brightness(camera, &default_value );	
-	for( i = 0; i < 13 ; i++ ){
+	camera_attr_get_brightness_range(camera, &min, &max);
+	if(max == -1 )
+		return 0;
+	for( i = 1; i < 13 ; i++ ){
 		int value;
 		ret1 = camera_attr_set_brightness(camera, i );
 		printf("-set brightness %d\tret=%x\n",i,ret1);
 		ret2 = camera_attr_get_brightness(camera, &value);
 		printf("-get brightness %d\tret=%x\n",value,ret2);
 
-		if( i >= 1 && i <= 7 ){
+		if( i >= min && i <= max ){
 			if( value != i)
 				return -1;
 		}else{ // out of bound error
@@ -334,15 +346,19 @@ int contrast_test(camera_h camera){
 	int i;
 	int ret1,ret2;
 	int default_value;
+	int min,max;
 	ret1 = camera_attr_get_contrast (camera, &default_value );	
-	for( i = 0; i < 13 ; i++ ){
+	camera_attr_get_contrast_range(camera, &min, &max);
+	if(max == -1 )
+		return 0;
+	for( i = 1; i < 13 ; i++ ){
 		int value;
 		ret1 = camera_attr_set_contrast (camera, i );
 		printf("-set contrast %d\tret=%x\n",i,ret1);
 		ret2 = camera_attr_get_contrast (camera, &value);
 		printf("-get contrast %d\tret=%x\n",value,ret2);
 
-		if( i >= 1 && i <= 7 ){
+		if( i >= min && i <= max ){
 			if( value != i)
 				return -1;
 		}else{ // out of bound error
@@ -512,24 +528,18 @@ int flash_mode_test(camera_h camera){
 }
 
 int gps_test(camera_h camera){
-	double value;
+	double lng = 1.12;
+	double lat = 1.13;
+	double alt = 1.14;
 	int ret;
-	ret = camera_attr_set_tag_longitude(camera, 1.12);
-	printf("-set tag longitude 1.12\tret=%x\n",ret);
-	ret = camera_attr_get_tag_longitude(camera, &value);
-	printf("-get tag longitude %g\tret=%x\n",value, ret);
-
-	ret = camera_attr_set_tag_latitude(camera, 1.13);
-	printf("-set tag latitude 1.13\tret=%x\n", ret);
-	ret = camera_attr_get_tag_latitude(camera, &value);
-	printf("-get tag latitude %g\tret=%x\n",value, ret);
-	
-	ret = camera_attr_set_tag_altitude(camera, 1.15);
-	printf("-set tag altitude 1.15\tret=%x\n",ret);
-	ret = camera_attr_get_tag_altitude(camera, &value);
-	printf("-get tag altitude %g\tret=%x\n",value, ret);
-	
+	ret = camera_attr_set_geotag(camera, lat, lng , alt );
+	if( ret != 0)
+		return -1;
+	ret = camera_attr_get_geotag(camera, &lat , &lng , &alt);
+	if( ret != 0 )
+		return -1;
 	return 0;
+
 }
 int camera_attribute_test(){
 	int ret;
@@ -594,6 +604,7 @@ int camera_preview_test(){
 	int ret;
 	camera_h camera ;
 	int i;
+	int timeout = 0;
 	camera_preview_test_s preview_test_data;
 	int enable_preview_format[CAMERA_PIXEL_FORMAT_JPEG+1] = {0,};
 	
@@ -609,6 +620,7 @@ int camera_preview_test(){
 	
 	for(i =0; i<= CAMERA_PIXEL_FORMAT_JPEG ; i++){
 		if( enable_preview_format[i] ){
+			timeout = 5;
 			preview_test_data.in_format = i;
 			preview_test_data.camera = camera;
 			preview_test_data.iscalled = false;
@@ -616,11 +628,14 @@ int camera_preview_test(){
 			camera_set_preview_format(camera, i);
 			printf("-------------PREVIEW FORMAT %d TEST--------------------\n", i);
 			camera_start_preview(camera);
-			sleep(1);
+			while( preview_test_data.iscalled==false && timeout-- > 5 )
+				sleep(1);
+
 			camera_stop_preview(camera);
 			if( preview_test_data.iscalled && preview_test_data.result ){
 				printf("PASS\n");
 			}else{
+				printf("preview_test_data.result = %d\n", preview_test_data.result);
 				printf("FAIL\n");
 				camera_destroy(camera);
 				return -1;
@@ -656,7 +671,8 @@ void _state_change_test_cb(camera_state_e previous , camera_state_e current , bo
 	data->state = current;
 }
 
-void _capture_test_cb(void *image_buffer, int buffer_size, int width, int height, camera_pixel_format_e format, void *user_data){
+void _capture_test_cb(camera_image_data_s* image, camera_image_data_s* postview, camera_image_data_s* thumbnail, void *user_data){
+	printf("capture callback\n");
 }
 
 
@@ -664,18 +680,18 @@ int camera_state_change_test(){
 	camera_h camera ;
 	state_change_data data;
 	bool ispass = true;
+	int ret=0;
 	
 	camera_create(CAMERA_DEVICE_CAMERA0 , &camera);
 	camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
 	camera_set_x11_display_rotation(camera, CAMERA_ROTATION_270);
 	camera_set_state_changed_cb(camera, _state_change_test_cb, &data);
-	camera_set_capturing_cb(camera,_capture_test_cb, NULL);
-
 
 	printf("------------------- PREVIEW STATE Change test------------------\n");
 	data.iscalled = false;
-	data.state = 0;	
-	camera_start_preview(camera);
+	data.state = 0;
+	ret = camera_start_preview(camera);
+	printf("camera_start_preview ret = %x\n", ret);
 	sleep(1);
 	if( data.iscalled && data.state == CAMERA_STATE_PREVIEW )
 		printf("PASS\n");
@@ -689,7 +705,8 @@ int camera_state_change_test(){
 	
 	data.iscalled = false;
 	data.state = 0;
-	camera_stop_preview(camera);
+	ret = camera_stop_preview(camera);
+	printf("camera_stop_preview ret = %x\n", ret);
 	sleep(1);
 	if( data.iscalled && data.state == CAMERA_STATE_CREATED)
 		printf("PASS\n");
@@ -701,14 +718,16 @@ int camera_state_change_test(){
 
 	printf("------------------- CAPTURED STATE Change test------------------\n");
 
-	camera_start_preview(camera);
+	ret = camera_start_preview(camera);
+	printf("camera_start_preview ret = %x\n", ret);
 	sleep(1);
 	data.iscalled = false;
 	data.state = 0;
 	data.iscaptured = false;
 	data.ispreviewed= false;	
 	data.iscapturing = false;	
-	camera_start_capture(camera);
+	ret = camera_start_capture(camera, _capture_test_cb, NULL, NULL);
+	printf("camera_start_capture ret = %x\n", ret);
 	sleep(3);
 	if( data.iscalled &&  data.iscaptured && data.iscapturing && data.state == CAMERA_STATE_CAPTURED)
 		printf("PASS\n");
@@ -717,14 +736,18 @@ int camera_state_change_test(){
 		ispass = false;
 	}
 	
-	camera_start_preview(camera);
-	camera_stop_preview(camera);
-	camera_destroy(camera);
+	ret = camera_start_preview(camera);
+	printf("camera_start_preview ret = %x\n", ret);
+	ret = camera_stop_preview(camera);
+	printf("camera_stop_preview ret = %x\n", ret);
+	ret = camera_destroy(camera);
+	printf("camera_destroy ret = %x\n", ret);
+
 	return ispass ? 0: -1;
 	
 }
 
-void _capture_test2_cb(void *image_buffer, int buffer_size, int width, int height, camera_pixel_format_e format, void *user_data){
+void _capture_test2_cb(camera_image_data_s* image, camera_image_data_s* postview, camera_image_data_s* thumbnail, void *user_data){
 	int *iscalled = (int*)user_data;
 	*iscalled = 1;
 }
@@ -741,10 +764,9 @@ int capture_test(){
 	camera_create(CAMERA_DEVICE_CAMERA0 , &camera);
 	camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
 	camera_set_x11_display_rotation(camera, CAMERA_ROTATION_270);	
-	camera_set_capturing_cb(camera,_capture_test2_cb, &iscalled);
 	camera_start_preview(camera);
 	iscalled = 0;
-	camera_start_capture(camera);
+	camera_start_capture(camera, _capture_test2_cb, NULL,  &iscalled);
 
 	while( camera_get_state(camera, &state ) == 0 && state != CAMERA_STATE_CAPTURED && timeout-- > 0 )
 		sleep(1);
@@ -788,9 +810,9 @@ typedef struct{
 	int expected_height;
 	bool ispass;
 }preview_test_data;
-void _capture_test3_cb(void *image_buffer, int buffer_size, int width, int height, camera_pixel_format_e format, void *user_data){
+void _capture_test3_cb(camera_image_data_s* image, camera_image_data_s* postview, camera_image_data_s* thumbnail, void *user_data){
 	preview_test_data *data = (preview_test_data*)user_data;
-	if( data->expected_height == height && data->expected_width == width )
+	if( data->expected_height == image->height && data->expected_width == image->width )
 		data->ispass = true;
 }
 
@@ -822,10 +844,9 @@ int capture_resolution_test(){
 		
 		printf("resolution set test %x\n", (unsigned int)camera_set_capture_resolution(camera,data.expected_width  ,data.expected_height));
 
-		camera_set_capturing_cb(camera, _capture_test3_cb , &data);
 		camera_start_preview(camera);
 		
-		camera_start_capture(camera);
+		camera_start_capture(camera, _capture_test3_cb , NULL,  &data);
 		
 		while( camera_get_state(camera, &state ) == 0 && state != CAMERA_STATE_CAPTURED && timeout-- > 0){
 			sleep(1);
@@ -907,15 +928,15 @@ void focus_test(){
 
 	sleep(3);
 	printf("start focusing\n");
-	camera_start_focusing(camera);
+	camera_start_focusing(camera, false);
 	
 	sleep(3);
 	printf("start focusing2\n");
-	camera_start_focusing(camera);
+	camera_start_focusing(camera, false);
 	sleep(3);
 
 	printf("start focusing3\n");
-	camera_start_focusing(camera);
+	camera_start_focusing(camera, false);
 	printf("cancel focusing\n");
 	camera_cancel_focusing(camera);
 
@@ -989,21 +1010,445 @@ void rotation_flip_test(){
 	
 }
 
-int camera_test(){
-	
-	int ret=0;
-	/*
-	ret = camera_attribute_test();
-	ret += camera_preview_test();
-	ret += camera_state_change_test();
-	ret += capture_test();
-	ret += capture_resolution_test();
-	ret += stillshot_test();
-	camera_lens_rotation_test();
 
-	contrast_test2();
-	*/
-	rotation_flip_test();
+
+typedef struct{
+	camera_h camera;
+	int count;
+	bool completed;
+}conti_test_data;
+
+void conti_capturing_cb(camera_image_data_s* image, camera_image_data_s* postview, camera_image_data_s* thumbnail, void *user_data){
+	conti_test_data *test_data = (conti_test_data*)user_data;
+	printf("capture callback!!%d\n", test_data->count++);
+	if( test_data->count == 5 )
+		camera_stop_continuous_capture(test_data->camera);
+}
+
+void _capture_completed_cb(void *user_data){
+	conti_test_data *test_data = (conti_test_data*)user_data;
+	test_data->completed = true;
+	printf("capture completed\n");
+}
+
+int continuous_capture_test(){
+	printf("--------------continuous capture test--------------------\n");
+	camera_h camera;
+	conti_test_data test_data;
+	int timeout =30;
+	int ret;
+	ret = camera_create(CAMERA_DEVICE_CAMERA0, &camera);
+	printf("camera_create %x\n", ret);
+	ret = camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
+	printf("camera_set_display %x\n", ret);
+	ret = camera_set_x11_display_rotation(camera, CAMERA_ROTATION_270);
+	printf("camera_set_x11_display_rotation %x\n", ret);
+	ret = camera_start_preview(camera);
+	printf("camera_start_preview %x\n", ret);
+
+	test_data.camera = camera;
+	test_data.count = 0;
+	test_data.completed = false;
+	ret = camera_start_continuous_capture(camera, 10, 10, conti_capturing_cb, _capture_completed_cb, &test_data);
+	printf("camera_start_continuous_capture ret = %x\n", ret);
+	if( ret != 0 ){
+		printf("fail conti capture\n");
+		camera_stop_preview(camera);
+		camera_destroy(camera);
+		return -1;
+	}
+
+	while( test_data.completed == false && timeout-- > 0 )
+		sleep(1);
+
+	camera_start_preview(camera);
+
+	if( test_data.count != 5|| test_data.completed == false ){
+		camera_stop_preview(camera);
+		camera_destroy(camera);
+		return -1;
+	}
+
+
+	test_data.camera = camera;
+	test_data.count = 0;
+	test_data.completed = false;
+	timeout = 30;
+
+	ret = camera_start_continuous_capture(camera, 10, 1000, conti_capturing_cb, _capture_completed_cb, &test_data);
+
+	if( ret != 0 ){
+		printf("fail conti capture\n");
+		camera_stop_preview(camera);
+		camera_destroy(camera);
+		return -1;
+	}
+
+	sleep(2);
+	camera_stop_continuous_capture(camera);
+
+	while( test_data.completed == false && timeout-- > 0 )
+		sleep(1);
+
+	camera_start_preview(camera);
+	camera_stop_preview(camera);
+	camera_destroy(camera);
+
+	printf("total capture count = %d\n", test_data.count);
+	if( test_data.completed == false)
+		return -1;
+	return 0;
+}
+
+
+void _face_detected(camera_detected_face_s *faces, int count, void *user_data){
+	printf("face detected!!\n");
+	int i;
+	for(i = 0 ; i < count ; i++){
+		printf("%d) - %dx%d\n", faces[i].id, faces[i].x, faces[i].y);
+	}
+}
+
+
+int face_detection_test(){
+	printf("--------------face_detection_test--------------------\n");
+	camera_h camera;
+	int ret;
+	ret = camera_create(CAMERA_DEVICE_CAMERA0, &camera);
+	printf("camera_create %x\n", ret);
+	ret = camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
+	printf("camera_set_display %x\n", ret);
+	ret = camera_set_x11_display_rotation(camera, CAMERA_ROTATION_270);
+	printf("camera_set_x11_display_rotation %x\n", ret);
+	ret = camera_start_preview(camera);
+	printf("camera_start_preview %x\n", ret);
+	if( camera_is_supported_face_detection(camera) ){
+		ret = camera_start_face_detection(camera, _face_detected, NULL);
+		printf("camera_start_face_detection %x\n", ret);
+	}else
+	{
+		printf("not supported face detection\n");
+	}
+	return 0;
+}
+
+int face_count ;
+void _face_detected2(camera_detected_face_s *faces, int count, void *user_data){
+	face_count = count;
+	printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n-------------------------------------------\n");
+	int i;
+	for( i = 0 ; i < count ; i++ ){
+		printf("%d) %dx%d \n", faces[i].id, faces[i].x , faces[i].y);
+	}
+}
+
+
+int face_zoom_test(){
+	printf("--------------face_zoom_test--------------------\n");
+	camera_h camera;
+	int ret;
+	ret = camera_create(CAMERA_DEVICE_CAMERA0, &camera);
+	printf("camera_create %x\n", ret);
+	ret = camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
+	printf("camera_set_display %x\n", ret);
+	ret = camera_set_x11_display_rotation(camera, CAMERA_ROTATION_270);
+	printf("camera_set_x11_display_rotation %x\n", ret);
+	ret = camera_start_preview(camera);
+	printf("camera_start_preview %x\n", ret);
+	if( camera_is_supported_face_detection(camera) ){
+		ret = camera_start_face_detection(camera, _face_detected2, NULL);
+		printf("camera_start_face_detection %x\n", ret);
+	}else
+	{
+		printf("not supported face detection\n");
+	}
+	while(1){
+		char select[255];
+		//printf("current faces %d\n", face_count);
+		//printf("x is zoom cancel\n");
+		//printf("select face>");
+		gets(select);
+		if( select[0] == 'x' ){
+			camera_cancel_face_zoom(camera);
+		}else if( select[0] != '\0'){
+			int face = select[0] - '0';
+			//printf("input : <%s>\n", select);
+			if( face >= 0 ){
+				//printf("select %d\n", face);
+				camera_face_zoom(camera, face);
+			}
+		}
+	}
+	return 0;
+}
+
+char *table[] = {
+"CAMERA_PIXEL_FORMAT_NV12",           /**< NV12 pixel format */
+"CAMERA_PIXEL_FORMAT_NV12T",          /**< NV12 Tiled pixel format */
+"CAMERA_PIXEL_FORMAT_NV16",           /**< NV16 pixel format */
+"CAMERA_PIXEL_FORMAT_NV21",           /**< NV21 pixel format */
+"CAMERA_PIXEL_FORMAT_YUYV",           /**< YUYV(YUY2) pixel format */
+"CAMERA_PIXEL_FORMAT_UYVY",           /**< UYVY pixel format */
+"CAMERA_PIXEL_FORMAT_422P",           /**< YUV422(Y:U:V) planar pixel format */
+"CAMERA_PIXEL_FORMAT_I420",           /**< I420 pixel format */
+"CAMERA_PIXEL_FORMAT_YV12",           /**< YV12 pixel format */
+"CAMERA_PIXEL_FORMAT_RGB565",         /**< RGB565 pixel format */
+"CAMERA_PIXEL_FORMAT_RGB888",         /**< RGB888 pixel format */
+"CAMERA_PIXEL_FORMAT_RGBA",           /**< RGBA pixel format */
+"CAMERA_PIXEL_FORMAT_ARGB",           /**< ARGB pixel format */
+"CAMERA_PIXEL_FORMAT_JPEG"           /**< Encoded pixel format */
+};
+
+
+bool supported_preview_format_test(camera_pixel_format_e format,void *user_data){
+	printf("%s\n", table[format]);
+	return true;
+}
+
+int preview_format_test(){
+	camera_h camera;
+	camera_pixel_format_e format;
+	camera_create(CAMERA_DEVICE_CAMERA0, &camera);
+	printf("----------CAMERA_DEVICE_CAMERA0 -----------------\n");
+	camera_foreach_supported_preview_format(camera, supported_preview_format_test, NULL);
+	camera_get_preview_format(camera, &format);
+	printf("default - %s\n", table[format]);
+
+	camera_destroy(camera);
+	camera_create(CAMERA_DEVICE_CAMERA1, &camera);
+	printf("----------CAMERA_DEVICE_CAMERA1 -----------------\n");
+	camera_foreach_supported_preview_format(camera, supported_preview_format_test, NULL);
+	camera_get_preview_format(camera, &format);
+	printf("default - %s\n", table[format]);
+	camera_destroy(camera);
+
+	return 0;
+
+}
+
+void _hdr_progress_cb(int percent, void *user_data){
+	printf("percent = %d\n", percent);
+}
+
+void _hdr_capturing_cb(camera_image_data_s* image, camera_image_data_s* postview, camera_image_data_s* thumbnail, void *user_data){
+	printf("hdr capturing!\n");
+}
+
+void _hdr_capture_completed_cb(void *user_data){
+	printf("hdr capture complete\n");
+}
+
+
+
+int hdr_capture_test(){
+	camera_h camera;
+	int ret;
+	camera_create(CAMERA_DEVICE_CAMERA0, &camera);
+	if( !camera_attr_is_supported_hdr_capture(camera) ){
+		printf("Not supported HDR Capture\n");
+		return 0;
+	}
+
+	camera_attr_set_hdr_capture_progress_cb(camera, _hdr_progress_cb, NULL);
+	camera_attr_set_hdr_mode(camera, CAMERA_ATTR_HDR_MODE_KEEP_ORIGINAL);
+	ret = camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
+	camera_start_preview(camera);
+	camera_start_capture(camera, _hdr_capturing_cb , _hdr_capture_completed_cb , NULL);
+
+	return 0;
+}
+
+Eina_Bool captured_event_check5(void *data){
+	printf("!!!captured_event_check5\n");
+	camera_h camera = (camera_h)data;
+	camera_start_capture(camera, _hdr_capturing_cb , _hdr_capture_completed_cb , NULL);
+	camera_state_e state;
+	camera_get_state(camera,&state);
+	while( state == CAMERA_STATE_CAPTURING ){
+		//printf("current state = %d\n", state);
+		usleep(10000);
+		camera_get_state(camera,&state);
+	}
+	printf("current state = %d\n", state);
+	camera_start_preview(camera);
+	camera_stop_preview(camera);
+	camera_destroy(camera);
+
+	return false;
+}
+
+
+int hdr_capture_test2(){
+	camera_h camera;
+	int ret;
+	camera_create(CAMERA_DEVICE_CAMERA0, &camera);
+	if( !camera_attr_is_supported_hdr_capture(camera) ){
+		printf("Not supported HDR Capture\n");
+		return 0;
+	}
+
+	camera_attr_set_hdr_capture_progress_cb(camera, _hdr_progress_cb, NULL);
+	camera_attr_set_hdr_mode(camera, CAMERA_ATTR_HDR_MODE_KEEP_ORIGINAL);
+	ret = camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
+	camera_start_preview(camera);
+	ecore_idler_add(captured_event_check5, camera);
+
+	return 0;
+}
+
+
+void _captured_check_capturing_cb(camera_image_data_s* image, camera_image_data_s* postview, camera_image_data_s* thumbnail, void *user_data){
+	printf("capturing!\n");
+}
+
+void _captured_check_capture_completed_cb(void *user_data){
+	printf("capture complete\n");
+}
+
+Eina_Bool captured_event_check4(void *data){
+	printf("!!!HDR captured event check4\n");
+	camera_h camera;
+	int ret;
+	camera_state_e state;
+
+	ret= camera_create(CAMERA_DEVICE_CAMERA0, &camera);
+	ret = camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
+	ret = camera_start_preview(camera);
+	printf("camera_start_preview ret = %d\n", ret);
+	camera_attr_set_hdr_mode(camera, CAMERA_ATTR_HDR_MODE_KEEP_ORIGINAL);
+	camera_start_capture(camera, _captured_check_capturing_cb , _captured_check_capture_completed_cb , NULL);
+	printf("camera_start_capture ret = %d\n", ret);
+	camera_get_state(camera,&state);
+	while( state == CAMERA_STATE_CAPTURING ){
+		//printf("current state = %d\n", state);
+		usleep(10000);
+		camera_get_state(camera,&state);
+	}
+	printf("current state = %d\n", state);
+	ret = camera_start_preview(camera);
+	printf("camera_start_preview ret = %d\n", ret);
+	ret = camera_stop_preview(camera);
+	printf("camera_stop_preview ret = %d\n", ret);
+	ret = camera_destroy(camera);
+	printf("camera_destroy ret = %d\n", ret);
+	return false;
+}
+
+Eina_Bool captured_event_check3(void *data){
+	printf("!!!continuous break captured event check3\n");
+	camera_h camera;
+	int ret;
+	camera_state_e state;
+
+	ret= camera_create(CAMERA_DEVICE_CAMERA0, &camera);
+	printf("camera_create ret = %d\n", ret);
+	ret = camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
+	ret = camera_start_preview(camera);
+	printf("camera_start_preview ret = %d\n", ret);
+	ret = camera_start_continuous_capture(camera, 5 , 1000, _captured_check_capturing_cb, _captured_check_capture_completed_cb, NULL);
+	printf("camera_start_continuous_capture ret = %d\n", ret);
+	camera_get_state(camera,&state);
+	int count = 0;
+	while( state == CAMERA_STATE_CAPTURING ){
+		//printf("current state = %d\n", state);
+		usleep(10000);
+		count++;
+		if( count == 10)
+			camera_stop_continuous_capture(camera);
+		camera_get_state(camera,&state);
+	}
+	printf("current state = %d\n", state);
+	ret = camera_start_preview(camera);
+	printf("camera_start_preview ret = %d\n", ret);
+	ret = camera_stop_preview(camera);
+	printf("camera_stop_preview ret = %d\n", ret);
+	ret = camera_destroy(camera);
+	printf("camera_destroy ret = %d\n", ret);
+	ecore_idler_add(captured_event_check4, NULL);
+	return false;
+}
+
+Eina_Bool captured_event_check2(void *data){
+	printf("!!!continuous shot captured event check2\n");
+	camera_h camera;
+	int ret;
+	camera_state_e state;
+
+	ret= camera_create(CAMERA_DEVICE_CAMERA0, &camera);
+	printf("camera_create ret = %d\n", ret);
+	ret = camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
+	ret = camera_start_preview(camera);
+	printf("camera_start_preview ret = %d\n", ret);
+	ret = camera_start_continuous_capture(camera, 5 , 1000, _captured_check_capturing_cb, _captured_check_capture_completed_cb, NULL);
+	printf("camera_start_continuous_capture ret = %d\n", ret);
+	camera_get_state(camera,&state);
+	while( state == CAMERA_STATE_CAPTURING ){
+		//printf("current state = %d\n", state);
+		usleep(10000);
+		camera_get_state(camera,&state);
+	}
+	printf("current state = %d\n", state);
+	ret = camera_start_preview(camera);
+	printf("camera_start_preview ret = %d\n", ret);
+	ret = camera_stop_preview(camera);
+	printf("camera_stop_preview ret = %d\n", ret);
+	ret = camera_destroy(camera);
+	printf("camera_destroy ret = %d\n", ret);
+	ecore_idler_add(captured_event_check3, NULL);
+	return false;
+}
+
+
+Eina_Bool captured_event_check(void *data){
+	printf("!!!Normal captured event check\n");
+	camera_h camera;
+	camera_state_e state;
+
+	int ret;
+	ret= camera_create(CAMERA_DEVICE_CAMERA0, &camera);
+	ret = camera_set_display(camera,CAMERA_DISPLAY_TYPE_X11, GET_DISPLAY(preview_win));
+	ret = camera_start_preview(camera);
+	printf("camera_start_preview ret = %d\n", ret);
+	camera_start_capture(camera, _captured_check_capturing_cb , _captured_check_capture_completed_cb , NULL);
+	printf("camera_start_capture ret = %d\n", ret);
+	camera_get_state(camera,&state);
+	while( state == CAMERA_STATE_CAPTURING ){
+		//printf("current state = %d\n", state);
+		usleep(10000);
+		camera_get_state(camera,&state);
+	}
+	printf("current state = %d\n", state);
+	ret = camera_start_preview(camera);
+	printf("camera_start_preview ret = %d\n", ret);
+	ret = camera_stop_preview(camera);
+	printf("camera_stop_preview ret = %d\n", ret);
+	ret = camera_destroy(camera);
+	printf("camera_destroy ret = %d\n", ret);
+
+	ecore_idler_add(captured_event_check2, NULL);
+	return false;
+}
+
+int camera_test(){
+
+	int ret=0;
+
+	//ret = camera_attribute_test();
+	//ret += camera_preview_test();
+	//ret += camera_state_change_test();
+	//ret += capture_test();
+	//ret += capture_resolution_test();
+	//ret += stillshot_test();
+	//camera_lens_rotation_test();
+	//contrast_test2();
+	//rotation_flip_test();
+	//ret += continuous_capture_test();
+	//ret = face_detection_test();
+	//face_zoom_test();
+	//preview_format_test();
+	//hdr_capture_test();
+	//hdr_capture_test();
+	hdr_capture_test2();
 
 	return ret;
 }
@@ -1050,14 +1495,13 @@ int main(int argc, char ** argv)
 
 	evas_object_image_fill_set(img, 0, 0, w, h);
 
-	evas_object_show(img);	
+	evas_object_show(img);
 
 	pthread_t gloop_thread;
 
 	pthread_create(&gloop_thread, NULL, test_main,  NULL);
 
-	//ecore_timer_add(0.01, video_window_update, NULL);
-
+	//ecore_idler_add(captured_event_check, NULL);
 
 	elm_run();
 	elm_shutdown();

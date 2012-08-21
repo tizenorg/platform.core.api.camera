@@ -1,8 +1,8 @@
 Name:       capi-media-camera
-Summary:    A Camera library in Tizen Native API
+Summary:    A Camera library in Tizen C API
 Version:    0.1.0
-Release:    1
-Group:      TO_BE/FILLED_IN
+Release:    30
+Group:      libs
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
 BuildRequires:  cmake
@@ -16,7 +16,7 @@ Requires(postun): /sbin/ldconfig
 
 
 %package devel
-Summary:  A Camera library in Tizen Native API (Development)
+Summary:  A Camera library in Tizen C API (Development)
 Group:    TO_BE/FILLED_IN
 Requires: %{name} = %{version}-%{release}
 
