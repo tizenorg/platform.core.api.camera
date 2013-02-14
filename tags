@@ -1,0 +1,652 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+-dbg-package	debian/rules	/^	dh_strip --dbg-package=capi-media-camera-dbg$/;"	m
+-sourcedir	debian/rules	/^	dh_install --sourcedir=debian\/tmp$/;"	m
+CAMERA_ATTR_AF_FULL	include/camera.h	/^    CAMERA_ATTR_AF_FULL,        \/**< auto-focus in full mode(all range scan, limited by dev spec) *\/$/;"	e	enum:__anon17
+CAMERA_ATTR_AF_MACRO	include/camera.h	/^    CAMERA_ATTR_AF_MACRO,       \/**< auto-focus in macro mode(close distance)  *\/$/;"	e	enum:__anon17
+CAMERA_ATTR_AF_NONE	include/camera.h	/^    CAMERA_ATTR_AF_NONE = 0,    \/**< auto-focus is not set *\/$/;"	e	enum:__anon17
+CAMERA_ATTR_AF_NORMAL	include/camera.h	/^    CAMERA_ATTR_AF_NORMAL,      \/**< auto-focus normally  *\/$/;"	e	enum:__anon17
+CAMERA_ATTR_EFFECT_ANTIQUE	include/camera.h	/^    CAMERA_ATTR_EFFECT_ANTIQUE,      \/**< Antique *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_AQUA	include/camera.h	/^    CAMERA_ATTR_EFFECT_AQUA,         \/**< Aqua *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_BLUE	include/camera.h	/^    CAMERA_ATTR_EFFECT_BLUE,         \/**< Blue *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_EMBOSS	include/camera.h	/^    CAMERA_ATTR_EFFECT_EMBOSS,       \/**< Emboss *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_GRAY	include/camera.h	/^    CAMERA_ATTR_EFFECT_GRAY,         \/**< Gray *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_GREEN	include/camera.h	/^    CAMERA_ATTR_EFFECT_GREEN,        \/**< Green *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_MONO	include/camera.h	/^    CAMERA_ATTR_EFFECT_MONO,         \/**< Mono *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_NEGATIVE	include/camera.h	/^    CAMERA_ATTR_EFFECT_NEGATIVE,     \/**< Negative *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_NONE	include/camera.h	/^    CAMERA_ATTR_EFFECT_NONE = 0,     \/**< None *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_ORANGE	include/camera.h	/^    CAMERA_ATTR_EFFECT_ORANGE,       \/**< Orange *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_OUTLINE	include/camera.h	/^    CAMERA_ATTR_EFFECT_OUTLINE,      \/**< Outline *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_PINK	include/camera.h	/^    CAMERA_ATTR_EFFECT_PINK,         \/**< Pink *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_PURPLE	include/camera.h	/^    CAMERA_ATTR_EFFECT_PURPLE,       \/**< Purple *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_RED	include/camera.h	/^    CAMERA_ATTR_EFFECT_RED,          \/**< Red *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_SEPIA	include/camera.h	/^    CAMERA_ATTR_EFFECT_SEPIA,        \/**< Sepia *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_SKETCH	include/camera.h	/^    CAMERA_ATTR_EFFECT_SKETCH,       \/**< Sketch *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_SOLARIZATION	include/camera.h	/^    CAMERA_ATTR_EFFECT_SOLARIZATION, \/**< Solarization *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_VIOLET	include/camera.h	/^    CAMERA_ATTR_EFFECT_VIOLET,       \/**< Violet *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_WARM	include/camera.h	/^    CAMERA_ATTR_EFFECT_WARM,         \/**< Warm *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EFFECT_YELLOW	include/camera.h	/^    CAMERA_ATTR_EFFECT_YELLOW,       \/**< Yellow *\/$/;"	e	enum:__anon14
+CAMERA_ATTR_EXPOSURE_MODE_ALL	include/camera.h	/^    CAMERA_ATTR_EXPOSURE_MODE_ALL,       \/**< All mode*\/$/;"	e	enum:__anon20
+CAMERA_ATTR_EXPOSURE_MODE_CENTER	include/camera.h	/^    CAMERA_ATTR_EXPOSURE_MODE_CENTER,    \/**< Center mode*\/$/;"	e	enum:__anon20
+CAMERA_ATTR_EXPOSURE_MODE_CUSTOM	include/camera.h	/^    CAMERA_ATTR_EXPOSURE_MODE_CUSTOM,    \/**< Custom mode*\/$/;"	e	enum:__anon20
+CAMERA_ATTR_EXPOSURE_MODE_OFF	include/camera.h	/^    CAMERA_ATTR_EXPOSURE_MODE_OFF = 0,   \/**< Off*\/$/;"	e	enum:__anon20
+CAMERA_ATTR_EXPOSURE_MODE_SPOT	include/camera.h	/^    CAMERA_ATTR_EXPOSURE_MODE_SPOT,      \/**< Spot mode*\/$/;"	e	enum:__anon20
+CAMERA_ATTR_FLASH_MODE_AUTO	include/camera.h	/^    CAMERA_ATTR_FLASH_MODE_AUTO,             \/**< Depending on intensity of light, strobe starts to flash. *\/$/;"	e	enum:__anon22
+CAMERA_ATTR_FLASH_MODE_FRONT_CURTAIN	include/camera.h	/^    CAMERA_ATTR_FLASH_MODE_FRONT_CURTAIN,    \/**< Front curtain synchronization. *\/$/;"	e	enum:__anon22
+CAMERA_ATTR_FLASH_MODE_OFF	include/camera.h	/^    CAMERA_ATTR_FLASH_MODE_OFF = 0,          \/**< Always off *\/$/;"	e	enum:__anon22
+CAMERA_ATTR_FLASH_MODE_ON	include/camera.h	/^    CAMERA_ATTR_FLASH_MODE_ON,               \/**< Always splashes *\/$/;"	e	enum:__anon22
+CAMERA_ATTR_FLASH_MODE_PERMANENT	include/camera.h	/^    CAMERA_ATTR_FLASH_MODE_PERMANENT,        \/**< keep turned on until turning off *\/$/;"	e	enum:__anon22
+CAMERA_ATTR_FLASH_MODE_REAR_CURTAIN	include/camera.h	/^    CAMERA_ATTR_FLASH_MODE_REAR_CURTAIN,     \/**< Rear curtain synchronization. *\/$/;"	e	enum:__anon22
+CAMERA_ATTR_FLASH_MODE_REDEYE_REDUCTION	include/camera.h	/^    CAMERA_ATTR_FLASH_MODE_REDEYE_REDUCTION, \/**< Red eye reduction. Multiple flash before capturing. *\/$/;"	e	enum:__anon22
+CAMERA_ATTR_FLASH_MODE_SLOW_SYNC	include/camera.h	/^    CAMERA_ATTR_FLASH_MODE_SLOW_SYNC,        \/**< Slow sync curtain synchronization*\/$/;"	e	enum:__anon22
+CAMERA_ATTR_FPS_120	include/camera.h	/^    CAMERA_ATTR_FPS_120 = 120 \/**< 120 FPS *\/$/;"	e	enum:__anon23
+CAMERA_ATTR_FPS_15	include/camera.h	/^    CAMERA_ATTR_FPS_15 = 15,  \/**< 15 FPS *\/$/;"	e	enum:__anon23
+CAMERA_ATTR_FPS_24	include/camera.h	/^    CAMERA_ATTR_FPS_24 = 24,  \/**< 24 FPS *\/$/;"	e	enum:__anon23
+CAMERA_ATTR_FPS_25	include/camera.h	/^    CAMERA_ATTR_FPS_25 = 25,  \/**< 25 FPS *\/$/;"	e	enum:__anon23
+CAMERA_ATTR_FPS_30	include/camera.h	/^    CAMERA_ATTR_FPS_30 = 30,  \/**< 30 FPS *\/$/;"	e	enum:__anon23
+CAMERA_ATTR_FPS_60	include/camera.h	/^    CAMERA_ATTR_FPS_60 = 60,  \/**< 60 FPS *\/$/;"	e	enum:__anon23
+CAMERA_ATTR_FPS_8	include/camera.h	/^    CAMERA_ATTR_FPS_8 = 8,    \/**< 8 FPS *\/$/;"	e	enum:__anon23
+CAMERA_ATTR_FPS_AUTO	include/camera.h	/^    CAMERA_ATTR_FPS_AUTO = 0, \/**< AUTO FPS *\/$/;"	e	enum:__anon23
+CAMERA_ATTR_ISO_100	include/camera.h	/^    CAMERA_ATTR_ISO_100,      \/**< ISO 100*\/$/;"	e	enum:__anon19
+CAMERA_ATTR_ISO_1600	include/camera.h	/^    CAMERA_ATTR_ISO_1600,     \/**< ISO 1600*\/$/;"	e	enum:__anon19
+CAMERA_ATTR_ISO_200	include/camera.h	/^    CAMERA_ATTR_ISO_200,      \/**< ISO 200*\/$/;"	e	enum:__anon19
+CAMERA_ATTR_ISO_3200	include/camera.h	/^    CAMERA_ATTR_ISO_3200,     \/**< ISO 3200*\/$/;"	e	enum:__anon19
+CAMERA_ATTR_ISO_400	include/camera.h	/^    CAMERA_ATTR_ISO_400,      \/**< ISO 400*\/$/;"	e	enum:__anon19
+CAMERA_ATTR_ISO_50	include/camera.h	/^    CAMERA_ATTR_ISO_50,       \/**< ISO 50*\/$/;"	e	enum:__anon19
+CAMERA_ATTR_ISO_800	include/camera.h	/^    CAMERA_ATTR_ISO_800,      \/**< ISO 800*\/$/;"	e	enum:__anon19
+CAMERA_ATTR_ISO_AUTO	include/camera.h	/^    CAMERA_ATTR_ISO_AUTO = 0, \/**< ISO auto mode*\/$/;"	e	enum:__anon19
+CAMERA_ATTR_SCENE_MODE_BACKLIGHT	include/camera.h	/^    CAMERA_ATTR_SCENE_MODE_BACKLIGHT,      \/**< Backlight *\/$/;"	e	enum:__anon16
+CAMERA_ATTR_SCENE_MODE_BEACH_N_INDOOR	include/camera.h	/^    CAMERA_ATTR_SCENE_MODE_BEACH_N_INDOOR, \/**< Beach & indoor *\/$/;"	e	enum:__anon16
+CAMERA_ATTR_SCENE_MODE_CANDLE_LIGHT	include/camera.h	/^    CAMERA_ATTR_SCENE_MODE_CANDLE_LIGHT,   \/**< Candle light *\/$/;"	e	enum:__anon16
+CAMERA_ATTR_SCENE_MODE_DUSK_N_DAWN	include/camera.h	/^    CAMERA_ATTR_SCENE_MODE_DUSK_N_DAWN,    \/**< Dusk & dawn *\/$/;"	e	enum:__anon16
+CAMERA_ATTR_SCENE_MODE_FALL_COLOR	include/camera.h	/^    CAMERA_ATTR_SCENE_MODE_FALL_COLOR,     \/**< Fall *\/$/;"	e	enum:__anon16
+CAMERA_ATTR_SCENE_MODE_FIREWORK	include/camera.h	/^    CAMERA_ATTR_SCENE_MODE_FIREWORK,       \/**< Firework *\/$/;"	e	enum:__anon16
+CAMERA_ATTR_SCENE_MODE_LANDSCAPE	include/camera.h	/^    CAMERA_ATTR_SCENE_MODE_LANDSCAPE,      \/**< Landscape *\/$/;"	e	enum:__anon16
+CAMERA_ATTR_SCENE_MODE_NIGHT_SCENE	include/camera.h	/^    CAMERA_ATTR_SCENE_MODE_NIGHT_SCENE,    \/**< Night scene *\/$/;"	e	enum:__anon16
+CAMERA_ATTR_SCENE_MODE_NORMAL	include/camera.h	/^    CAMERA_ATTR_SCENE_MODE_NORMAL = 0,     \/**< Normal *\/$/;"	e	enum:__anon16
+CAMERA_ATTR_SCENE_MODE_PARTY_N_INDOOR	include/camera.h	/^    CAMERA_ATTR_SCENE_MODE_PARTY_N_INDOOR, \/**< Party & indoor *\/$/;"	e	enum:__anon16
+CAMERA_ATTR_SCENE_MODE_PORTRAIT	include/camera.h	/^    CAMERA_ATTR_SCENE_MODE_PORTRAIT,       \/**< Portrait *\/$/;"	e	enum:__anon16
+CAMERA_ATTR_SCENE_MODE_SHOW_WINDOW	include/camera.h	/^    CAMERA_ATTR_SCENE_MODE_SHOW_WINDOW,    \/**< Show window *\/$/;"	e	enum:__anon16
+CAMERA_ATTR_SCENE_MODE_SPORTS	include/camera.h	/^    CAMERA_ATTR_SCENE_MODE_SPORTS,         \/**< Sports *\/$/;"	e	enum:__anon16
+CAMERA_ATTR_SCENE_MODE_SUNSET	include/camera.h	/^    CAMERA_ATTR_SCENE_MODE_SUNSET,         \/**< Sunset *\/$/;"	e	enum:__anon16
+CAMERA_ATTR_SCENE_MODE_TEXT	include/camera.h	/^    CAMERA_ATTR_SCENE_MODE_TEXT,           \/**< Text *\/$/;"	e	enum:__anon16
+CAMERA_ATTR_TAG_ORIENTATION_BOTTOM_LEFT	include/camera.h	/^    CAMERA_ATTR_TAG_ORIENTATION_BOTTOM_LEFT = 4,   \/**< Row #0 is bottom, Column #0 is left *\/$/;"	e	enum:__anon21
+CAMERA_ATTR_TAG_ORIENTATION_BOTTOM_RIGHT	include/camera.h	/^    CAMERA_ATTR_TAG_ORIENTATION_BOTTOM_RIGHT = 3,  \/**< Row #0 is bottom, Column #0 is right *\/$/;"	e	enum:__anon21
+CAMERA_ATTR_TAG_ORIENTATION_LEFT_BOTTOM	include/camera.h	/^    CAMERA_ATTR_TAG_ORIENTATION_LEFT_BOTTOM = 8,   \/**< Row #0 is left, Column #0 is bottom *\/$/;"	e	enum:__anon21
+CAMERA_ATTR_TAG_ORIENTATION_LEFT_TOP	include/camera.h	/^    CAMERA_ATTR_TAG_ORIENTATION_LEFT_TOP = 5,      \/**< Row #0 is left, Column #0 is top *\/$/;"	e	enum:__anon21
+CAMERA_ATTR_TAG_ORIENTATION_RIGHT_BOTTOM	include/camera.h	/^    CAMERA_ATTR_TAG_ORIENTATION_RIGHT_BOTTOM = 7,  \/**< Row #0 is right, Column #0 is bottom *\/$/;"	e	enum:__anon21
+CAMERA_ATTR_TAG_ORIENTATION_RIGHT_TOP	include/camera.h	/^    CAMERA_ATTR_TAG_ORIENTATION_RIGHT_TOP = 6,     \/**< Row #0 is right, Column #0 is top *\/$/;"	e	enum:__anon21
+CAMERA_ATTR_TAG_ORIENTATION_TOP_LEFT	include/camera.h	/^    CAMERA_ATTR_TAG_ORIENTATION_TOP_LEFT = 1,      \/**< Row #0 is top, Column #0 is left *\/$/;"	e	enum:__anon21
+CAMERA_ATTR_TAG_ORIENTATION_TOP_RIGHT	include/camera.h	/^    CAMERA_ATTR_TAG_ORIENTATION_TOP_RIGHT = 2,     \/**< Row #0 is top, Column #0 is right *\/$/;"	e	enum:__anon21
+CAMERA_ATTR_WHITE_BALANCE_AUTOMATIC	include/camera.h	/^    CAMERA_ATTR_WHITE_BALANCE_AUTOMATIC,    \/**< Automatic *\/$/;"	e	enum:__anon15
+CAMERA_ATTR_WHITE_BALANCE_CLOUDY	include/camera.h	/^    CAMERA_ATTR_WHITE_BALANCE_CLOUDY,       \/**< Cloudy *\/$/;"	e	enum:__anon15
+CAMERA_ATTR_WHITE_BALANCE_CUSTOM	include/camera.h	/^    CAMERA_ATTR_WHITE_BALANCE_CUSTOM,       \/**< Custom *\/$/;"	e	enum:__anon15
+CAMERA_ATTR_WHITE_BALANCE_DAYLIGHT	include/camera.h	/^    CAMERA_ATTR_WHITE_BALANCE_DAYLIGHT,     \/**< Daylight *\/$/;"	e	enum:__anon15
+CAMERA_ATTR_WHITE_BALANCE_FLASH	include/camera.h	/^    CAMERA_ATTR_WHITE_BALANCE_FLASH,        \/**< Flash *\/$/;"	e	enum:__anon15
+CAMERA_ATTR_WHITE_BALANCE_FLUORESCENT	include/camera.h	/^    CAMERA_ATTR_WHITE_BALANCE_FLUORESCENT,  \/**< Fluorescent *\/$/;"	e	enum:__anon15
+CAMERA_ATTR_WHITE_BALANCE_HORIZON	include/camera.h	/^    CAMERA_ATTR_WHITE_BALANCE_HORIZON,      \/**< Horizon *\/$/;"	e	enum:__anon15
+CAMERA_ATTR_WHITE_BALANCE_INCANDESCENT	include/camera.h	/^    CAMERA_ATTR_WHITE_BALANCE_INCANDESCENT, \/**< Incandescent *\/$/;"	e	enum:__anon15
+CAMERA_ATTR_WHITE_BALANCE_NONE	include/camera.h	/^    CAMERA_ATTR_WHITE_BALANCE_NONE = 0,     \/**< None *\/$/;"	e	enum:__anon15
+CAMERA_ATTR_WHITE_BALANCE_SHADE	include/camera.h	/^    CAMERA_ATTR_WHITE_BALANCE_SHADE,        \/**< Shade *\/$/;"	e	enum:__anon15
+CAMERA_DEVICE_CAMERA0	include/camera.h	/^    CAMERA_DEVICE_CAMERA0 = 0, \/**< Primary camera *\/$/;"	e	enum:__anon9
+CAMERA_DEVICE_CAMERA1	include/camera.h	/^    CAMERA_DEVICE_CAMERA1      \/**< Secondary camera *\/$/;"	e	enum:__anon9
+CAMERA_DISPLAY_MODE_CROPPED_FULL	include/camera.h	/^	CAMERA_DISPLAY_MODE_CROPPED_FULL,	\/**< Cropped full screen*\/$/;"	e	enum:__anon13
+CAMERA_DISPLAY_MODE_FULL	include/camera.h	/^	CAMERA_DISPLAY_MODE_FULL,	\/**< full screen*\/$/;"	e	enum:__anon13
+CAMERA_DISPLAY_MODE_LETTER_BOX	include/camera.h	/^	CAMERA_DISPLAY_MODE_LETTER_BOX = 0,	\/**< Letter box*\/$/;"	e	enum:__anon13
+CAMERA_DISPLAY_MODE_ORIGIN_SIZE	include/camera.h	/^	CAMERA_DISPLAY_MODE_ORIGIN_SIZE,	\/**< Origin size*\/$/;"	e	enum:__anon13
+CAMERA_DISPLAY_ROTATION_180	include/camera.h	/^	CAMERA_DISPLAY_ROTATION_180,	\/**< 180 degree rotation *\/$/;"	e	enum:__anon12
+CAMERA_DISPLAY_ROTATION_270	include/camera.h	/^	CAMERA_DISPLAY_ROTATION_270,	\/**< 270 degree rotation *\/$/;"	e	enum:__anon12
+CAMERA_DISPLAY_ROTATION_90	include/camera.h	/^	CAMERA_DISPLAY_ROTATION_90,		\/**< 90 degree rotation *\/$/;"	e	enum:__anon12
+CAMERA_DISPLAY_ROTATION_NONE	include/camera.h	/^	CAMERA_DISPLAY_ROTATION_NONE,	\/**< No rotation of the display *\/$/;"	e	enum:__anon12
+CAMERA_DISPLAY_TYPE_EVAS	include/camera.h	/^  CAMERA_DISPLAY_TYPE_EVAS = 1,		\/**< Evas object surface display *\/$/;"	e	enum:__anon11
+CAMERA_DISPLAY_TYPE_NONE	include/camera.h	/^  CAMERA_DISPLAY_TYPE_NONE = 3		\/**< This disposes of buffers *\/$/;"	e	enum:__anon11
+CAMERA_DISPLAY_TYPE_X11	include/camera.h	/^  CAMERA_DISPLAY_TYPE_X11 = 0,		\/**< X surface display *\/$/;"	e	enum:__anon11
+CAMERA_ERROR_CLASS	include/camera.h	35;"	d
+CAMERA_ERROR_DEVICE	include/camera.h	/^    CAMERA_ERROR_DEVICE =            CAMERA_ERROR_CLASS | 0x04,    \/**< Device error *\/$/;"	e	enum:__anon7
+CAMERA_ERROR_INVALID_OPERATION	include/camera.h	/^    CAMERA_ERROR_INVALID_OPERATION = TIZEN_ERROR_INVALID_OPERATION,  \/**< Internal error *\/$/;"	e	enum:__anon7
+CAMERA_ERROR_INVALID_PARAMETER	include/camera.h	/^    CAMERA_ERROR_INVALID_PARAMETER = TIZEN_ERROR_INVALID_PARAMETER,  \/**< Invalid parameter *\/$/;"	e	enum:__anon7
+CAMERA_ERROR_INVALID_STATE	include/camera.h	/^    CAMERA_ERROR_INVALID_STATE =     CAMERA_ERROR_CLASS | 0x02,    \/**< Invalid state *\/$/;"	e	enum:__anon7
+CAMERA_ERROR_NONE	include/camera.h	/^    CAMERA_ERROR_NONE =              TIZEN_ERROR_OK,		\/**< Successful *\/$/;"	e	enum:__anon7
+CAMERA_ERROR_OUT_OF_MEMORY	include/camera.h	/^    CAMERA_ERROR_OUT_OF_MEMORY =     TIZEN_ERROR_OUT_OF_MEMORY,      \/**< Out of memory *\/$/;"	e	enum:__anon7
+CAMERA_ERROR_SOUND_POLICY	include/camera.h	/^    CAMERA_ERROR_SOUND_POLICY =      CAMERA_ERROR_CLASS | 0x06,    \/**< Blocked by Audio Session Manager *\/$/;"	e	enum:__anon7
+CAMERA_FOCUS_STATE_FAILED	include/camera.h	/^    CAMERA_FOCUS_STATE_FAILED,       \/**< Focus failed*\/$/;"	e	enum:__anon18
+CAMERA_FOCUS_STATE_FOCUSED	include/camera.h	/^    CAMERA_FOCUS_STATE_FOCUSED,      \/**< Focus success*\/$/;"	e	enum:__anon18
+CAMERA_FOCUS_STATE_ONGOING	include/camera.h	/^    CAMERA_FOCUS_STATE_ONGOING,      \/**< Focus in progress*\/$/;"	e	enum:__anon18
+CAMERA_FOCUS_STATE_RELEASED	include/camera.h	/^    CAMERA_FOCUS_STATE_RELEASED = 0, \/**< Focus released.*\/$/;"	e	enum:__anon18
+CAMERA_MODE_IMAGE	include/camera_private.h	/^	CAMERA_MODE_IMAGE = MM_CAMCORDER_MODE_IMAGE,				\/**< Still image capture mode *\/$/;"	e	enum:__anon6
+CAMERA_MODE_VIDEO	include/camera_private.h	/^	CAMERA_MODE_VIDEO = MM_CAMCORDER_MODE_VIDEO				\/**< Video recording mode *\/$/;"	e	enum:__anon6
+CAMERA_PIXEL_FORMAT_422P	include/camera.h	/^	CAMERA_PIXEL_FORMAT_422P,           \/**< YUV422(Y:U:V) planar pixel format *\/$/;"	e	enum:__anon10
+CAMERA_PIXEL_FORMAT_ARGB	include/camera.h	/^	CAMERA_PIXEL_FORMAT_ARGB,           \/**< ARGB pixel format *\/$/;"	e	enum:__anon10
+CAMERA_PIXEL_FORMAT_I420	include/camera.h	/^	CAMERA_PIXEL_FORMAT_I420,           \/**< I420 pixel format *\/$/;"	e	enum:__anon10
+CAMERA_PIXEL_FORMAT_INVALID	include/camera.h	/^	CAMERA_PIXEL_FORMAT_INVALID	= -1,  \/**< Invalid pixel format *\/$/;"	e	enum:__anon10
+CAMERA_PIXEL_FORMAT_JPEG	include/camera.h	/^	CAMERA_PIXEL_FORMAT_JPEG,           \/**< Encoded pixel format *\/$/;"	e	enum:__anon10
+CAMERA_PIXEL_FORMAT_NV12	include/camera.h	/^	CAMERA_PIXEL_FORMAT_NV12,           \/**< NV12 pixel format *\/$/;"	e	enum:__anon10
+CAMERA_PIXEL_FORMAT_NV12T	include/camera.h	/^	CAMERA_PIXEL_FORMAT_NV12T,          \/**< NV12 Tiled pixel format *\/$/;"	e	enum:__anon10
+CAMERA_PIXEL_FORMAT_NV16	include/camera.h	/^	CAMERA_PIXEL_FORMAT_NV16,           \/**< NV16 pixel format *\/$/;"	e	enum:__anon10
+CAMERA_PIXEL_FORMAT_NV21	include/camera.h	/^	CAMERA_PIXEL_FORMAT_NV21,           \/**< NV21 pixel format *\/$/;"	e	enum:__anon10
+CAMERA_PIXEL_FORMAT_RGB565	include/camera.h	/^	CAMERA_PIXEL_FORMAT_RGB565,         \/**< RGB565 pixel format *\/$/;"	e	enum:__anon10
+CAMERA_PIXEL_FORMAT_RGB888	include/camera.h	/^	CAMERA_PIXEL_FORMAT_RGB888,         \/**< RGB888 pixel format *\/$/;"	e	enum:__anon10
+CAMERA_PIXEL_FORMAT_RGBA	include/camera.h	/^	CAMERA_PIXEL_FORMAT_RGBA,           \/**< RGBA pixel format *\/$/;"	e	enum:__anon10
+CAMERA_PIXEL_FORMAT_UYVY	include/camera.h	/^	CAMERA_PIXEL_FORMAT_UYVY,           \/**< UYVY pixel format *\/$/;"	e	enum:__anon10
+CAMERA_PIXEL_FORMAT_YUYV	include/camera.h	/^	CAMERA_PIXEL_FORMAT_YUYV,           \/**< YUYV(YUY2) pixel format *\/$/;"	e	enum:__anon10
+CAMERA_PIXEL_FORMAT_YV12	include/camera.h	/^	CAMERA_PIXEL_FORMAT_YV12,           \/**< YV12 pixel format *\/$/;"	e	enum:__anon10
+CAMERA_STATE_CAPTURED	include/camera.h	/^    CAMERA_STATE_CAPTURED    \/**< After capturing *\/$/;"	e	enum:__anon8
+CAMERA_STATE_CAPTURING	include/camera.h	/^    CAMERA_STATE_CAPTURING,  \/**< While capturing *\/$/;"	e	enum:__anon8
+CAMERA_STATE_CREATED	include/camera.h	/^    CAMERA_STATE_CREATED,    \/**< Created, but not initialized yet *\/$/;"	e	enum:__anon8
+CAMERA_STATE_NONE	include/camera.h	/^    CAMERA_STATE_NONE,       \/**< Before create *\/$/;"	e	enum:__anon8
+CAMERA_STATE_PREVIEW	include/camera.h	/^    CAMERA_STATE_PREVIEW,    \/**< Preview *\/$/;"	e	enum:__anon8
+CC	TC/testcase/Makefile	/^CC ?= gcc$/;"	m
+CFLAGS	TC/testcase/Makefile	/^CFLAGS = -I. `pkg-config --cflags $(PKGS)`$/;"	m
+CFLAGS	debian/rules	/^CFLAGS = -Wall -g$/;"	m
+CMAKE_BUILD_DIR	debian/rules	/^CMAKE_BUILD_DIR ?= $(CURDIR)\/cmake_build_tmp$/;"	m
+CMAKE_ROOT_DIR	debian/rules	/^CMAKE_ROOT_DIR ?= $(CURDIR)$/;"	m
+DLOG_D	src/camera.c	37;"	d	file:
+DLOG_I	src/camera.c	36;"	d	file:
+DLOG_V	src/camera.c	35;"	d	file:
+GET_DISPLAY	include/camera.h	140;"	d
+GmainThread	TC/testcase/utc_media_camera_lifecycle.c	/^gpointer GmainThread(gpointer data){$/;"	f
+GmainThread	TC/testcase/utc_media_camera_setting.c	/^gpointer GmainThread(gpointer data){$/;"	f
+GmainThread	TC/testcase/utc_media_camera_working.c	/^gpointer GmainThread(gpointer data){$/;"	f
+LDFLAGS	TC/testcase/Makefile	/^LDFLAGS = `pkg-config --libs $(PKGS)`$/;"	m
+LOG_TAG	src/camera.c	32;"	d	file:
+LOG_TAG	src/camera.c	34;"	d	file:
+MY_ASSERT	TC/testcase/utc_media_camera_attr.c	22;"	d	file:
+MY_ASSERT	TC/testcase/utc_media_camera_lifecycle.c	25;"	d	file:
+MY_ASSERT	TC/testcase/utc_media_camera_setting.c	26;"	d	file:
+MY_ASSERT	TC/testcase/utc_media_camera_working.c	23;"	d	file:
+PKGS	TC/testcase/Makefile	/^PKGS = capi-media-camera dlog glib-2.0$/;"	m
+TCS	TC/testcase/Makefile	/^TCS = utc_media_camera_attr \\$/;"	m
+_CAMERA_EVENT_TYPE_CAPTURE	include/camera_private.h	/^	_CAMERA_EVENT_TYPE_CAPTURE,	$/;"	e	enum:__anon5
+_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE	include/camera_private.h	/^	_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE,$/;"	e	enum:__anon5
+_CAMERA_EVENT_TYPE_ERROR	include/camera_private.h	/^	_CAMERA_EVENT_TYPE_ERROR,		$/;"	e	enum:__anon5
+_CAMERA_EVENT_TYPE_FOCUS_CHANGE	include/camera_private.h	/^	_CAMERA_EVENT_TYPE_FOCUS_CHANGE,	$/;"	e	enum:__anon5
+_CAMERA_EVENT_TYPE_NUM	include/camera_private.h	/^	_CAMERA_EVENT_TYPE_NUM$/;"	e	enum:__anon5
+_CAMERA_EVENT_TYPE_PREVIEW	include/camera_private.h	/^	_CAMERA_EVENT_TYPE_PREVIEW,$/;"	e	enum:__anon5
+_CAMERA_EVENT_TYPE_STATE_CHANGE	include/camera_private.h	/^	_CAMERA_EVENT_TYPE_STATE_CHANGE,$/;"	e	enum:__anon5
+__TIZEN_MULTIMEDIA_CAMERA_H__	include/camera.h	26;"	d
+__TIZEN_MULTIMEDIA_CAMERA_PRIVATE_H__	include/camera_private.h	27;"	d
+_af_mode_test_cb	TC/testcase/utc_media_camera_working.c	/^bool _af_mode_test_cb(camera_attr_af_mode_e mode, void *user_data){$/;"	f
+_af_mode_test_cb	test/multimedia_camera_test.c	/^bool _af_mode_test_cb(camera_attr_af_mode_e mode, void *user_data){$/;"	f
+_camera_event_e	include/camera_private.h	/^}_camera_event_e;$/;"	t	typeref:enum:__anon5
+_camera_preview_test_cb	TC/testcase/utc_media_camera_working.c	/^ void _camera_preview_test_cb(void *stream_buffer, int buffer_size, int width, int height, camera_pixel_format_e format,  void *user_data){$/;"	f
+_camera_preview_test_cb	test/multimedia_camera_test.c	/^ void _camera_preview_test_cb(void *stream_buffer, int buffer_size, int width, int height, camera_pixel_format_e format, void *user_data){$/;"	f
+_camera_s	include/camera_private.h	/^typedef struct _camera_s{$/;"	s
+_camera_state_convert	src/camera.c	/^camera_state_e _camera_state_convert(MMCamcorderStateType mm_state)$/;"	f
+_capture_completed_cb	TC/testcase/utc_media_camera_setting.c	/^void _capture_completed_cb(void *user_data)$/;"	f
+_capture_format_cb	TC/testcase/utc_media_camera_setting.c	/^bool _capture_format_cb(camera_pixel_format_e format , void *user_data)$/;"	f
+_capture_format_cb2	TC/testcase/utc_media_camera_setting.c	/^bool _capture_format_cb2(camera_pixel_format_e format , void *user_data)$/;"	f
+_capture_resolution_cb	TC/testcase/utc_media_camera_setting.c	/^bool _capture_resolution_cb(int width, int height, void *user_data)$/;"	f
+_capture_resolution_cb2	TC/testcase/utc_media_camera_setting.c	/^bool _capture_resolution_cb2(int width, int height, void *user_data)$/;"	f
+_capture_test2_cb	TC/testcase/utc_media_camera_working.c	/^void _capture_test2_cb(void *image_buffer, int buffer_size, int width, int height, camera_pixel_format_e format,  void *user_data){$/;"	f
+_capture_test2_cb	test/multimedia_camera_test.c	/^void _capture_test2_cb(void *image_buffer, int buffer_size, int width, int height, camera_pixel_format_e format, void *user_data){$/;"	f
+_capture_test3_cb	TC/testcase/utc_media_camera_working.c	/^void _capture_test3_cb(void *image_buffer, int buffer_size, int width, int height, camera_pixel_format_e format,  void *user_data){$/;"	f
+_capture_test3_cb	test/multimedia_camera_test.c	/^void _capture_test3_cb(void *image_buffer, int buffer_size, int width, int height, camera_pixel_format_e format, void *user_data){$/;"	f
+_capture_test_cb	TC/testcase/utc_media_camera_working.c	/^void _capture_test_cb(void *image_buffer, int buffer_size, int width, int height, camera_pixel_format_e format,  void *user_data){$/;"	f
+_capture_test_cb	test/multimedia_camera_test.c	/^void _capture_test_cb(void *image_buffer, int buffer_size, int width, int height, camera_pixel_format_e format, void *user_data){$/;"	f
+_capturing_cb	TC/testcase/utc_media_camera_setting.c	/^void _capturing_cb(void* image_buffer, int buffer_size, int width, int height, camera_pixel_format_e format , void *user_data)$/;"	f
+_cb_af_mode	TC/testcase/utc_media_camera_attr.c	/^bool _cb_af_mode(camera_attr_af_mode_e mode, void *user_data)$/;"	f
+_cb_effect_cb	TC/testcase/utc_media_camera_attr.c	/^bool _cb_effect_cb(camera_attr_effect_mode_e effect , void *user_data)$/;"	f
+_cb_exposure_mode	TC/testcase/utc_media_camera_attr.c	/^bool _cb_exposure_mode(camera_attr_exposure_mode_e mode , void *user_data)$/;"	f
+_cb_flash_mode_cb	TC/testcase/utc_media_camera_attr.c	/^bool _cb_flash_mode_cb(camera_attr_flash_mode_e mode,  void *user_data)$/;"	f
+_cb_fps_cb	TC/testcase/utc_media_camera_attr.c	/^bool _cb_fps_cb(camera_attr_fps_e fps, void *user_data)$/;"	f
+_cb_iso	TC/testcase/utc_media_camera_attr.c	/^bool _cb_iso(camera_attr_iso_e iso , void *user_data)$/;"	f
+_cb_scene_mode_cb	TC/testcase/utc_media_camera_attr.c	/^bool _cb_scene_mode_cb(camera_attr_scene_mode_e mode , void *user_data)$/;"	f
+_cb_whitebalance_cb	TC/testcase/utc_media_camera_attr.c	/^bool _cb_whitebalance_cb(camera_attr_whitebalance_e wb , void *user_data)$/;"	f
+_changed_cb	TC/testcase/utc_media_camera_setting.c	/^void _changed_cb(camera_state_e previous , camera_state_e current , bool by_asm, void *user_data)$/;"	f
+_convert_camera_error_code	src/camera.c	/^int _convert_camera_error_code(int code){$/;"	f
+_effect_test_cb	TC/testcase/utc_media_camera_working.c	/^bool _effect_test_cb(camera_attr_effect_mode_e effect,  void *user_data){$/;"	f
+_effect_test_cb	test/multimedia_camera_test.c	/^bool _effect_test_cb(camera_attr_effect_mode_e effect, void *user_data){$/;"	f
+_error_cb	TC/testcase/utc_media_camera_setting.c	/^void _error_cb(int error, camera_state_e current_state, void *user_data)$/;"	f
+_exposure_mode_test_cb	TC/testcase/utc_media_camera_working.c	/^bool _exposure_mode_test_cb(camera_attr_exposure_mode_e mode, void *user_data){$/;"	f
+_exposure_mode_test_cb	test/multimedia_camera_test.c	/^bool _exposure_mode_test_cb(camera_attr_exposure_mode_e mode, void *user_data){$/;"	f
+_flash_mode_test_cb	TC/testcase/utc_media_camera_working.c	/^bool _flash_mode_test_cb(camera_attr_flash_mode_e mode,  void *user_data){$/;"	f
+_flash_mode_test_cb	test/multimedia_camera_test.c	/^bool _flash_mode_test_cb(camera_attr_flash_mode_e mode, void *user_data){$/;"	f
+_focus_changed_cb	TC/testcase/utc_media_camera_setting.c	/^void _focus_changed_cb(camera_focus_state_e state, void *user_data)$/;"	f
+_focus_changed_cb2	test/multimedia_camera_test.c	/^void _focus_changed_cb2(camera_focus_state_e state, void *user_data){$/;"	f
+_iso_test_cb	TC/testcase/utc_media_camera_working.c	/^bool _iso_test_cb(camera_attr_iso_e iso, void *user_data){$/;"	f
+_iso_test_cb	test/multimedia_camera_test.c	/^bool _iso_test_cb(camera_attr_iso_e iso, void *user_data){$/;"	f
+_preview_cb	TC/testcase/utc_media_camera_setting.c	/^void _preview_cb(void* stream_buffer, int buffer_size, int width, int height, camera_pixel_format_e format, void *user_data)$/;"	f
+_preview_format_cb	TC/testcase/utc_media_camera_setting.c	/^bool _preview_format_cb(camera_pixel_format_e format , void *user_data)$/;"	f
+_preview_format_cb2	TC/testcase/utc_media_camera_setting.c	/^bool _preview_format_cb2(camera_pixel_format_e format , void *user_data)$/;"	f
+_preview_format_test_cb	TC/testcase/utc_media_camera_working.c	/^bool _preview_format_test_cb(camera_pixel_format_e format,  void *user_data){$/;"	f
+_preview_format_test_cb	test/multimedia_camera_test.c	/^bool _preview_format_test_cb(camera_pixel_format_e format, void *user_data){$/;"	f
+_preview_fps_cb	TC/testcase/utc_media_camera_working.c	/^bool _preview_fps_cb(camera_attr_fps_e fps, void *user_data){$/;"	f
+_preview_fps_cb	test/multimedia_camera_test.c	/^bool _preview_fps_cb(camera_attr_fps_e fps, void *user_data){$/;"	f
+_preview_resolution_cb	TC/testcase/utc_media_camera_setting.c	/^bool _preview_resolution_cb(int width, int height, void *user_data )$/;"	f
+_preview_resolution_cb2	TC/testcase/utc_media_camera_setting.c	/^bool _preview_resolution_cb2(int width, int height, void *user_data )$/;"	f
+_scene_mode_test_cb	TC/testcase/utc_media_camera_working.c	/^bool _scene_mode_test_cb (camera_attr_scene_mode_e mode,  void *user_data){$/;"	f
+_scene_mode_test_cb	test/multimedia_camera_test.c	/^bool _scene_mode_test_cb (camera_attr_scene_mode_e mode, void *user_data){$/;"	f
+_state_change_test_cb	TC/testcase/utc_media_camera_working.c	/^void _state_change_test_cb(camera_state_e previous , camera_state_e current , bool by_asm,  void *user_data){$/;"	f
+_state_change_test_cb	test/multimedia_camera_test.c	/^void _state_change_test_cb(camera_state_e previous , camera_state_e current , bool by_asm, void *user_data){$/;"	f
+_whitebalance_test_cb	TC/testcase/utc_media_camera_working.c	/^bool _whitebalance_test_cb(camera_attr_whitebalance_e wb,  void *user_data){$/;"	f
+_whitebalance_test_cb	test/multimedia_camera_test.c	/^bool _whitebalance_test_cb(camera_attr_whitebalance_e wb, void *user_data){$/;"	f
+af_mode_test	TC/testcase/utc_media_camera_working.c	/^int af_mode_test(camera_h camera){$/;"	f
+af_mode_test	test/multimedia_camera_test.c	/^int af_mode_test(camera_h camera){$/;"	f
+appdata	test/multimedia_camera_test.c	/^}appdata;$/;"	t	typeref:struct:__anon24	file:
+brightness_test	TC/testcase/utc_media_camera_working.c	/^int brightness_test(camera_h camera){$/;"	f
+brightness_test	test/multimedia_camera_test.c	/^int brightness_test(camera_h camera){$/;"	f
+camera	TC/testcase/utc_media_camera_attr.c	/^camera_h camera;$/;"	v
+camera	TC/testcase/utc_media_camera_setting.c	/^camera_h camera;$/;"	v
+camera	TC/testcase/utc_media_camera_working.c	/^	camera_h camera;$/;"	m	struct:__anon1	file:
+camera	test/multimedia_camera_test.c	/^	camera_h camera;$/;"	m	struct:__anon25	file:
+camera_attr_af_mode_e	include/camera.h	/^} camera_attr_af_mode_e;$/;"	t	typeref:enum:__anon17
+camera_attr_effect_mode_e	include/camera.h	/^} camera_attr_effect_mode_e;$/;"	t	typeref:enum:__anon14
+camera_attr_enable_tag	src/camera.c	/^int camera_attr_enable_tag(camera_h camera,  bool enable){$/;"	f
+camera_attr_exposure_mode_e	include/camera.h	/^} camera_attr_exposure_mode_e;$/;"	t	typeref:enum:__anon20
+camera_attr_flash_mode_e	include/camera.h	/^} camera_attr_flash_mode_e;$/;"	t	typeref:enum:__anon22
+camera_attr_foreach_supported_af_mode	src/camera.c	/^int camera_attr_foreach_supported_af_mode( camera_h camera, camera_attr_supported_af_mode_cb foreach_cb , void *user_data){$/;"	f
+camera_attr_foreach_supported_effect	src/camera.c	/^int camera_attr_foreach_supported_effect(camera_h camera, camera_attr_supported_effect_cb foreach_cb , void *user_data){$/;"	f
+camera_attr_foreach_supported_exposure_mode	src/camera.c	/^int camera_attr_foreach_supported_exposure_mode(camera_h camera, camera_attr_supported_exposure_mode_cb foreach_cb , void *user_data){$/;"	f
+camera_attr_foreach_supported_flash_mode	src/camera.c	/^int camera_attr_foreach_supported_flash_mode(camera_h camera, camera_attr_supported_flash_mode_cb foreach_cb , void *user_data){$/;"	f
+camera_attr_foreach_supported_fps	src/camera.c	/^int camera_attr_foreach_supported_fps(camera_h camera, camera_attr_supported_fps_cb foreach_cb , void *user_data){$/;"	f
+camera_attr_foreach_supported_iso	src/camera.c	/^int camera_attr_foreach_supported_iso( camera_h camera, camera_attr_supported_iso_cb foreach_cb , void *user_data){$/;"	f
+camera_attr_foreach_supported_scene_mode	src/camera.c	/^int camera_attr_foreach_supported_scene_mode(camera_h camera, camera_attr_supported_scene_mode_cb foreach_cb , void *user_data){$/;"	f
+camera_attr_foreach_supported_whitebalance	src/camera.c	/^int camera_attr_foreach_supported_whitebalance(camera_h camera, camera_attr_supported_whitebalance_cb foreach_cb , void *user_data){$/;"	f
+camera_attr_fps_e	include/camera.h	/^} camera_attr_fps_e;$/;"	t	typeref:enum:__anon23
+camera_attr_get_af_mode	src/camera.c	/^int camera_attr_get_af_mode( camera_h camera,  camera_attr_af_mode_e *mode){$/;"	f
+camera_attr_get_brightness	src/camera.c	/^int camera_attr_get_brightness(camera_h camera,  int *level){$/;"	f
+camera_attr_get_contrast	src/camera.c	/^int camera_attr_get_contrast(camera_h camera,  int *level){$/;"	f
+camera_attr_get_effect	src/camera.c	/^int camera_attr_get_effect(camera_h camera, camera_attr_effect_mode_e *effect){$/;"	f
+camera_attr_get_exposure	src/camera.c	/^int camera_attr_get_exposure(camera_h camera, int *value){$/;"	f
+camera_attr_get_exposure_mode	src/camera.c	/^int camera_attr_get_exposure_mode( camera_h camera,  camera_attr_exposure_mode_e *mode){$/;"	f
+camera_attr_get_flash_mode	src/camera.c	/^int camera_attr_get_flash_mode(camera_h camera,  camera_attr_flash_mode_e *mode){$/;"	f
+camera_attr_get_hue	src/camera.c	/^int camera_attr_get_hue(camera_h camera,  int *level){$/;"	f
+camera_attr_get_image_quality	src/camera.c	/^int camera_attr_get_image_quality(camera_h camera,  int *quality){$/;"	f
+camera_attr_get_iso	src/camera.c	/^int camera_attr_get_iso( camera_h camera,  camera_attr_iso_e *iso){$/;"	f
+camera_attr_get_lens_orientation	src/camera.c	/^int camera_attr_get_lens_orientation(camera_h camera, int *angle) {$/;"	f
+camera_attr_get_preview_fps	src/camera.c	/^int camera_attr_get_preview_fps(camera_h camera,  camera_attr_fps_e *fps){$/;"	f
+camera_attr_get_saturation	src/camera.c	/^int camera_attr_get_saturation(camera_h camera,  int *level){$/;"	f
+camera_attr_get_scene_mode	src/camera.c	/^int camera_attr_get_scene_mode(camera_h camera,  camera_attr_scene_mode_e *mode){$/;"	f
+camera_attr_get_sharpness	src/camera.c	/^int camera_attr_get_sharpness(camera_h camera,  int *level){$/;"	f
+camera_attr_get_tag_altitude	src/camera.c	/^int camera_attr_get_tag_altitude(camera_h camera,  double *altitude){$/;"	f
+camera_attr_get_tag_image_description	src/camera.c	/^int camera_attr_get_tag_image_description(camera_h camera,  char **description){$/;"	f
+camera_attr_get_tag_latitude	src/camera.c	/^int camera_attr_get_tag_latitude(camera_h camera,  double *latitude){$/;"	f
+camera_attr_get_tag_longitude	src/camera.c	/^int camera_attr_get_tag_longitude(camera_h camera,  double *longtitude){$/;"	f
+camera_attr_get_tag_orientation	src/camera.c	/^int camera_attr_get_tag_orientation(camera_h camera,  camera_attr_tag_orientation_e *orientation){$/;"	f
+camera_attr_get_tag_software	src/camera.c	/^int camera_attr_get_tag_software(camera_h camera,  char **software){$/;"	f
+camera_attr_get_whitebalance	src/camera.c	/^int camera_attr_get_whitebalance(camera_h camera,  camera_attr_whitebalance_e *wb){$/;"	f
+camera_attr_get_zoom	src/camera.c	/^int camera_attr_get_zoom(camera_h camera,  int *zoom){$/;"	f
+camera_attr_is_enabled_tag	src/camera.c	/^int camera_attr_is_enabled_tag(camera_h camera,  bool *enable){$/;"	f
+camera_attr_iso_e	include/camera.h	/^} camera_attr_iso_e;$/;"	t	typeref:enum:__anon19
+camera_attr_scene_mode_e	include/camera.h	/^} camera_attr_scene_mode_e;$/;"	t	typeref:enum:__anon16
+camera_attr_set_af_mode	src/camera.c	/^int camera_attr_set_af_mode(camera_h camera,  camera_attr_af_mode_e mode){$/;"	f
+camera_attr_set_af_touch	src/camera.c	/^int camera_attr_set_af_touch(camera_h camera,  int x , int y, int width, int height ){$/;"	f
+camera_attr_set_brightness	src/camera.c	/^int camera_attr_set_brightness(camera_h camera,  int level){$/;"	f
+camera_attr_set_contrast	src/camera.c	/^int camera_attr_set_contrast(camera_h camera,  int level){$/;"	f
+camera_attr_set_effect	src/camera.c	/^int camera_attr_set_effect(camera_h camera, camera_attr_effect_mode_e effect){$/;"	f
+camera_attr_set_exposure	src/camera.c	/^int camera_attr_set_exposure(camera_h camera, int value){$/;"	f
+camera_attr_set_exposure_mode	src/camera.c	/^int camera_attr_set_exposure_mode(camera_h camera,  camera_attr_exposure_mode_e mode){$/;"	f
+camera_attr_set_flash_mode	src/camera.c	/^int camera_attr_set_flash_mode(camera_h camera,  camera_attr_flash_mode_e mode){$/;"	f
+camera_attr_set_hue	src/camera.c	/^int camera_attr_set_hue(camera_h camera,  int level){$/;"	f
+camera_attr_set_image_quality	src/camera.c	/^int camera_attr_set_image_quality(camera_h camera,  int quality){$/;"	f
+camera_attr_set_iso	src/camera.c	/^int camera_attr_set_iso(camera_h camera,  camera_attr_iso_e iso){$/;"	f
+camera_attr_set_preview_fps	src/camera.c	/^int camera_attr_set_preview_fps(camera_h camera,  camera_attr_fps_e fps){$/;"	f
+camera_attr_set_saturation	src/camera.c	/^int camera_attr_set_saturation(camera_h camera,  int level){$/;"	f
+camera_attr_set_scene_mode	src/camera.c	/^int camera_attr_set_scene_mode(camera_h camera,  camera_attr_scene_mode_e mode){$/;"	f
+camera_attr_set_sharpness	src/camera.c	/^int camera_attr_set_sharpness(camera_h camera,  int level){$/;"	f
+camera_attr_set_tag_altitude	src/camera.c	/^int camera_attr_set_tag_altitude(camera_h camera,  double altitude){$/;"	f
+camera_attr_set_tag_image_description	src/camera.c	/^int camera_attr_set_tag_image_description(camera_h camera,  const char *description){$/;"	f
+camera_attr_set_tag_latitude	src/camera.c	/^int camera_attr_set_tag_latitude(camera_h camera,  double latitude){$/;"	f
+camera_attr_set_tag_longitude	src/camera.c	/^int camera_attr_set_tag_longitude(camera_h camera,  double longtitude){$/;"	f
+camera_attr_set_tag_orientation	src/camera.c	/^int camera_attr_set_tag_orientation(camera_h camera,  camera_attr_tag_orientation_e orientation){$/;"	f
+camera_attr_set_tag_software	src/camera.c	/^int camera_attr_set_tag_software(camera_h camera,  const char *software){$/;"	f
+camera_attr_set_whitebalance	src/camera.c	/^int camera_attr_set_whitebalance(camera_h camera,  camera_attr_whitebalance_e wb){$/;"	f
+camera_attr_set_zoom	src/camera.c	/^int camera_attr_set_zoom(camera_h camera,  int zoom){$/;"	f
+camera_attr_supported_af_mode_cb	include/camera.h	/^typedef bool (*camera_attr_supported_af_mode_cb)(camera_attr_af_mode_e mode, void *user_data);$/;"	t
+camera_attr_supported_effect_cb	include/camera.h	/^typedef bool (*camera_attr_supported_effect_cb)(camera_attr_effect_mode_e effect,$/;"	t
+camera_attr_supported_exposure_mode_cb	include/camera.h	/^typedef bool (*camera_attr_supported_exposure_mode_cb)(camera_attr_exposure_mode_e mode,$/;"	t
+camera_attr_supported_flash_mode_cb	include/camera.h	/^typedef bool (*camera_attr_supported_flash_mode_cb)(camera_attr_flash_mode_e mode,$/;"	t
+camera_attr_supported_fps_cb	include/camera.h	/^typedef bool (*camera_attr_supported_fps_cb)(camera_attr_fps_e fps, void *user_data);$/;"	t
+camera_attr_supported_iso_cb	include/camera.h	/^typedef bool (*camera_attr_supported_iso_cb)(camera_attr_iso_e iso, void *user_data);$/;"	t
+camera_attr_supported_scene_mode_cb	include/camera.h	/^typedef bool (*camera_attr_supported_scene_mode_cb)(camera_attr_scene_mode_e mode,$/;"	t
+camera_attr_supported_whitebalance_cb	include/camera.h	/^typedef bool (*camera_attr_supported_whitebalance_cb)(camera_attr_whitebalance_e wb,$/;"	t
+camera_attr_tag_orientation_e	include/camera.h	/^} camera_attr_tag_orientation_e;$/;"	t	typeref:enum:__anon21
+camera_attr_whitebalance_e	include/camera.h	/^} camera_attr_whitebalance_e;$/;"	t	typeref:enum:__anon15
+camera_attribute_test	test/multimedia_camera_test.c	/^int camera_attribute_test(){$/;"	f
+camera_cancel_focusing	src/camera.c	/^int camera_cancel_focusing( camera_h camera ){$/;"	f
+camera_capture_completed_cb	include/camera.h	/^typedef void (*camera_capture_completed_cb)(void *user_data);$/;"	t
+camera_capturing_cb	include/camera.h	/^typedef void (*camera_capturing_cb)(void *image_buffer, int buffer_size, int width, int height,$/;"	t
+camera_create	src/camera.c	/^int camera_create( camera_device_e device, camera_h* camera){$/;"	f
+camera_destroy	src/camera.c	/^ int camera_destroy(camera_h camera){$/;"	f
+camera_device_e	include/camera.h	/^} camera_device_e;$/;"	t	typeref:enum:__anon9
+camera_display_h	include/camera.h	/^typedef void *camera_display_h;$/;"	t
+camera_display_mode_e	include/camera.h	/^} camera_display_mode_e;$/;"	t	typeref:enum:__anon13
+camera_display_rotation_e	include/camera.h	/^} camera_display_rotation_e;$/;"	t	typeref:enum:__anon12
+camera_display_type_e	include/camera.h	/^} camera_display_type_e;$/;"	t	typeref:enum:__anon11
+camera_error_cb	include/camera.h	/^typedef void (*camera_error_cb)(int error, camera_state_e current_state, void *user_data);$/;"	t
+camera_error_e	include/camera.h	/^} camera_error_e;$/;"	t	typeref:enum:__anon7
+camera_focus_changed_cb	include/camera.h	/^typedef void (*camera_focus_changed_cb)(camera_focus_state_e state, void *user_data);$/;"	t
+camera_focus_state_e	include/camera.h	/^} camera_focus_state_e;$/;"	t	typeref:enum:__anon18
+camera_foreach_supported_capture_format	src/camera.c	/^int camera_foreach_supported_capture_format(camera_h camera, camera_supported_capture_format_cb foreach_cb , void *user_data){$/;"	f
+camera_foreach_supported_capture_resolution	src/camera.c	/^int camera_foreach_supported_capture_resolution(camera_h camera, camera_supported_capture_resolution_cb foreach_cb , void *user_data){$/;"	f
+camera_foreach_supported_preview_format	src/camera.c	/^int camera_foreach_supported_preview_format(camera_h camera, camera_supported_preview_format_cb foreach_cb , void *user_data){$/;"	f
+camera_foreach_supported_preview_resolution	src/camera.c	/^int camera_foreach_supported_preview_resolution(camera_h camera, camera_supported_preview_resolution_cb foreach_cb , void *user_data){$/;"	f
+camera_get_capture_format	src/camera.c	/^int camera_get_capture_format(camera_h camera, camera_pixel_format_e *format){$/;"	f
+camera_get_capture_resolution	src/camera.c	/^int camera_get_capture_resolution(camera_h camera, int *width, int *height){$/;"	f
+camera_get_preview_format	src/camera.c	/^int camera_get_preview_format(camera_h camera, camera_pixel_format_e *format){$/;"	f
+camera_get_preview_resolution	src/camera.c	/^int camera_get_preview_resolution(camera_h camera,  int *width, int *height){$/;"	f
+camera_get_state	src/camera.c	/^int camera_get_state(camera_h camera, camera_state_e * state){$/;"	f
+camera_get_x11_display_mode	src/camera.c	/^int camera_get_x11_display_mode( camera_h camera , camera_display_mode_e* ratio){$/;"	f
+camera_get_x11_display_rotation	src/camera.c	/^int camera_get_x11_display_rotation( camera_h camera,  camera_display_rotation_e *rotation){$/;"	f
+camera_h	include/camera.h	/^typedef struct camera_s *camera_h;$/;"	t	typeref:struct:camera_s
+camera_is_x11_display_visible	src/camera.c	/^int camera_is_x11_display_visible(camera_h camera, bool* visible){$/;"	f
+camera_lens_rotation_test	test/multimedia_camera_test.c	/^void camera_lens_rotation_test(){$/;"	f
+camera_mode_e	include/camera_private.h	/^} camera_mode_e;$/;"	t	typeref:enum:__anon6
+camera_pixel_format_e	include/camera.h	/^} camera_pixel_format_e;$/;"	t	typeref:enum:__anon10
+camera_preview_cb	include/camera.h	/^typedef void (*camera_preview_cb)(void *stream_buffer, int buffer_size, int width, int height,$/;"	t
+camera_preview_test	test/multimedia_camera_test.c	/^int camera_preview_test(){$/;"	f
+camera_preview_test_s	TC/testcase/utc_media_camera_working.c	/^} camera_preview_test_s;$/;"	t	typeref:struct:__anon1	file:
+camera_preview_test_s	test/multimedia_camera_test.c	/^} camera_preview_test_s;$/;"	t	typeref:struct:__anon25	file:
+camera_s	include/camera_private.h	/^} camera_s;$/;"	t	typeref:struct:_camera_s
+camera_set_capture_completed_cb	src/camera.c	/^int camera_set_capture_completed_cb(camera_h camera, camera_capture_completed_cb callback, void* user_data){$/;"	f
+camera_set_capture_format	src/camera.c	/^int camera_set_capture_format(camera_h camera, camera_pixel_format_e format){$/;"	f
+camera_set_capture_resolution	src/camera.c	/^int camera_set_capture_resolution(camera_h camera,  int width, int height){$/;"	f
+camera_set_capturing_cb	src/camera.c	/^int camera_set_capturing_cb( camera_h camera, camera_capturing_cb callback, void* user_data ){$/;"	f
+camera_set_display	src/camera.c	/^int camera_set_display(camera_h camera, camera_display_type_e type, camera_display_h display){$/;"	f
+camera_set_error_cb	src/camera.c	/^int camera_set_error_cb(camera_h camera, camera_error_cb callback, void *user_data){$/;"	f
+camera_set_focus_changed_cb	src/camera.c	/^int camera_set_focus_changed_cb(camera_h camera, camera_focus_changed_cb callback, void* user_data){$/;"	f
+camera_set_mode	src/camera.c	/^int camera_set_mode(camera_h camera, camera_mode_e mode ){$/;"	f
+camera_set_preview_cb	src/camera.c	/^int camera_set_preview_cb( camera_h camera, camera_preview_cb callback, void* user_data ){$/;"	f
+camera_set_preview_format	src/camera.c	/^int camera_set_preview_format(camera_h camera, camera_pixel_format_e format){$/;"	f
+camera_set_preview_resolution	src/camera.c	/^int camera_set_preview_resolution(camera_h camera,  int width, int height){$/;"	f
+camera_set_state_changed_cb	src/camera.c	/^int camera_set_state_changed_cb(camera_h camera, camera_state_changed_cb callback, void* user_data){$/;"	f
+camera_set_x11_display_mode	src/camera.c	/^int camera_set_x11_display_mode( camera_h camera , camera_display_mode_e ratio){$/;"	f
+camera_set_x11_display_rotation	src/camera.c	/^int camera_set_x11_display_rotation(camera_h camera,  camera_display_rotation_e rotation){$/;"	f
+camera_set_x11_display_visible	src/camera.c	/^int camera_set_x11_display_visible(camera_h camera, bool visible){$/;"	f
+camera_start_capture	src/camera.c	/^int camera_start_capture(camera_h camera){$/;"	f
+camera_start_focusing	src/camera.c	/^int camera_start_focusing( camera_h camera ){$/;"	f
+camera_start_preview	src/camera.c	/^int camera_start_preview(camera_h camera){$/;"	f
+camera_state_change_test	test/multimedia_camera_test.c	/^int camera_state_change_test(){$/;"	f
+camera_state_changed_cb	include/camera.h	/^typedef void (*camera_state_changed_cb)(camera_state_e previous, camera_state_e current,$/;"	t
+camera_state_e	include/camera.h	/^} camera_state_e;$/;"	t	typeref:enum:__anon8
+camera_stop_preview	src/camera.c	/^int camera_stop_preview(camera_h camera){$/;"	f
+camera_supported_capture_format_cb	include/camera.h	/^typedef bool (*camera_supported_capture_format_cb)(camera_pixel_format_e format,$/;"	t
+camera_supported_capture_resolution_cb	include/camera.h	/^typedef bool (*camera_supported_capture_resolution_cb)(int width, int height, void *user_data);$/;"	t
+camera_supported_preview_format_cb	include/camera.h	/^typedef bool (*camera_supported_preview_format_cb)(camera_pixel_format_e format,$/;"	t
+camera_supported_preview_resolution_cb	include/camera.h	/^typedef bool (*camera_supported_preview_resolution_cb)(int width, int height, void *user_data);$/;"	t
+camera_test	test/multimedia_camera_test.c	/^int camera_test(){$/;"	f
+camera_unset_capture_completed_cb	src/camera.c	/^int camera_unset_capture_completed_cb(camera_h camera){$/;"	f
+camera_unset_capturing_cb	src/camera.c	/^int camera_unset_capturing_cb( camera_h camera){$/;"	f
+camera_unset_error_cb	src/camera.c	/^int camera_unset_error_cb(camera_h camera){$/;"	f
+camera_unset_focus_changed_cb	src/camera.c	/^int camera_unset_focus_changed_cb(camera_h camera){$/;"	f
+camera_unset_preview_cb	src/camera.c	/^int camera_unset_preview_cb( camera_h camera){$/;"	f
+camera_unset_state_changed_cb	src/camera.c	/^int camera_unset_state_changed_cb(camera_h camera){$/;"	f
+capture_cb	TC/testcase/utc_media_camera_working.c	/^void capture_cb(void *image_buffer, int buffer_size, int width, int height, camera_pixel_format_e format, void *user_data)$/;"	f
+capture_complete	TC/testcase/utc_media_camera_working.c	/^int capture_complete(void *user_data){$/;"	f
+capture_complete	test/multimedia_camera_test.c	/^int capture_complete(void *user_data){$/;"	f
+capture_resolution_test	test/multimedia_camera_test.c	/^int capture_resolution_test(){$/;"	f
+capture_resolution_test_cb	TC/testcase/utc_media_camera_working.c	/^bool capture_resolution_test_cb(int width, int height,  void *user_data){$/;"	f
+capture_resolution_test_cb	test/multimedia_camera_test.c	/^bool capture_resolution_test_cb(int width, int height, void *user_data){$/;"	f
+capture_test	test/multimedia_camera_test.c	/^int capture_test(){$/;"	f
+capturing_cb	test/multimedia_camera_test.c	/^void capturing_cb(void *image_buffer, int buffer_size, int width, int height, camera_pixel_format_e format, void *user_data)$/;"	f
+cleanup	TC/testcase/utc_media_camera_attr.c	/^static void cleanup(void)$/;"	f	file:
+cleanup	TC/testcase/utc_media_camera_lifecycle.c	/^static void cleanup(void)$/;"	f	file:
+cleanup	TC/testcase/utc_media_camera_setting.c	/^static void cleanup(void)$/;"	f	file:
+cleanup	TC/testcase/utc_media_camera_working.c	/^static void cleanup(void)$/;"	f	file:
+contrast_test	TC/testcase/utc_media_camera_working.c	/^int contrast_test(camera_h camera){$/;"	f
+contrast_test	test/multimedia_camera_test.c	/^int contrast_test(camera_h camera){$/;"	f
+count	TC/testcase/utc_media_camera_working.c	/^	int count;$/;"	m	struct:__anon3	file:
+count	test/multimedia_camera_test.c	/^	int count;$/;"	m	struct:__anon27	file:
+display_handle	include/camera_private.h	/^	void* display_handle;$/;"	m	struct:_camera_s
+display_type	include/camera_private.h	/^	camera_display_type_e display_type;$/;"	m	struct:_camera_s
+effect_test	TC/testcase/utc_media_camera_working.c	/^int effect_test(camera_h camera){$/;"	f
+effect_test	test/multimedia_camera_test.c	/^int effect_test(camera_h camera){$/;"	f
+event_thread	TC/testcase/utc_media_camera_lifecycle.c	/^static GThread *event_thread;$/;"	v	file:
+event_thread	TC/testcase/utc_media_camera_working.c	/^static GThread *event_thread;$/;"	v	file:
+expected_height	TC/testcase/utc_media_camera_working.c	/^	int expected_height;$/;"	m	struct:__anon4	file:
+expected_height	test/multimedia_camera_test.c	/^	int expected_height;$/;"	m	struct:__anon28	file:
+expected_width	TC/testcase/utc_media_camera_working.c	/^	int expected_width;$/;"	m	struct:__anon4	file:
+expected_width	test/multimedia_camera_test.c	/^	int expected_width;$/;"	m	struct:__anon28	file:
+exposure_mode_test	TC/testcase/utc_media_camera_working.c	/^int exposure_mode_test(camera_h camera){$/;"	f
+exposure_mode_test	test/multimedia_camera_test.c	/^int exposure_mode_test(camera_h camera){$/;"	f
+exposure_test	TC/testcase/utc_media_camera_working.c	/^int exposure_test(camera_h camera){$/;"	f
+exposure_test	test/multimedia_camera_test.c	/^int exposure_test(camera_h camera){$/;"	f
+flash_mode_test	TC/testcase/utc_media_camera_working.c	/^int flash_mode_test(camera_h camera){$/;"	f
+flash_mode_test	test/multimedia_camera_test.c	/^int flash_mode_test(camera_h camera){$/;"	f
+focus_test	test/multimedia_camera_test.c	/^void focus_test(){$/;"	f
+g_af_test_pass	TC/testcase/utc_media_camera_working.c	/^bool g_af_test_pass ; $/;"	v
+g_af_test_pass	test/multimedia_camera_test.c	/^bool g_af_test_pass ; $/;"	v
+g_exposure_mode_pass	TC/testcase/utc_media_camera_working.c	/^bool g_exposure_mode_pass;$/;"	v
+g_exposure_mode_pass	test/multimedia_camera_test.c	/^bool g_exposure_mode_pass;$/;"	v
+g_iso_test_pass	TC/testcase/utc_media_camera_working.c	/^bool g_iso_test_pass ;$/;"	v
+g_iso_test_pass	test/multimedia_camera_test.c	/^bool g_iso_test_pass ;$/;"	v
+g_mainloop	TC/testcase/utc_media_camera_lifecycle.c	/^static GMainLoop *g_mainloop = NULL;$/;"	v	file:
+g_mainloop	TC/testcase/utc_media_camera_setting.c	/^static GMainLoop *g_mainloop = NULL;$/;"	v	file:
+g_mainloop	TC/testcase/utc_media_camera_working.c	/^static GMainLoop *g_mainloop = NULL;$/;"	v	file:
+g_preview_fps_pass	TC/testcase/utc_media_camera_working.c	/^bool g_preview_fps_pass;$/;"	v
+g_preview_fps_pass	test/multimedia_camera_test.c	/^bool g_preview_fps_pass;$/;"	v
+gps_test	TC/testcase/utc_media_camera_working.c	/^int gps_test(camera_h camera){$/;"	f
+gps_test	test/multimedia_camera_test.c	/^int gps_test(camera_h camera){$/;"	f
+height	TC/testcase/utc_media_camera_working.c	/^	int height[100];$/;"	m	struct:__anon3	file:
+height	test/multimedia_camera_test.c	/^	int height[100];$/;"	m	struct:__anon27	file:
+image_quality_test	TC/testcase/utc_media_camera_working.c	/^int image_quality_test(camera_h camera){$/;"	f
+image_quality_test	test/multimedia_camera_test.c	/^int image_quality_test(camera_h camera){$/;"	f
+img	test/multimedia_camera_test.c	/^Evas_Object* img;$/;"	v
+in_format	TC/testcase/utc_media_camera_working.c	/^	camera_pixel_format_e in_format;$/;"	m	struct:__anon1	file:
+in_format	test/multimedia_camera_test.c	/^	camera_pixel_format_e in_format;$/;"	m	struct:__anon25	file:
+iscalled	TC/testcase/utc_media_camera_working.c	/^	bool iscalled;$/;"	m	struct:__anon1	file:
+iscalled	TC/testcase/utc_media_camera_working.c	/^	bool iscalled;$/;"	m	struct:__anon2	file:
+iscalled	test/multimedia_camera_test.c	/^	bool iscalled;$/;"	m	struct:__anon25	file:
+iscalled	test/multimedia_camera_test.c	/^	bool iscalled;$/;"	m	struct:__anon26	file:
+iscaptured	TC/testcase/utc_media_camera_working.c	/^	bool iscaptured;$/;"	m	struct:__anon2	file:
+iscaptured	test/multimedia_camera_test.c	/^	bool iscaptured;$/;"	m	struct:__anon26	file:
+iscapturing	TC/testcase/utc_media_camera_working.c	/^	bool iscapturing;$/;"	m	struct:__anon2	file:
+iscapturing	test/multimedia_camera_test.c	/^	bool iscapturing;$/;"	m	struct:__anon26	file:
+iso_test	TC/testcase/utc_media_camera_working.c	/^int iso_test(camera_h camera){$/;"	f
+iso_test	test/multimedia_camera_test.c	/^int iso_test(camera_h camera){$/;"	f
+ispass	TC/testcase/utc_media_camera_working.c	/^	bool ispass;$/;"	m	struct:__anon4	file:
+ispass	test/multimedia_camera_test.c	/^	bool ispass;$/;"	m	struct:__anon28	file:
+ispreviewed	TC/testcase/utc_media_camera_working.c	/^	bool ispreviewed;$/;"	m	struct:__anon2	file:
+ispreviewed	test/multimedia_camera_test.c	/^	bool ispreviewed;$/;"	m	struct:__anon26	file:
+mEvasWindow	test/multimedia_camera_test.c	/^Evas_Object* mEvasWindow;$/;"	v
+main	test/multimedia_camera_test.c	/^int main(int argc, char ** argv)$/;"	f
+mm_capture_callback	src/camera.c	/^gboolean mm_capture_callback(MMCamcorderCaptureDataType *frame, MMCamcorderCaptureDataType *thumbnail, void *user_data){$/;"	f
+mm_handle	include/camera_private.h	/^	MMHandleType mm_handle;$/;"	m	struct:_camera_s
+mm_message_callback	src/camera.c	/^int mm_message_callback(int message, void *param, void *user_data){$/;"	f
+mm_videostream_callback	src/camera.c	/^gboolean mm_videostream_callback(MMCamcorderVideoStreamDataType * stream, void *user_data){$/;"	f
+preview_fps_test	TC/testcase/utc_media_camera_working.c	/^int preview_fps_test(camera_h camera)$/;"	f
+preview_fps_test	test/multimedia_camera_test.c	/^int preview_fps_test(camera_h camera)$/;"	f
+preview_resolution_cb	test/multimedia_camera_test.c	/^bool preview_resolution_cb(int width, int height, void *user_data)$/;"	f
+preview_test	test/multimedia_camera_test.c	/^void preview_test(){$/;"	f
+preview_test_data	TC/testcase/utc_media_camera_working.c	/^}preview_test_data;$/;"	t	typeref:struct:__anon4	file:
+preview_test_data	test/multimedia_camera_test.c	/^}preview_test_data;$/;"	t	typeref:struct:__anon28	file:
+preview_win	TC/testcase/utc_media_camera_working.c	/^int preview_win = 0;	$/;"	v
+preview_win	test/multimedia_camera_test.c	/^Ecore_X_Window preview_win;$/;"	v
+resolution_stack	TC/testcase/utc_media_camera_working.c	/^} resolution_stack;$/;"	t	typeref:struct:__anon3	file:
+resolution_stack	test/multimedia_camera_test.c	/^} resolution_stack;$/;"	t	typeref:struct:__anon27	file:
+result	TC/testcase/utc_media_camera_working.c	/^	bool result;$/;"	m	struct:__anon1	file:
+result	test/multimedia_camera_test.c	/^	bool result;$/;"	m	struct:__anon25	file:
+rotation_test	test/multimedia_camera_test.c	/^void rotation_test(){$/;"	f
+scene_mode_test	TC/testcase/utc_media_camera_working.c	/^int scene_mode_test(camera_h camera){$/;"	f
+scene_mode_test	test/multimedia_camera_test.c	/^int scene_mode_test(camera_h camera){$/;"	f
+startup	TC/testcase/utc_media_camera_attr.c	/^static void startup(void)$/;"	f	file:
+startup	TC/testcase/utc_media_camera_lifecycle.c	/^static void startup(void)$/;"	f	file:
+startup	TC/testcase/utc_media_camera_setting.c	/^static void startup(void)$/;"	f	file:
+startup	TC/testcase/utc_media_camera_working.c	/^static void startup(void)$/;"	f	file:
+state	TC/testcase/utc_media_camera_working.c	/^	camera_state_e state;$/;"	m	struct:__anon2	file:
+state	include/camera_private.h	/^	int state;$/;"	m	struct:_camera_s
+state	test/multimedia_camera_test.c	/^	camera_state_e state;$/;"	m	struct:__anon26	file:
+state_cb	TC/testcase/utc_media_camera_working.c	/^void state_cb(camera_state_e previous , camera_state_e current , int by_asm, void *user_data){$/;"	f
+state_cb	test/multimedia_camera_test.c	/^void state_cb(camera_state_e previous , camera_state_e current , int by_asm, const void *user_data){$/;"	f
+state_change_data	TC/testcase/utc_media_camera_working.c	/^} state_change_data;$/;"	t	typeref:struct:__anon2	file:
+state_change_data	test/multimedia_camera_test.c	/^} state_change_data;$/;"	t	typeref:struct:__anon26	file:
+stillshot_test	test/multimedia_camera_test.c	/^int stillshot_test(){$/;"	f
+tag_enable_test	TC/testcase/utc_media_camera_working.c	/^int tag_enable_test(camera_h camera){$/;"	f
+tag_enable_test	test/multimedia_camera_test.c	/^int tag_enable_test(camera_h camera){$/;"	f
+tag_image_description_test	TC/testcase/utc_media_camera_working.c	/^int tag_image_description_test(camera_h camera){$/;"	f
+tag_image_description_test	test/multimedia_camera_test.c	/^int tag_image_description_test(camera_h camera){$/;"	f
+tag_orientation_test	TC/testcase/utc_media_camera_working.c	/^int tag_orientation_test(camera_h camera){$/;"	f
+tag_orientation_test	test/multimedia_camera_test.c	/^int tag_orientation_test(camera_h camera){$/;"	f
+tag_software_test	TC/testcase/utc_media_camera_working.c	/^int tag_software_test(camera_h camera){$/;"	f
+tag_software_test	test/multimedia_camera_test.c	/^int tag_software_test(camera_h camera){$/;"	f
+test_main	test/multimedia_camera_test.c	/^void* test_main(void *arg){$/;"	f
+tet_cleanup	TC/testcase/utc_media_camera_attr.c	/^void (*tet_cleanup)(void) = cleanup;$/;"	v
+tet_cleanup	TC/testcase/utc_media_camera_lifecycle.c	/^void (*tet_cleanup)(void) = cleanup;$/;"	v
+tet_cleanup	TC/testcase/utc_media_camera_setting.c	/^void (*tet_cleanup)(void) = cleanup;$/;"	v
+tet_cleanup	TC/testcase/utc_media_camera_working.c	/^void (*tet_cleanup)(void) = cleanup;$/;"	v
+tet_startup	TC/testcase/utc_media_camera_attr.c	/^void (*tet_startup)(void) = startup;$/;"	v
+tet_startup	TC/testcase/utc_media_camera_lifecycle.c	/^void (*tet_startup)(void) = startup;$/;"	v
+tet_startup	TC/testcase/utc_media_camera_setting.c	/^void (*tet_startup)(void) = startup;$/;"	v
+tet_startup	TC/testcase/utc_media_camera_working.c	/^void (*tet_startup)(void) = startup;$/;"	v
+tet_testlist	TC/testcase/utc_media_camera_attr.c	/^struct tet_testlist tet_testlist[] = {$/;"	v	typeref:struct:tet_testlist
+tet_testlist	TC/testcase/utc_media_camera_lifecycle.c	/^struct tet_testlist tet_testlist[] = {$/;"	v	typeref:struct:tet_testlist
+tet_testlist	TC/testcase/utc_media_camera_setting.c	/^struct tet_testlist tet_testlist[] = {$/;"	v	typeref:struct:tet_testlist
+tet_testlist	TC/testcase/utc_media_camera_working.c	/^struct tet_testlist tet_testlist[] = {$/;"	v	typeref:struct:tet_testlist
+user_cb	include/camera_private.h	/^	void* user_cb[_CAMERA_EVENT_TYPE_NUM];$/;"	m	struct:_camera_s
+user_data	include/camera_private.h	/^	void* user_data[_CAMERA_EVENT_TYPE_NUM];$/;"	m	struct:_camera_s
+utc_camera_foreach_supported_capture_format_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_foreach_supported_capture_format_negative(void)$/;"	f	file:
+utc_camera_foreach_supported_capture_format_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_foreach_supported_capture_format_positive(void)$/;"	f	file:
+utc_camera_foreach_supported_capture_resolution_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_foreach_supported_capture_resolution_negative(void)$/;"	f	file:
+utc_camera_foreach_supported_capture_resolution_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_foreach_supported_capture_resolution_positive(void)$/;"	f	file:
+utc_camera_foreach_supported_preview_format_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_foreach_supported_preview_format_negative(void)$/;"	f	file:
+utc_camera_foreach_supported_preview_format_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_foreach_supported_preview_format_positive(void)$/;"	f	file:
+utc_camera_foreach_supported_preview_resolution_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_foreach_supported_preview_resolution_negative(void)$/;"	f	file:
+utc_camera_foreach_supported_preview_resolution_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_foreach_supported_preview_resolution_positive(void)$/;"	f	file:
+utc_camera_get_capture_format_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_get_capture_format_negative(void)$/;"	f	file:
+utc_camera_get_capture_format_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_get_capture_format_positive(void)$/;"	f	file:
+utc_camera_get_capture_resolution_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_get_capture_resolution_negative(void)$/;"	f	file:
+utc_camera_get_capture_resolution_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_get_capture_resolution_positive(void)$/;"	f	file:
+utc_camera_get_display_rotation_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_get_display_rotation_negative(void)$/;"	f	file:
+utc_camera_get_display_rotation_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_get_display_rotation_positive(void)$/;"	f	file:
+utc_camera_get_preview_format_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_get_preview_format_negative(void)$/;"	f	file:
+utc_camera_get_preview_format_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_get_preview_format_positive(void)$/;"	f	file:
+utc_camera_get_preview_resolution_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_get_preview_resolution_negative(void)$/;"	f	file:
+utc_camera_get_preview_resolution_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_get_preview_resolution_positive(void)$/;"	f	file:
+utc_camera_get_x11_display_mode_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_get_x11_display_mode_negative(void){$/;"	f	file:
+utc_camera_get_x11_display_mode_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_get_x11_display_mode_positive(void){$/;"	f	file:
+utc_camera_is_x11_display_visible_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_is_x11_display_visible_negative(void){$/;"	f	file:
+utc_camera_is_x11_display_visible_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_is_x11_display_visible_positive(void){$/;"	f	file:
+utc_camera_set_capture_completed_cb_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_capture_completed_cb_negative(void)$/;"	f	file:
+utc_camera_set_capture_completed_cb_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_capture_completed_cb_positive(void)$/;"	f	file:
+utc_camera_set_capture_format_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_capture_format_negative(void)$/;"	f	file:
+utc_camera_set_capture_format_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_capture_format_positive(void)$/;"	f	file:
+utc_camera_set_capture_resolution_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_capture_resolution_negative(void)$/;"	f	file:
+utc_camera_set_capture_resolution_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_capture_resolution_positive(void)$/;"	f	file:
+utc_camera_set_capturing_cb_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_capturing_cb_negative(void)$/;"	f	file:
+utc_camera_set_capturing_cb_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_capturing_cb_positive(void)$/;"	f	file:
+utc_camera_set_display_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_display_negative(void)$/;"	f	file:
+utc_camera_set_display_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_display_positive(void)$/;"	f	file:
+utc_camera_set_display_rotation_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_display_rotation_negative(void)$/;"	f	file:
+utc_camera_set_display_rotation_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_display_rotation_positive(void)$/;"	f	file:
+utc_camera_set_error_cb_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_error_cb_negative(void)$/;"	f	file:
+utc_camera_set_error_cb_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_error_cb_positive(void)$/;"	f	file:
+utc_camera_set_focus_changed_cb_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_focus_changed_cb_negative(void)$/;"	f	file:
+utc_camera_set_focus_changed_cb_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_focus_changed_cb_positive(void)$/;"	f	file:
+utc_camera_set_preview_cb_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_preview_cb_negative(void)$/;"	f	file:
+utc_camera_set_preview_cb_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_preview_cb_positive(void)$/;"	f	file:
+utc_camera_set_preview_format_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_preview_format_negative(void)$/;"	f	file:
+utc_camera_set_preview_format_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_preview_format_positive(void)$/;"	f	file:
+utc_camera_set_preview_resolution_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_preview_resolution_negative(void)$/;"	f	file:
+utc_camera_set_preview_resolution_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_preview_resolution_positive(void)$/;"	f	file:
+utc_camera_set_state_changed_cb_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_state_changed_cb_negative(void)$/;"	f	file:
+utc_camera_set_state_changed_cb_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_state_changed_cb_positive(void)$/;"	f	file:
+utc_camera_set_x11_display_mode_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_x11_display_mode_negative(void){$/;"	f	file:
+utc_camera_set_x11_display_mode_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_x11_display_mode_positive(void){$/;"	f	file:
+utc_camera_set_x11_display_visible_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_x11_display_visible_negative(void){$/;"	f	file:
+utc_camera_set_x11_display_visible_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_set_x11_display_visible_positive(void){$/;"	f	file:
+utc_camera_unset_capture_completed_cb_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_unset_capture_completed_cb_negative(void)$/;"	f	file:
+utc_camera_unset_capture_completed_cb_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_unset_capture_completed_cb_positive(void)$/;"	f	file:
+utc_camera_unset_capturing_cb_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_unset_capturing_cb_negative(void)$/;"	f	file:
+utc_camera_unset_capturing_cb_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_unset_capturing_cb_positive(void)$/;"	f	file:
+utc_camera_unset_error_cb_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_unset_error_cb_negative(void)$/;"	f	file:
+utc_camera_unset_error_cb_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_unset_error_cb_positive(void)$/;"	f	file:
+utc_camera_unset_focus_changed_cb_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_unset_focus_changed_cb_negative(void)$/;"	f	file:
+utc_camera_unset_focus_changed_cb_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_unset_focus_changed_cb_positive(void)$/;"	f	file:
+utc_camera_unset_preview_cb_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_unset_preview_cb_negative(void)$/;"	f	file:
+utc_camera_unset_preview_cb_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_unset_preview_cb_positive(void)$/;"	f	file:
+utc_camera_unset_state_changed_cb_negative	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_unset_state_changed_cb_negative(void)$/;"	f	file:
+utc_camera_unset_state_changed_cb_positive	TC/testcase/utc_media_camera_setting.c	/^static void utc_camera_unset_state_changed_cb_positive(void)$/;"	f	file:
+utc_media_camera_attr_foreach_supported_af_mode_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_foreach_supported_af_mode_negative(void)$/;"	f	file:
+utc_media_camera_attr_foreach_supported_af_mode_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_foreach_supported_af_mode_positive(void)$/;"	f	file:
+utc_media_camera_attr_foreach_supported_effect_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_foreach_supported_effect_negative(void)$/;"	f	file:
+utc_media_camera_attr_foreach_supported_effect_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_foreach_supported_effect_positive(void)$/;"	f	file:
+utc_media_camera_attr_foreach_supported_exposure_mode_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_foreach_supported_exposure_mode_negative(void)$/;"	f	file:
+utc_media_camera_attr_foreach_supported_exposure_mode_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_foreach_supported_exposure_mode_positive(void)$/;"	f	file:
+utc_media_camera_attr_foreach_supported_flash_mode_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_foreach_supported_flash_mode_negative(void)$/;"	f	file:
+utc_media_camera_attr_foreach_supported_flash_mode_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_foreach_supported_flash_mode_positive(void)$/;"	f	file:
+utc_media_camera_attr_foreach_supported_fps_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_foreach_supported_fps_negative(void)$/;"	f	file:
+utc_media_camera_attr_foreach_supported_fps_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_foreach_supported_fps_positive(void)$/;"	f	file:
+utc_media_camera_attr_foreach_supported_iso_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_foreach_supported_iso_negative(void)$/;"	f	file:
+utc_media_camera_attr_foreach_supported_iso_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_foreach_supported_iso_positive(void)$/;"	f	file:
+utc_media_camera_attr_foreach_supported_scene_mode_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_foreach_supported_scene_mode_negative(void)$/;"	f	file:
+utc_media_camera_attr_foreach_supported_scene_mode_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_foreach_supported_scene_mode_positive(void)$/;"	f	file:
+utc_media_camera_attr_foreach_supported_whitebalance_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_foreach_supported_whitebalance_negative(void)$/;"	f	file:
+utc_media_camera_attr_foreach_supported_whitebalance_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_foreach_supported_whitebalance_positive(void)$/;"	f	file:
+utc_media_camera_attr_get_effect_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_effect_negative(void)$/;"	f	file:
+utc_media_camera_attr_get_effect_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_effect_positive(void)$/;"	f	file:
+utc_media_camera_attr_get_flash_mode_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_flash_mode_negative(void)$/;"	f	file:
+utc_media_camera_attr_get_flash_mode_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_flash_mode_positive(void)$/;"	f	file:
+utc_media_camera_attr_get_image_quality_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_image_quality_negative(void)$/;"	f	file:
+utc_media_camera_attr_get_image_quality_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_image_quality_positive(void)$/;"	f	file:
+utc_media_camera_attr_get_lens_orientation_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_lens_orientation_negative(void)$/;"	f	file:
+utc_media_camera_attr_get_lens_orientation_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_lens_orientation_positive(void)$/;"	f	file:
+utc_media_camera_attr_get_preview_fps_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_preview_fps_negative(void)$/;"	f	file:
+utc_media_camera_attr_get_preview_fps_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_preview_fps_positive(void)$/;"	f	file:
+utc_media_camera_attr_get_scene_mode_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_scene_mode_negative(void)$/;"	f	file:
+utc_media_camera_attr_get_scene_mode_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_scene_mode_positive(void)$/;"	f	file:
+utc_media_camera_attr_get_tag_altitude_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_tag_altitude_negative(void)$/;"	f	file:
+utc_media_camera_attr_get_tag_altitude_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_tag_altitude_positive(void)$/;"	f	file:
+utc_media_camera_attr_get_tag_image_description_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_tag_image_description_negative(void)$/;"	f	file:
+utc_media_camera_attr_get_tag_image_description_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_tag_image_description_positive(void)$/;"	f	file:
+utc_media_camera_attr_get_tag_latitude_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_tag_latitude_negative(void)$/;"	f	file:
+utc_media_camera_attr_get_tag_latitude_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_tag_latitude_positive(void)$/;"	f	file:
+utc_media_camera_attr_get_tag_longitude_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_tag_longitude_negative(void)$/;"	f	file:
+utc_media_camera_attr_get_tag_longitude_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_tag_longitude_positive(void)$/;"	f	file:
+utc_media_camera_attr_get_tag_orientation_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_tag_orientation_negative(void)$/;"	f	file:
+utc_media_camera_attr_get_tag_orientation_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_tag_orientation_positive(void)$/;"	f	file:
+utc_media_camera_attr_get_tag_software_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_tag_software_negative(void)$/;"	f	file:
+utc_media_camera_attr_get_tag_software_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_get_tag_software_positive(void)$/;"	f	file:
+utc_media_camera_attr_is_enable_tag_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_is_enable_tag_negative(void)$/;"	f	file:
+utc_media_camera_attr_is_enable_tag_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_is_enable_tag_positive(void)$/;"	f	file:
+utc_media_camera_attr_set_af_mode_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_af_mode_negative(void)$/;"	f	file:
+utc_media_camera_attr_set_af_mode_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_af_mode_positive(void)$/;"	f	file:
+utc_media_camera_attr_set_brightness_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_brightness_negative(void)$/;"	f	file:
+utc_media_camera_attr_set_brightness_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_brightness_positive(void)$/;"	f	file:
+utc_media_camera_attr_set_contrast_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_contrast_negative(void)$/;"	f	file:
+utc_media_camera_attr_set_contrast_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_contrast_positive(void)$/;"	f	file:
+utc_media_camera_attr_set_exposure_mode_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_exposure_mode_negative(void)$/;"	f	file:
+utc_media_camera_attr_set_exposure_mode_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_exposure_mode_positive(void)$/;"	f	file:
+utc_media_camera_attr_set_exposure_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_exposure_negative(void)$/;"	f	file:
+utc_media_camera_attr_set_exposure_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_exposure_positive(void)$/;"	f	file:
+utc_media_camera_attr_set_image_quality_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_image_quality_negative(void)$/;"	f	file:
+utc_media_camera_attr_set_image_quality_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_image_quality_positive(void)$/;"	f	file:
+utc_media_camera_attr_set_iso_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_iso_negative(void)$/;"	f	file:
+utc_media_camera_attr_set_iso_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_iso_positive(void)$/;"	f	file:
+utc_media_camera_attr_set_preview_fps_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_preview_fps_negative(void)$/;"	f	file:
+utc_media_camera_attr_set_preview_fps_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_preview_fps_positive(void)$/;"	f	file:
+utc_media_camera_attr_set_whitebalance_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_whitebalance_negative(void)$/;"	f	file:
+utc_media_camera_attr_set_whitebalance_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_whitebalance_positive(void)$/;"	f	file:
+utc_media_camera_attr_set_zoom_negative	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_zoom_negative(void)$/;"	f	file:
+utc_media_camera_attr_set_zoom_positive	TC/testcase/utc_media_camera_attr.c	/^static void utc_media_camera_attr_set_zoom_positive(void)$/;"	f	file:
+utc_media_camera_attribute_test	TC/testcase/utc_media_camera_working.c	/^void utc_media_camera_attribute_test(void)$/;"	f
+utc_media_camera_cancel_focusing_negative	TC/testcase/utc_media_camera_lifecycle.c	/^static void utc_media_camera_cancel_focusing_negative(void)$/;"	f	file:
+utc_media_camera_cancel_focusing_positive	TC/testcase/utc_media_camera_lifecycle.c	/^static void utc_media_camera_cancel_focusing_positive(void)$/;"	f	file:
+utc_media_camera_capture_test	TC/testcase/utc_media_camera_working.c	/^void utc_media_camera_capture_test(void){$/;"	f
+utc_media_camera_create_negative	TC/testcase/utc_media_camera_lifecycle.c	/^static void utc_media_camera_create_negative(void)$/;"	f	file:
+utc_media_camera_create_positive	TC/testcase/utc_media_camera_lifecycle.c	/^static void utc_media_camera_create_positive(void)$/;"	f	file:
+utc_media_camera_destroy_negative	TC/testcase/utc_media_camera_lifecycle.c	/^static void utc_media_camera_destroy_negative(void)$/;"	f	file:
+utc_media_camera_destroy_positive	TC/testcase/utc_media_camera_lifecycle.c	/^static void utc_media_camera_destroy_positive(void)$/;"	f	file:
+utc_media_camera_get_state_negative	TC/testcase/utc_media_camera_lifecycle.c	/^static void utc_media_camera_get_state_negative(void)$/;"	f	file:
+utc_media_camera_get_state_positive	TC/testcase/utc_media_camera_lifecycle.c	/^static void utc_media_camera_get_state_positive(void)$/;"	f	file:
+utc_media_camera_preview_test	TC/testcase/utc_media_camera_working.c	/^void utc_media_camera_preview_test(void)$/;"	f
+utc_media_camera_start_capture_negative	TC/testcase/utc_media_camera_lifecycle.c	/^static void utc_media_camera_start_capture_negative(void)$/;"	f	file:
+utc_media_camera_start_capture_positive	TC/testcase/utc_media_camera_lifecycle.c	/^static void utc_media_camera_start_capture_positive(void)$/;"	f	file:
+utc_media_camera_start_focusing_negative	TC/testcase/utc_media_camera_lifecycle.c	/^static void utc_media_camera_start_focusing_negative(void)$/;"	f	file:
+utc_media_camera_start_focusing_positive	TC/testcase/utc_media_camera_lifecycle.c	/^static void utc_media_camera_start_focusing_positive(void)$/;"	f	file:
+utc_media_camera_start_preview_negative	TC/testcase/utc_media_camera_lifecycle.c	/^static void utc_media_camera_start_preview_negative(void)$/;"	f	file:
+utc_media_camera_start_preview_positive	TC/testcase/utc_media_camera_lifecycle.c	/^static void utc_media_camera_start_preview_positive(void)$/;"	f	file:
+utc_media_camera_state_change_test	TC/testcase/utc_media_camera_working.c	/^void utc_media_camera_state_change_test(void){$/;"	f
+utc_media_camera_stop_preview_negative	TC/testcase/utc_media_camera_lifecycle.c	/^static void utc_media_camera_stop_preview_negative(void)$/;"	f	file:
+utc_media_camera_stop_preview_positive	TC/testcase/utc_media_camera_lifecycle.c	/^static void utc_media_camera_stop_preview_positive(void)$/;"	f	file:
+utc_media_capture_resolution_test	TC/testcase/utc_media_camera_working.c	/^void utc_media_capture_resolution_test(void){$/;"	f
+whitebalance_test	TC/testcase/utc_media_camera_working.c	/^int whitebalance_test(camera_h camera){$/;"	f
+whitebalance_test	test/multimedia_camera_test.c	/^int whitebalance_test(camera_h camera){$/;"	f
+width	TC/testcase/utc_media_camera_working.c	/^	int width[100];$/;"	m	struct:__anon3	file:
+width	test/multimedia_camera_test.c	/^	int width[100];$/;"	m	struct:__anon27	file:
+win	test/multimedia_camera_test.c	/^	Evas_Object* win;$/;"	m	struct:__anon24	file:
+zoom_test	TC/testcase/utc_media_camera_working.c	/^int zoom_test(camera_h camera){$/;"	f
+zoom_test	test/multimedia_camera_test.c	/^int zoom_test(camera_h camera){$/;"	f
