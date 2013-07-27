@@ -46,16 +46,18 @@ extern "C" {
  */
 typedef enum
 {
-    CAMERA_ERROR_NONE =              TIZEN_ERROR_NONE,		/**< Successful */
-    CAMERA_ERROR_INVALID_PARAMETER = TIZEN_ERROR_INVALID_PARAMETER,  /**< Invalid parameter */
-    CAMERA_ERROR_INVALID_STATE =     CAMERA_ERROR_CLASS | 0x02,    /**< Invalid state */
-    CAMERA_ERROR_OUT_OF_MEMORY =     TIZEN_ERROR_OUT_OF_MEMORY,      /**< Out of memory */
-    CAMERA_ERROR_DEVICE =            CAMERA_ERROR_CLASS | 0x04,    /**< Device error */
-    CAMERA_ERROR_INVALID_OPERATION = TIZEN_ERROR_INVALID_OPERATION,  /**< Internal error */
-    CAMERA_ERROR_SOUND_POLICY =      CAMERA_ERROR_CLASS | 0x06,    /**< Blocked by Audio Session Manager */
-    CAMERA_ERROR_SECURITY_RESTRICTED = CAMERA_ERROR_CLASS | 0x07,    /**< Restricted by security system policy */
-    CAMERA_ERROR_DEVICE_BUSY = CAMERA_ERROR_CLASS | 0x08,    /**< The device is using in other applications or working some operation */
-    CAMERA_ERROR_DEVICE_NOT_FOUND = CAMERA_ERROR_CLASS | 0x09, /**< No camera device */
+    CAMERA_ERROR_NONE                   = TIZEN_ERROR_NONE,                     /**< Successful */
+    CAMERA_ERROR_INVALID_PARAMETER      = TIZEN_ERROR_INVALID_PARAMETER,        /**< Invalid parameter */
+    CAMERA_ERROR_INVALID_STATE          = CAMERA_ERROR_CLASS | 0x02,            /**< Invalid state */
+    CAMERA_ERROR_OUT_OF_MEMORY          = TIZEN_ERROR_OUT_OF_MEMORY,            /**< Out of memory */
+    CAMERA_ERROR_DEVICE                 = CAMERA_ERROR_CLASS | 0x04,            /**< Device error */
+    CAMERA_ERROR_INVALID_OPERATION      = TIZEN_ERROR_INVALID_OPERATION,        /**< Internal error */
+    CAMERA_ERROR_SOUND_POLICY           = CAMERA_ERROR_CLASS | 0x06,            /**< Blocked by Audio Session Manager */
+    CAMERA_ERROR_SECURITY_RESTRICTED    = CAMERA_ERROR_CLASS | 0x07,            /**< Restricted by security system policy */
+    CAMERA_ERROR_DEVICE_BUSY            = CAMERA_ERROR_CLASS | 0x08,            /**< The device is using in other applications or working some operation */
+    CAMERA_ERROR_DEVICE_NOT_FOUND       = CAMERA_ERROR_CLASS | 0x09,            /**< No camera device */
+    CAMERA_ERROR_SOUND_POLICY_BY_CALL   = CAMERA_ERROR_CLASS | 0x0a,            /**< Blocked by Audio Session Manager - CALL */
+    CAMERA_ERROR_SOUND_POLICY_BY_ALARM  = CAMERA_ERROR_CLASS | 0x0b,            /**< Blocked by Audio Session Manager - ALARM */
 } camera_error_e;
 
 
@@ -188,9 +190,11 @@ typedef enum
  */
 typedef enum
 {
-	CAMERA_POLICY_NONE = 0, /**< None */
-	CAMERA_POLICY_SOUND, /**< Sound policy */
-	CAMERA_POLICY_SECURITY /**< Security policy */
+	CAMERA_POLICY_NONE = 0,         /**< None */
+	CAMERA_POLICY_SOUND,            /**< Sound policy */
+	CAMERA_POLICY_SOUND_BY_CALL,    /**< Sound policy by CALL */
+	CAMERA_POLICY_SOUND_BY_ALARM,   /**< Sound policy by ALARM */
+	CAMERA_POLICY_SECURITY          /**< Security policy */
 } camera_policy_e;
 
 

@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mm.h>
+#include <audio-session-manager-types.h>
 #include <mm_camcorder.h>
 #include <mm_types.h>
 #include <math.h>
@@ -113,6 +114,14 @@ static int __convert_camera_error_code(const char* func, int code){
 		case MM_ERROR_POLICY_BLOCKED:
 			ret = CAMERA_ERROR_SOUND_POLICY;
 			errorstr = "ERROR_SOUND_POLICY";
+			break;
+		case MM_ERROR_POLICY_BLOCKED_BY_CALL:
+			ret = CAMERA_ERROR_SOUND_POLICY_BY_CALL;
+			errorstr = "ERROR_SOUND_POLICY_BY_CALL";
+			break;
+		case MM_ERROR_POLICY_BLOCKED_BY_ALARM:
+			ret = CAMERA_ERROR_SOUND_POLICY_BY_ALARM;
+			errorstr = "ERROR_SOUND_POLICY_BY_ALARM";
 			break;
 		case MM_ERROR_POLICY_RESTRICTED:
 			ret = CAMERA_ERROR_SECURITY_RESTRICTED;
@@ -293,10 +302,26 @@ static int __mm_camera_message_callback(int message, void *param, void *user_dat
 			previous_state = handle->state;
 			handle->state = __camera_state_convert(m->state.current );
 			camera_policy_e policy = CAMERA_POLICY_NONE;
-			if(message == MM_MESSAGE_CAMCORDER_STATE_CHANGED_BY_ASM )
-				policy = CAMERA_POLICY_SOUND;
-			else if( message == MM_MESSAGE_CAMCORDER_STATE_CHANGED_BY_SECURITY )
+			if (message == MM_MESSAGE_CAMCORDER_STATE_CHANGED_BY_ASM) {
+				switch (m->state.code) {
+				case ASM_EVENT_SOURCE_CALL_START:
+					policy = CAMERA_POLICY_SOUND_BY_CALL;
+					LOGE("CAMERA_POLICY_SOUND_BY_CALL");
+					break;
+				case ASM_EVENT_SOURCE_ALARM_START:
+				case ASM_EVENT_SOURCE_ALARM_END:
+					policy = CAMERA_POLICY_SOUND_BY_ALARM;
+					LOGE("CAMERA_POLICY_SOUND_BY_ALARM");
+					break;
+				default:
+					policy = CAMERA_POLICY_SOUND;
+					LOGE("CAMERA_POLICY_SOUND");
+					break;
+				}
+			} else if (message == MM_MESSAGE_CAMCORDER_STATE_CHANGED_BY_SECURITY) {
 				policy = CAMERA_POLICY_SECURITY;
+				LOGE("CAMERA_POLICY_SECURITY");
+			}
 
 			if( previous_state != handle->state && handle->user_cb[_CAMERA_EVENT_TYPE_STATE_CHANGE] ){
 				((camera_state_changed_cb)handle->user_cb[_CAMERA_EVENT_TYPE_STATE_CHANGE])(previous_state, handle->state, policy, handle->user_data[_CAMERA_EVENT_TYPE_STATE_CHANGE]);

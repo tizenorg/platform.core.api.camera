@@ -1,13 +1,14 @@
 Name:       capi-media-camera
 Summary:    A Camera library in Tizen C API
-Version:    0.1.3
-Release:    1
+Version:    0.1.4
+Release:    0
 Group:      libdevel
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
 BuildRequires:  cmake
 BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(mm-camcorder)
+BuildRequires:  pkgconfig(audio-session-mgr)
 BuildRequires:  pkgconfig(capi-base-common)
 
 %description
