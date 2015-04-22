@@ -724,7 +724,8 @@ int camera_create(camera_device_e device, camera_h* camera){
 	return __convert_camera_error_code(__func__, ret);
 }
 
- int camera_destroy(camera_h camera){
+ int camera_destroy(camera_h camera)
+{
 	if( camera == NULL ){
 		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
@@ -749,11 +750,16 @@ int camera_create(camera_device_e device, camera_h* camera){
 	if( ret == MM_ERROR_NONE ){
 		_camera_remove_cb_message(handle);
 		g_mutex_clear(&handle->idle_cb_lock);
+#ifdef HAVE_WAYLAND
+		if (handle->wl_info) {
+			free(handle->wl_info);
+			handle->wl_info = NULL;
+		}
+#endif /* HAVE_WAYLAND */
 		free(handle);
 	}
 
 	return __convert_camera_error_code(__func__, ret);
-
 }
 
 int camera_start_preview(camera_h camera){
@@ -1222,7 +1228,9 @@ int camera_cancel_focusing(camera_h camera){
 	handle->on_continuous_focusing = false;
 	return __convert_camera_error_code(__func__, mm_camcorder_stop_focusing(handle->mm_handle));
 }
-int camera_set_display(camera_h camera, camera_display_type_e type, camera_display_h display){
+
+int camera_set_display(camera_h camera, camera_display_type_e type, camera_display_h display)
+{
 	int ret = MM_ERROR_NONE;
 	int set_surface = MM_DISPLAY_SURFACE_X;
 	void *set_handle = NULL;
@@ -1255,12 +1263,51 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 		object_type = evas_object_type_get(obj);
 		if( object_type ){
 			if( type == CAMERA_DISPLAY_TYPE_OVERLAY && !strcmp(object_type, "elm_win") ){
+#ifdef HAVE_WAYLAND
+				MMCamWaylandInfo *wl_info = (MMCamWaylandInfo *)malloc(sizeof(MMCamWaylandInfo));
+
+				if (wl_info == NULL) {
+					LOGE("wl_info alloc failed : %d", sizeof(MMCamWaylandInfo));
+					return __convert_camera_error_code(__func__, MM_ERROR_CAMCORDER_LOW_MEMORY);
+				}
+
+				memset(wl_info, 0x0, sizeof(MMCamWaylandInfo));
+
+				wl_info->evas_obj = (void *)obj;
+				wl_info->window = (void *)elm_win_wl_window_get(obj);
+				wl_info->surface = (void *)ecore_wl_window_surface_get(wl_info->window);
+				wl_info->display = (void *)ecore_wl_display_get();
+
+				if (wl_info->window == NULL || wl_info->surface == NULL || wl_info->display == NULL) {
+					LOGE("something is NULL %p, %p, %p", wl_info->window, wl_info->surface, wl_info->display);
+					free(wl_info);
+					return __convert_camera_error_code(__func__, MM_ERROR_CAMCORDER_INTERNAL);
+				}
+
+				evas_object_geometry_get(obj, &wl_info->window_x, &wl_info->window_y,
+							      &wl_info->window_width, &wl_info->window_height);
+
+				if (handle->wl_info) {
+					free(handle->wl_info);
+					handle->wl_info = NULL;
+				}
+
+				/* set wayland info */
+				handle->wl_info = (void *)wl_info;
+				set_surface = MM_DISPLAY_SURFACE_X;
+				set_handle = (void *)wl_info;
+
+				LOGD("wayland obj %p, window %p, surface %p, display %p, size %d,%d,%dx%d",
+				     wl_info->evas_obj, wl_info->window, wl_info->surface, wl_info->display,
+				     wl_info->window_x, wl_info->window_y, wl_info->window_width, wl_info->window_height);
+#else /* HAVE_WAYLAND */
 				/* x window overlay surface */
 				handle->display_handle = (void *)elm_win_xwindow_get(obj);
 				set_surface = MM_DISPLAY_SURFACE_X;
 				set_handle = &(handle->display_handle);
 
 				LOGD("display type OVERLAY : handle %p, %d", set_handle, (int)handle->display_handle);
+#endif /* HAVE_WAYLAND */
 			} else if( type == CAMERA_DISPLAY_TYPE_EVAS && !strcmp(object_type, "image") ) {
 				/* evas object surface */
 				handle->display_handle = display;

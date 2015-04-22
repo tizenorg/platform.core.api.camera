@@ -55,6 +55,7 @@ typedef struct _camera_s{
 	void* user_cb[_CAMERA_EVENT_TYPE_NUM];
 	void* user_data[_CAMERA_EVENT_TYPE_NUM];
 	void* display_handle;
+	MMCamWaylandInfo *wl_info;
 	camera_display_type_e display_type;
 	unsigned int state;
 
