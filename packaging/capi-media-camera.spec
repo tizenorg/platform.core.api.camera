@@ -1,6 +1,9 @@
+%bcond_with wayland
+%bcond_with x
+
 Name:       capi-media-camera
 Summary:    A Camera library in Tizen C API
-Version:    0.2.0
+Version:    0.2.1
 Release:    0
 Group:      Multimedia/API
 License:    Apache-2.0
@@ -46,7 +49,18 @@ Development related files.
 export CFLAGS+=" -DTIZEN_DEBUG_ENABLE"
 %endif
 MAJORVER=`echo %{version} | awk 'BEGIN {FS="."}{print $1}'`
-%cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix} -DFULLVER=%{version} -DMAJORVER=${MAJORVER}
+%cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix} -DFULLVER=%{version} -DMAJORVER=${MAJORVER} \
+%if %{with wayland}
+	-DWAYLAND_SUPPORT=On \
+%else
+	-DWAYLAND_SUPPORT=Off \
+%endif
+%if %{with x}
+	-DX11_SUPPORT=On
+%else
+	-DX11_SUPPORT=Off
+%endif
+
 make %{?jobs:-j%jobs}
 
 
