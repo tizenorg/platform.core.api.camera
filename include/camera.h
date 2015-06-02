@@ -27,7 +27,7 @@ extern "C" {
 /**
  * @file camera.h
  * @brief This file contains the Camera API, related structures and enumerations.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 
 /**
@@ -39,7 +39,7 @@ extern "C" {
 
 /**
  * @brief Enumeration for the error codes of Camera.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -62,7 +62,7 @@ typedef enum
 
 /**
  * @brief Enumeration for the camera state.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -75,7 +75,7 @@ typedef enum
 
 /**
  * @brief Enumeration for the camera device.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -85,7 +85,7 @@ typedef enum
 
 /**
  * @brief Enumeration for the camera pixel format.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -108,7 +108,7 @@ typedef enum
 
 /**
  * @brief Enumeration for the camera display type.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -119,7 +119,7 @@ typedef enum
 
 /**
  * @brief Enumeration for the camera policy.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -132,7 +132,7 @@ typedef enum
 
 /**
  * @brief Enumeration for the camera rotation type.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -145,7 +145,7 @@ typedef enum
 
 /**
  * @brief Enumeration for the camera flip type.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -157,7 +157,7 @@ typedef enum
 
 /**
  * @brief Enumeration for the camera focus state.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -169,7 +169,7 @@ typedef enum
 
 /**
  * @brief The structure type of the image data.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
  typedef struct
 {
@@ -184,7 +184,7 @@ typedef enum
 
 /**
  * @brief The structure type for face detection.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef struct
 {
@@ -198,7 +198,7 @@ typedef struct
 
 /**
  * @brief The structure type to preview stream data.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef struct
 {
@@ -233,14 +233,14 @@ typedef struct
 
 /**
  * @brief The Camera handle.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @see	recorder_create_videorecorder()
  */
 typedef struct camera_s *camera_h;
 
 /**
  * @brief The Camera display handle.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef void *camera_display_h;
 
@@ -248,7 +248,7 @@ typedef void *camera_display_h;
 
 /**
  * @brief Gets a display handle.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 #define GET_DISPLAY(x) (void*)(x)
 
@@ -265,7 +265,7 @@ typedef void *camera_display_h;
 
 /**
  * @brief Enumeration for the camera display mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -286,7 +286,7 @@ typedef enum
 
 /**
  * @brief Enumeration for the color tone, which provides the impression of looking through a tinted glass.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -325,7 +325,7 @@ typedef enum
 
 /**
  * @brief Enumeration for the white balance levels of the camera.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -344,7 +344,7 @@ typedef enum
 /**
  * @brief Enumeration for the scene mode.
  * @details The mode of operation can be in daylight, night, or back-light.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -368,7 +368,7 @@ typedef enum
 
 /**
  * @brief Enumeration for the auto focus mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -380,7 +380,7 @@ typedef enum
 
 /**
  * @brief Enumeration for the ISO levels of the camera.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -396,7 +396,7 @@ typedef enum
 
 /**
  * @brief Enumeration for the camera exposure modes.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -409,7 +409,7 @@ typedef enum
 
 /**
  * @brief Enumeration for the orientation values of tag.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -425,7 +425,7 @@ typedef enum
 
 /**
  * @brief Enumeration for the flash mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -441,7 +441,7 @@ typedef enum
 
 /**
  * @brief Enumeration to preview FPS.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -460,7 +460,7 @@ typedef enum
 
 /**
  * @brief Enumeration for the theater mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -471,7 +471,7 @@ typedef enum
 
 /**
  * @brief Enumeration for HDR capture mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
 typedef enum
 {
@@ -492,7 +492,7 @@ typedef enum
 
 /**
  * @brief Called when the camera state is changed.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  *
  * @param[in] previous The previous state of the camera
  * @param[in] current The current state of the camera
@@ -507,7 +507,7 @@ typedef void (*camera_state_changed_cb)(camera_state_e previous, camera_state_e 
 
 /**
  * @brief Called when the camera is interrupted by policy.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  *
  * @param[in] policy The policy that interrupted the camera
  * @param[in] previous The previous state of the camera
@@ -524,7 +524,7 @@ typedef void (*camera_interrupted_cb)(camera_policy_e policy, camera_state_e pre
  *          Changes of focus state are as follows: \n
  *          #CAMERA_FOCUS_STATE_RELEASED -> start focusing -> #CAMERA_FOCUS_STATE_ONGOING -> working ->
  *          #CAMERA_FOCUS_STATE_FOCUSED or #CAMERA_FOCUS_STATE_FAILED.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  *
  * @param[in] state The current state of the auto-focus
  * @param[in] user_data The user data passed from the callback registration function
@@ -538,7 +538,7 @@ typedef void (*camera_focus_changed_cb)(camera_focus_state_e state, void *user_d
 
 /**
  * @brief Called to register for notifications about delivering a copy of the new preview frame when every preview frame is displayed.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  *
  * @remarks This function is issued in the context of gstreamer so the UI update code should not be directly invoked.\n
  *          If the camera is used as a recorder then this callback function won't be called.
@@ -554,7 +554,7 @@ typedef void (*camera_preview_cb)(camera_preview_data_s *frame, void *user_data)
 
 /**
  * @brief Called to register for notifications about delivering media packet when every preview frame is displayed.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  *
  * @remarks This function is issued in the context of gstreamer so the UI update code should not be directly invoked.\n
  *          If the camera is used as a recorder then this callback function won't be called.\n
@@ -571,7 +571,7 @@ typedef void (*camera_media_packet_preview_cb)(media_packet_h pkt, void *user_da
 
 /**
  * @brief Called to get information about image data taken by the camera once per frame while capturing.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  *
  * @remarks This function is issued in the context of gstreamer (video source thread) so the UI update code should not be directly invoked.
  *          You must not call camera_start_preview() within this callback.
@@ -589,7 +589,7 @@ typedef void (*camera_capturing_cb)(camera_image_data_s* image, camera_image_dat
 
 /**
  * @brief Called when the camera capturing completes.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  *
  * @remarks The callback is called after camera_capturing_cb() is completed.\n
  *          If you want to show the user a preview after capturing is finished, an application can use camera_start_preview() after calling this callback.
@@ -604,7 +604,7 @@ typedef void (*camera_capture_completed_cb)(void *user_data);
 
 /**
  * @brief Called when an error occurs.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  *
  * @remarks This callback informs about a critical error situation.\n
  *          When this callback is invoked, the user should release the resource and terminate the application.\n
@@ -624,7 +624,7 @@ typedef void (*camera_error_cb)(camera_error_e error, camera_state_e current_sta
 
 /**
  * @brief Called when a face is detected in the preview frame.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] faces The detected face array
  * @param[in] count The length of the array
  * @param[in] user_data The user data passed from the callback registration function
@@ -643,7 +643,7 @@ typedef void (*camera_face_detected_cb)(camera_detected_face_s *faces, int count
 
 /**
  * @brief Called once for each supported preview resolution.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] width The preview image width
  * @param[in] height The preview image height
  * @param[in] user_data The user data passed from the foreach function
@@ -655,7 +655,7 @@ typedef bool (*camera_supported_preview_resolution_cb)(int width, int height, vo
 
 /**
  * @brief Called once for each supported capture resolution.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] width The capture resolution width
  * @param[in] height The capture resolution height
  * @param[in] user_data The user data passed from the foreach function
@@ -667,7 +667,7 @@ typedef bool (*camera_supported_capture_resolution_cb)(int width, int height, vo
 
 /**
  * @brief Called once for the pixel format of each supported capture format.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] format The supported pixel format
  * @param[in] user_data The user data passed from the foreach function
  * @return @c true to continue with the next iteration of the loop, \n otherwise @c false to break out of the loop
@@ -679,7 +679,7 @@ typedef bool (*camera_supported_capture_format_cb)(camera_pixel_format_e format,
 
 /**
  * @brief Called once for the pixel format of each supported preview format.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] format The supported preview data format
  * @param[in] user_data The user data passed from the foreach function
  * @return @c true to continue with the next iteration of the loop, \n otherwise @c false to break out of the loop
@@ -701,7 +701,7 @@ typedef bool (*camera_supported_preview_format_cb)(camera_pixel_format_e format,
 /**
  * @brief Creates a new camera handle for controlling a camera.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @remarks Multiple handles on a context at the same time are allowed to be created. However,
@@ -727,7 +727,7 @@ int camera_create(camera_device_e device, camera_h *camera);
 /**
  * @brief Destroys the camera handle and releases all its resources.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -745,7 +745,7 @@ int camera_destroy(camera_h camera);
 /**
  * @brief Starts capturing and drawing preview frames on the screen.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -784,7 +784,7 @@ int camera_start_preview(camera_h camera);
 
 /**
  * @brief Stops capturing and drawing preview frames.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -806,7 +806,7 @@ int camera_stop_preview(camera_h camera);
 /**
  * @brief Starts capturing of still images.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @remarks This function causes the transition of the camera state from #CAMERA_STATE_CAPTURING to #CAMERA_STATE_CAPTURED automatically\n
@@ -846,7 +846,7 @@ int camera_start_capture(camera_h camera, camera_capturing_cb capturing_cb , cam
 /**
  * @brief Starts continuously capturing still images.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @remarks If this is not supported zero shutter lag occurs. The capture resolution could be changed to the preview resolution.\n
@@ -880,7 +880,7 @@ int camera_start_continuous_capture(camera_h camera, int count, int interval, ca
 /**
  * @brief Aborts continuous capturing.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @remarks The camera state will be changed to #CAMERA_STATE_CAPTURED.
@@ -901,7 +901,7 @@ int camera_stop_continuous_capture(camera_h camera);
 /**
  * @brief Gets the state of the camera.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] state The current state of the camera
  * @return @c 0 on success, otherwise a negative error value
@@ -919,7 +919,7 @@ int camera_get_state(camera_h camera, camera_state_e *state);
 /**
  * @brief Starts camera auto-focusing, asynchronously.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @remarks If continuous status is @c true, the camera continuously tries to focus.
@@ -944,7 +944,7 @@ int camera_start_focusing(camera_h camera, bool continuous);
 
 /**
  * @brief Stops camera auto focusing.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -965,7 +965,7 @@ int camera_cancel_focusing(camera_h camera);
 /**
  * @brief Sets the display handle to show preview images.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks This function must be called before previewing (see camera_start_preview()).
  * @param[in] camera The handle to the camera
  * @param[in] type The display type
@@ -986,7 +986,7 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 /**
  * @brief Sets the resolution of the preview.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @remarks This function should be called before previewing (camera_start_preview()).
@@ -1010,7 +1010,7 @@ int camera_set_preview_resolution(camera_h camera, int width, int height);
 /**
  * @brief Gets the resolution of the preview.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] width The preview width
  * @param[out] height The preview height
@@ -1027,7 +1027,7 @@ int camera_get_preview_resolution(camera_h camera, int *width, int *height);
 /**
  * @brief Gets the recommended preview resolution.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks Depending on the capture resolution aspect ratio and display resolution, the recommended preview resolution is determined.
  * @param[in] camera The handle to the camera
  * @param[out] width The preview width
@@ -1044,7 +1044,7 @@ int camera_get_recommended_preview_resolution(camera_h camera, int *width, int *
 
 /**
  * @brief Starts face detection.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @remarks This should be called after the preview is started.\n
@@ -1074,7 +1074,7 @@ int camera_start_face_detection(camera_h camera, camera_face_detected_cb callbac
 /**
  * @brief Stops face detection.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -1102,7 +1102,7 @@ int camera_stop_face_detection(camera_h camera);
 /**
  * @brief Gets continuous capture feature's supported state.
  * @ingroup CAPI_MEDIA_CAMERA_CAPABILITY_MODULE
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
  * @param[in] camera The handle to the camera
  * @return @c true on supported, otherwise false
@@ -1117,7 +1117,7 @@ int camera_stop_face_detection(camera_h camera);
 /**
  * @brief Retrieves all supported camera preview resolutions by invoking the callback function once for each supported camera preview resolution.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to be invoked
  * @param[in] user_data	The user data to be passed to the callback function
@@ -1148,7 +1148,7 @@ int camera_foreach_supported_preview_resolution(camera_h camera,
  * @ingroup CAPI_MEDIA_CAMERA_DISPLAY_MODULE
  * @brief Sets the display rotation.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @remarks This function should be called before previewing (see camera_start_preview())
@@ -1170,7 +1170,7 @@ int camera_set_display_rotation(camera_h camera, camera_rotation_e rotation);
  * @ingroup CAPI_MEDIA_CAMERA_DISPLAY_MODULE
  * @brief Gets the display rotation.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] rotation The display rotation
  * @return @c 0 on success, otherwise a negative error value
@@ -1186,7 +1186,7 @@ int camera_get_display_rotation(camera_h camera, camera_rotation_e *rotation);
  * @ingroup CAPI_MEDIA_CAMERA_DISPLAY_MODULE
  * @brief Sets the display flip.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -1206,7 +1206,7 @@ int camera_set_display_flip(camera_h camera, camera_flip_e flip);
  * @ingroup CAPI_MEDIA_CAMERA_DISPLAY_MODULE
  * @brief Gets the display flip.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] flip The display flip
  * @return @c 0 on success, otherwise a negative error value
@@ -1222,7 +1222,7 @@ int camera_get_display_flip(camera_h camera, camera_flip_e *flip);
  * @ingroup CAPI_MEDIA_CAMERA_DISPLAY_MODULE
  * @brief Sets the visible property for display.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -1241,7 +1241,7 @@ int camera_set_display_visible(camera_h camera, bool visible);
  * @ingroup CAPI_MEDIA_CAMERA_DISPLAY_MODULE
  * @brief Gets the visible property of display.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] visible @c true if camera display is visible, otherwise @c false
  *
@@ -1258,7 +1258,7 @@ int camera_is_display_visible(camera_h camera, bool *visible);
  * @ingroup CAPI_MEDIA_CAMERA_DISPLAY_MODULE
  * @brief Sets the display mode.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] mode The display mode
  *
@@ -1275,7 +1275,7 @@ int camera_set_display_mode(camera_h camera , camera_display_mode_e mode);
  * @ingroup CAPI_MEDIA_CAMERA_DISPLAY_MODULE
  * @brief Gets the display mode.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] mode The display mode
  *
@@ -1290,7 +1290,7 @@ int camera_get_display_mode(camera_h camera, camera_display_mode_e *mode);
 
 /**
  * @brief Sets the resolution of the captured image.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -1311,7 +1311,7 @@ int camera_set_capture_resolution(camera_h camera, int width, int height);
 
 /**
  * @brief Gets the resolution of the captured image.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] width The capture width
  * @param[out] height The capture height
@@ -1337,7 +1337,7 @@ int camera_get_capture_resolution(camera_h camera, int *width, int *height);
 /**
  * @brief Retrieves all supported camera captured resolutions by invoking the callback function once for each supported camera capture resolution.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to register
  * @param[in] user_data	The user data to be passed to the callback function
@@ -1366,7 +1366,7 @@ int camera_foreach_supported_capture_resolution(camera_h camera,
 /**
  * @brief Sets the format of an image to be captured.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks This function should be called before capturing (see camera_start_capture()).
  * @param[in] camera The handle to the camera
  * @param[out] format The format of the image to be captured
@@ -1386,7 +1386,7 @@ int camera_set_capture_format(camera_h camera, camera_pixel_format_e format);
 /**
  * @brief Gets the format of the image to be captured.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] format The format of the image to be captured
  * @return @c 0 on success, otherwise a negative error value
@@ -1411,7 +1411,7 @@ int camera_get_capture_format(camera_h camera, camera_pixel_format_e *format);
 /**
  * @brief Retrieves all supported camera capture formats by invoking the callback function once for each supported camera capture format.
  *
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to be invoked
  * @param[in] user_data	The user data to be passed to the callback function
@@ -1439,7 +1439,7 @@ int camera_foreach_supported_capture_format(camera_h camera,
 
 /**
  * @brief Sets the preview data format.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks This function should be called before previewing (see camera_start_preview()).
  * @param[in] camera The handle to the camera
  * @param[in] format The preview data format
@@ -1458,7 +1458,7 @@ int camera_set_preview_format(camera_h camera, camera_pixel_format_e format);
 
 /**
  * @brief Gets the format of the preview stream.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] format The preview data format
  * @return @c 0 on success, otherwise a negative error value
@@ -1482,7 +1482,7 @@ int camera_get_preview_format(camera_h camera, camera_pixel_format_e *format);
 
 /**
  * @brief Retrieves all supported camera preview formats by invoking the callback function once for each supported camera preview format.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to be invoked
  * @param[in] user_data	The user data to be passed to the callback function
@@ -1502,7 +1502,7 @@ int camera_foreach_supported_preview_format(camera_h camera,
 /**
  * @ingroup CAPI_MEDIA_CAMERA_CAPABILITY_MODULE
  * @brief Gets the face detection feature's supported state.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
  * @param[in] camera The handle to the camera
  * @return @c true if supported, otherwise @c false
@@ -1518,7 +1518,7 @@ bool camera_is_supported_face_detection(camera_h camera);
 /**
  * @brief Gets the zero shutter lag feature's supported state.
  * @ingroup CAPI_MEDIA_CAMERA_CAPABILITY_MODULE
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks If supporting zero shutter lag, continuous shot can be done with full capture size. \n
  *                The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
  * @param[in] camera The handle to the camera
@@ -1534,7 +1534,7 @@ bool camera_is_supported_zero_shutter_lag(camera_h camera);
 /**
  * @ingroup CAPI_MEDIA_CAMERA_CAPABILITY_MODULE
  * @brief Gets the camera device count.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks If the device supports primary and secondary camera, this returns @c 2. If @c 1 is returned, the device only supports primary camera.
  * @param[in] camera The handle to the camera
  * @param[out] device_count The device count
@@ -1550,7 +1550,7 @@ int camera_get_device_count(camera_h camera, int *device_count);
 /**
  * @brief Gets the media packet preview callback feature's supported state.
  * @ingroup CAPI_MEDIA_CAMERA_CAPABILITY_MODULE
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
  * @param[in] camera The handle to the camera
  * @return @c true if supported, otherwise @c false
@@ -1573,7 +1573,7 @@ bool camera_is_supported_media_packet_preview_cb(camera_h camera);
 
 /**
  * @brief Registers a callback function to be called once per frame when previewing.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks This callback does not work in the video recorder mode.\n
  *          This function should be called before previewing (see camera_start_preview()).\n
  *          A registered callback is called on the internal thread of the camera.\n
@@ -1598,7 +1598,7 @@ int camera_set_preview_cb(camera_h camera, camera_preview_cb callback, void *use
 
 /**
  * @brief Unregisters the callback function.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @return @c 0 on success, otherwise a negative error value
  * @retval #CAMERA_ERROR_NONE Successful
@@ -1611,7 +1611,7 @@ int camera_unset_preview_cb(camera_h camera);
 
 /**
  * @brief Registers a media packet callback function to be called once per frame when previewing.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks This callback does not work in video recorder mode.\n
  *          This function should be called before previewing (see camera_start_preview())\n
  *          A registered callback is called on the internal thread of the camera.\n
@@ -1636,7 +1636,7 @@ int camera_set_media_packet_preview_cb(camera_h camera, camera_media_packet_prev
 
 /**
  * @brief Unregisters the media packet callback function.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @return @c 0 on success, otherwise a negative error value
  * @retval #CAMERA_ERROR_NONE Successful
@@ -1649,7 +1649,7 @@ int camera_unset_media_packet_preview_cb(camera_h camera);
 
 /**
  * @brief Registers a callback function to be called when the camera state changes.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to register
  * @param[in] user_data The user data to be passed to the callback function
@@ -1667,7 +1667,7 @@ int camera_set_state_changed_cb(camera_h camera, camera_state_changed_cb callbac
 
 /**
  * @brief Unregisters the callback function.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @return @c 0 on success, otherwise a negative error value
  * @retval #CAMERA_ERROR_NONE Successful
@@ -1680,7 +1680,7 @@ int camera_unset_state_changed_cb(camera_h camera);
 
 /**
  * @brief Registers a callback function to be called when the camera is interrupted by policy.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to register
  * @param[in] user_data The user data to be passed to the callback function
@@ -1697,7 +1697,7 @@ int camera_set_interrupted_cb(camera_h camera, camera_interrupted_cb callback,
 
 /**
  * @brief Unregisters the callback function.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @return @c 0 on success, otherwise a negative error value
  * @retval #CAMERA_ERROR_NONE Successful
@@ -1710,7 +1710,7 @@ int camera_unset_interrupted_cb(camera_h camera);
 
 /**
  * @brief Registers a callback function to be called when the auto-focus state changes.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to register
  * @param[in] user_data	The user data to be passed to the callback function
@@ -1730,7 +1730,7 @@ int camera_set_focus_changed_cb(camera_h camera, camera_focus_changed_cb callbac
 
 /**
  * @brief Unregisters the callback function.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @return @c 0 on success, otherwise a negative error value
  * @retval #CAMERA_ERROR_NONE Successful
@@ -1743,7 +1743,7 @@ int camera_unset_focus_changed_cb(camera_h camera);
 
 /**
  * @brief Registers a callback function to be called when an asynchronous operation error occurs.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks This callback informs about a critical error situation.\n
  *          When this callback is invoked, the user should release the resource and terminate the application.\n
  *          In case of errors, one of the following codes will occur:\n
@@ -1767,7 +1767,7 @@ int camera_set_error_cb(camera_h camera, camera_error_cb callback, void *user_da
 
 /**
  * @brief Unregisters the callback function.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @return @c 0 on success, otherwise a negative error value
  * @retval #CAMERA_ERROR_NONE Successful
@@ -1789,6 +1789,7 @@ int camera_unset_error_cb(camera_h camera);
 
 /**
  * @brief Called to get each supported auto-focus mode.
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] mode The supported auto-focus mode
  * @param[in] user_data The user data passed from the foreach function
  * @return @c true to continue with the next iteration of the loop, \n otherwise @c false to break out of the loop
@@ -1799,6 +1800,7 @@ typedef bool (*camera_attr_supported_af_mode_cb)(camera_attr_af_mode_e mode, voi
 
 /**
  * @brief Called to get each supported exposure mode.
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] mode The supported exposure mode
  * @param[in] user_data The user data passed from the foreach function
  * @return @c true to continue with the next iteration of the loop, \n otherwise @c false to break out of the loop
@@ -1811,6 +1813,7 @@ typedef bool (*camera_attr_supported_exposure_mode_cb)(camera_attr_exposure_mode
 
 /**
  * @brief Called to get each supported ISO mode.
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] iso The supported ISO mode
  * @param[in] user_data The user data passed from the foreach function
  * @return @c true to continue with the next iteration of the loop, \n otherwise @c false to break out of the loop
@@ -1821,6 +1824,7 @@ typedef bool (*camera_attr_supported_iso_cb)(camera_attr_iso_e iso, void *user_d
 
 /**
  * @brief Called to get each supported white balance.
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] wb The supported white balance mode
  * @param[in] user_data The user data passed from the foreach function
  * @return @c true to continue with the next iteration of the loop, \n otherwise @c false to break out of the loop
@@ -1833,6 +1837,7 @@ typedef bool (*camera_attr_supported_whitebalance_cb)(camera_attr_whitebalance_e
 
 /**
  * @brief Called to get each supported effect mode.
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] effect The supported effect mode
  * @param[in] user_data The user data passed from the foreach function
  * @return @c true to continue with the next iteration of the loop, \n otherwise @c false to break out of the loop
@@ -1844,6 +1849,7 @@ typedef bool (*camera_attr_supported_effect_cb)(camera_attr_effect_mode_e effect
 
 /**
  * @brief Called to get each supported scene mode.
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] mode The supported scene mode
  * @param[in] user_data The user data passed from the foreach function
  * @return @c true to continue with the next iteration of the loop, \n otherwise @c false to break out of the loop
@@ -1856,6 +1862,7 @@ typedef bool (*camera_attr_supported_scene_mode_cb)(camera_attr_scene_mode_e mod
 
 /**
  * @brief Called to get each supported flash mode.
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] mode The supported flash mode
  * @param[in] user_data The user data passed from the foreach function
  * @return @c true to continue with the next iteration of the loop, \n otherwise @c false to break out of the loop
@@ -1867,6 +1874,7 @@ typedef bool (*camera_attr_supported_flash_mode_cb)(camera_attr_flash_mode_e mod
 
 /**
  * @brief Called to get each supported FPS mode.
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] mode The supported FPS mode
  * @param[in] user_data The user data passed from the foreach function
  * @return @c true to continue with the next iteration of the loop, \n otherwise @c false to break out of the loop
@@ -1877,6 +1885,7 @@ typedef bool (*camera_attr_supported_fps_cb)(camera_attr_fps_e fps, void *user_d
 
 /**
  * @brief Called to get each supported stream flip mode.
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] mode The supported stream flip mode
  * @param[in] user_data The user data passed from the foreach function
  * @return @c true to continue with the next iteration of the loop, \n @c false to break out of the loop
@@ -1887,6 +1896,7 @@ typedef bool (*camera_attr_supported_stream_flip_cb)(camera_flip_e flip, void *u
 
 /**
  * @brief Called to get each supported stream rotation mode.
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] mode The supported stream rotation mode
  * @param[in] user_data The user data passed from the foreach function
  * @return @c true to continue with the next iteration of the loop, \n @c false to break out of the loop
@@ -1897,6 +1907,7 @@ typedef bool (*camera_attr_supported_stream_rotation_cb)(camera_rotation_e rotat
 
 /**
  * @brief Called to get each supported theater mode.
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] mode The supported theater mode
  * @param[in] user_data The user data passed from the foreach function
  * @return @c true to continue with the next iteration of the loop, \n @c false to break out of the loop
@@ -1916,7 +1927,7 @@ typedef bool (*camera_attr_supported_theater_mode_cb)(camera_attr_theater_mode_e
 
 /**
  * @brief Sets the preview frame rate.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks This function should be called before previewing (see camera_start_preview()).
  * @param[in] camera The handle to the camera
  * @param[in] fps The frame rate
@@ -1934,7 +1945,7 @@ int camera_attr_set_preview_fps(camera_h camera, camera_attr_fps_e fps);
 
 /**
  * @brief Gets the frames per second of a preview video stream.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] fps The frames per second of the preview video stream
  * @return @c 0 on success, otherwise a negative error value
@@ -1958,7 +1969,7 @@ int camera_attr_get_preview_fps(camera_h camera, camera_attr_fps_e *fps);
 
 /**
  * @brief Retrieves all supported FPS modes by invoking the callback function once for each supported FPS mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to invoke
  * @param[in] user_data The user data to be passed to the callback function
@@ -1976,6 +1987,29 @@ int camera_attr_foreach_supported_fps(camera_h camera, camera_attr_supported_fps
         void *user_data);
 
 /**
+ * @brief Retrieves all supported FPS modes by invoking the callback function once for each supported FPS mode.
+ * @since_tizen 2.4
+ * @param[in] camera The handle to the camera
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/camera
+ * @param[in] width Required preview resolution's width
+ * @param[in] height Required preview resolution's height
+ * @param[in] callback The callback function to invoke
+ * @param[in] user_data The user data to be passed to the callback function
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_PERMISSION_DENIED The access to the resources can not be granted
+ * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
+ * @post This function invokes camera_attr_supported_fps_cb() repeatly to get each supported FPS mode.
+ * @see	camera_attr_set_preview_fps()
+ * @see	camera_attr_get_preview_fps()
+ * @see	camera_attr_supported_fps_cb()
+ */
+int camera_attr_foreach_supported_fps_by_resolution(camera_h camera,  int width, int height,
+	camera_attr_supported_fps_cb callback ,void *user_data);
+
+/**
  * @}
  */
 
@@ -1987,7 +2021,7 @@ int camera_attr_foreach_supported_fps(camera_h camera, camera_attr_supported_fps
 /**
  * @brief Sets quality of the image.
  * @details The range for image quality is 1 to 100. If @a quality is out of range, #CAMERA_ERROR_INVALID_PARAMETER error occurred.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -2006,7 +2040,7 @@ int camera_attr_set_image_quality(camera_h camera, int quality);
 
 /**
  * @brief Gets the quality of a still image, which is captured.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] quality The quality of the image(1 ~ 100)
  * @return @c 0 on success, otherwise a negative error value
@@ -2021,7 +2055,7 @@ int camera_attr_get_image_quality(camera_h camera, int *quality);
 /**
  * @brief Sets the zoom level.
  * @details The range for the zoom level is received from camera_attr_get_zoom_range(). If @a zoom is out of range, the #CAMERA_ERROR_INVALID_PARAMETER error occurs.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -2038,7 +2072,7 @@ int camera_attr_set_zoom(camera_h camera, int zoom);
 
 /**
  * @brief Gets the zoom level.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] zoom The zoom level
  * @return @c 0 on success, otherwise a negative error value
@@ -2053,7 +2087,7 @@ int camera_attr_get_zoom(camera_h camera, int *zoom);
 
 /**
  * @brief Gets the available zoom level.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks If the min value is greater than the max value, it means that this feature is not supported.
  * @param[in] camera The handle to the camera
  * @param[out] min The minimum zoom level
@@ -2071,7 +2105,7 @@ int camera_attr_get_zoom_range(camera_h camera , int *min , int *max);
 
 /**
  * @brief Sets the auto focus mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -2089,7 +2123,7 @@ int camera_attr_set_af_mode(camera_h camera, camera_attr_af_mode_e mode);
 
 /**
  * @brief Gets the auto focus mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -2107,7 +2141,7 @@ int camera_attr_get_af_mode(camera_h camera, camera_attr_af_mode_e *mode);
 
 /**
  * @brief Sets auto focus area.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @remarks This API is invalid in the #CAMERA_ATTR_AF_NONE mode.\n
@@ -2128,7 +2162,7 @@ int camera_attr_set_af_area(camera_h camera, int x, int y);
 
 /**
  * @brief Clears the auto focus area.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @remarks The focusing area is set to the center.
@@ -2155,7 +2189,7 @@ int camera_attr_clear_af_area(camera_h camera);
 
 /**
  * @brief Retrieves all supported auto focus modes by invoking the callback function once for each supported auto focus mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to invoke
  * @param[in] user_data The user data to be passed to the callback function
@@ -2183,7 +2217,7 @@ int camera_attr_foreach_supported_af_mode(camera_h camera,
 
 /**
  * @brief Sets the exposure mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -2200,7 +2234,7 @@ int camera_attr_set_exposure_mode(camera_h camera, camera_attr_exposure_mode_e m
 
 /**
  * @brief Gets the exposure mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] mode The exposure mode
  * @return @c 0 on success, otherwise a negative error value
@@ -2224,7 +2258,7 @@ int camera_attr_get_exposure_mode(camera_h camera, camera_attr_exposure_mode_e *
 
 /**
  * @brief Retrieves all supported exposure modes by invoking the callback function once for each supported exposure mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to be invoked
  * @param[in] user_data The user data to be passed to the callback function
@@ -2252,7 +2286,7 @@ int camera_attr_foreach_supported_exposure_mode(camera_h camera,
 
 /**
  * @brief Sets the exposure value.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -2268,7 +2302,7 @@ int camera_attr_set_exposure(camera_h camera, int value);
 
 /**
  * @brief Gets the exposure value.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] value The exposure value
  * @return @c 0 on success, otherwise a negative error value
@@ -2282,7 +2316,7 @@ int camera_attr_get_exposure(camera_h camera, int *value);
 
 /**
  * @brief Gets the available exposure value.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks If the min value is greater than the max value, it means that this feature is not supported.
  * @param[in] camera The handle to the camera
  * @param[out] min The minimum exposure value
@@ -2298,7 +2332,7 @@ int camera_attr_get_exposure_range(camera_h camera, int *min, int *max);
 
 /**
  * @brief Sets the ISO level.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -2315,7 +2349,7 @@ int camera_attr_set_iso(camera_h camera, camera_attr_iso_e iso);
 
 /**
  * @brief Gets the ISO level.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] iso The ISO level
  * @return @c 0 on success, otherwise a negative error value
@@ -2339,7 +2373,7 @@ int camera_attr_get_iso(camera_h camera, camera_attr_iso_e *iso);
 
 /**
  * @brief Retrieves all supported ISO levels by invoking the callback function once for each supported ISO level.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to be invoked
  * @param[in] user_data	The user data to be passed to the callback function
@@ -2367,7 +2401,7 @@ int camera_attr_foreach_supported_iso(camera_h camera, camera_attr_supported_iso
 
 /**
  * @brief Sets the theater mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @remarks If you want to display the preview image on the external display with the full screen mode, use this function.
@@ -2385,7 +2419,7 @@ int camera_attr_set_theater_mode(camera_h camera, camera_attr_theater_mode_e mod
 
 /**
  * @brief Gets the theater mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] mode Currnet theater mode
  * @return @c 0 on success, otherwise a negative error value
@@ -2408,7 +2442,7 @@ int camera_attr_get_theater_mode(camera_h camera, camera_attr_theater_mode_e *mo
 
 /**
  * @brief Retrieves all supported theater modes by invoking callback function once for each supported theater modes.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to be invoked
  * @param[in] user_data The user data to be passed to the callback function
@@ -2437,7 +2471,7 @@ int camera_attr_foreach_supported_theater_mode(camera_h camera,
 
 /**
  * @brief Sets the brightness level.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -2454,7 +2488,7 @@ int camera_attr_set_brightness(camera_h camera, int level);
 
 /**
  * @brief Gets the brightness level.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] level The brightness level
  * @return @c 0 on success, otherwise a negative error value
@@ -2469,7 +2503,7 @@ int camera_attr_get_brightness(camera_h camera, int *level);
 
 /**
  * @brief Gets the available brightness level.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks If the min value is greater than the max value, it means that this feature is not supported.
  * @param[in] camera The handle to the camera
  * @param[out] min The minimum brightness level
@@ -2486,7 +2520,7 @@ int camera_attr_get_brightness_range(camera_h camera, int *min, int *max);
 
 /**
  * @brief Sets the contrast level.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -2503,7 +2537,7 @@ int camera_attr_set_contrast(camera_h camera, int level);
 
 /**
  * @brief Gets the contrast level.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] level The contrast level
  * @return @c 0 on success, otherwise a negative error value
@@ -2518,7 +2552,7 @@ int camera_attr_get_contrast(camera_h camera, int *level);
 
 /**
  * @brief Gets the available contrast level.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks If the min value is greater than the max value, it means that this feature is not supported.
  * @param[in] camera The handle to the camera
  * @param[out] min The minimum contrast level
@@ -2535,7 +2569,7 @@ int camera_attr_get_contrast_range(camera_h camera, int *min , int *max);
 
 /**
  * @brief Sets the white balance mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -2552,7 +2586,7 @@ int camera_attr_set_whitebalance(camera_h camera, camera_attr_whitebalance_e whi
 
 /**
  * @brief Gets the white balance mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] whitebalance The white balance mode
  * @return @c 0 on success, otherwise a negative error value
@@ -2576,7 +2610,7 @@ int camera_attr_get_whitebalance(camera_h camera, camera_attr_whitebalance_e *wh
 
 /**
  * @brief Retrieves all supported white balances by invoking the callback function once for each supported white balance.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to be invoked
  * @param[in] user_data The user data to be passed to the callback function
@@ -2604,7 +2638,7 @@ int camera_attr_foreach_supported_whitebalance(camera_h camera,
 
 /**
  * @brief Sets the camera effect mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -2622,7 +2656,7 @@ int camera_attr_set_effect(camera_h camera, camera_attr_effect_mode_e effect);
 
 /**
  * @brief Gets the camera effect mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] effect The camera effect mode
  * @return @c 0 on success, otherwise a negative error value
@@ -2646,7 +2680,7 @@ int camera_attr_get_effect(camera_h camera, camera_attr_effect_mode_e *effect);
 
 /**
  * @brief Retrieves all supported effect modes by invoking the callback function once for each supported effect mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to invoke
  * @param[in] user_data The user data to be passed to the callback function
@@ -2674,7 +2708,7 @@ int camera_attr_foreach_supported_effect(camera_h camera,
 
 /**
  * @brief Sets the scene mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -2691,7 +2725,7 @@ int camera_attr_set_scene_mode(camera_h camera, camera_attr_scene_mode_e mode);
 
 /**
  * @brief Gets the scene mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] mode The scene mode
  * @return @c 0 on success, otherwise a negative error value
@@ -2715,7 +2749,7 @@ int camera_attr_get_scene_mode(camera_h camera, camera_attr_scene_mode_e *mode);
 
 /**
  * @brief Retrieves all supported scene modes by invoking the callback function once for each supported scene mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to invoke
  * @param[in] user_data The user data to be passed to the callback function
@@ -2743,7 +2777,7 @@ int camera_attr_foreach_supported_scene_mode(camera_h camera,
 
 /**
  * @brief Enables to write EXIF(Exchangeable image file format) tags in a JPEG file.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] enable If @c true writing EXIF tags in a JPEG file is enabled, otherwise @c false
  * @return @c 0 on success, otherwise a negative error value
@@ -2757,7 +2791,7 @@ int camera_attr_enable_tag(camera_h camera, bool enable);
 
 /**
  * @brief Gets the value that indicates whether writing EXIF(Exchangeable image file format) tags in a JPEG file is enabled.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] enabled  If @c true camera information is enabled, otherwise @c false
  * @return @c 0 on success, otherwise a negative error value
@@ -2771,7 +2805,7 @@ int camera_attr_is_enabled_tag(camera_h camera, bool *enabled);
 
 /**
  * @brief Sets the camera image description in the EXIF(Exchangeable image file format) tag.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] description The string with description
  * @return @c 0 on success, otherwise a negative error value
@@ -2785,7 +2819,7 @@ int camera_attr_set_tag_image_description(camera_h camera, const char *descripti
 
 /**
  * @brief Gets the camera image description in EXIF(Exchangeable image file format) tag.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks You must release @a description using free().
  * @param[in] camera The handle to the camera
  * @param[out] description A pointer to a string
@@ -2800,7 +2834,7 @@ int camera_attr_get_tag_image_description(camera_h camera, char **description);
 
 /**
  * @brief Sets the camera orientation in the EXIF(Exchangeable image file format) tag.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] orientation The camera orientation
  * @return @c 0 on success, otherwise a negative error value
@@ -2814,7 +2848,7 @@ int camera_attr_set_tag_orientation(camera_h camera, camera_attr_tag_orientation
 
 /**
  * @brief Gets the camera orientation in the EXIF(Exchangeable image file format) tag.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] orientation The camera orientation
  * @return @c 0 on success, otherwise a negative error value
@@ -2828,7 +2862,7 @@ int camera_attr_get_tag_orientation(camera_h camera, camera_attr_tag_orientation
 
 /**
  * @brief Sets the software information in the EXIF(Exchangeable image file format) tag.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] software The software information tag
  * @return @c 0 on success, otherwise a negative error value
@@ -2842,7 +2876,7 @@ int camera_attr_set_tag_software(camera_h camera, const char *software);
 
 /**
  * @brief Gets the software information in the EXIF(Exchangeable image file format) tag.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks You must release @a software using free().
  * @param[in] camera The handle to the camera
  * @param[out] software A pointer to a string
@@ -2857,7 +2891,7 @@ int camera_attr_get_tag_software(camera_h camera, char **software);
 
 /**
  * @brief Sets the geotag(GPS data) in the EXIF(Exchangeable image file format) tag.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] latitude The latitude data
  * @param[in] longitude The longitude data
@@ -2874,7 +2908,7 @@ int camera_attr_set_geotag(camera_h camera, double latitude , double longitude, 
 
 /**
  * @brief Gets the geotag(GPS data) in the EXIF(Exchangeable image file format) tag.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] latitude The latitude data
  * @param[out] longitude The longitude data
@@ -2891,7 +2925,7 @@ int camera_attr_get_geotag(camera_h camera, double *latitude , double *longitude
 
 /**
  * @brief Removes the geotag(GPS data) in the EXIF(Exchangeable image file format) tag.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @return @c 0 on success, otherwise a negative error value
  * @retval #CAMERA_ERROR_NONE Successful
@@ -2905,9 +2939,11 @@ int camera_attr_remove_geotag(camera_h camera);
 
 /**
  * @brief Sets the camera's flash mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
+ * @remarks Since 2.4, while setting the flash mode, if the flash was preempted by other APIs,\n
+            then this function returns #CAMERA_ERROR_DEVICE_BUSY error.
  * @param[in] camera The handle to the camera
  * @param[in] mode The flash mode
  * @return @c 0 on success, otherwise a negative error value
@@ -2915,6 +2951,7 @@ int camera_attr_remove_geotag(camera_h camera);
  * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
  * @retval #CAMERA_ERROR_PERMISSION_DENIED The access to the resources can not be granted
  * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
+ * @retval #CAMERA_ERROR_DEVICE_BUSY The flash was preempted by other API
  * @see	camera_attr_foreach_supported_flash_mode()
  * @see camera_attr_get_flash_mode()
  */
@@ -2922,7 +2959,7 @@ int camera_attr_set_flash_mode(camera_h camera, camera_attr_flash_mode_e mode);
 
 /**
  * @brief Gets the camera's flash mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] mode The flash mode
  * @return @c 0 on success, otherwise a negative error value
@@ -2946,7 +2983,7 @@ int camera_attr_get_flash_mode(camera_h camera, camera_attr_flash_mode_e *mode);
 
 /**
  * @brief Retrieves all supported flash modes by invoking the callback function once for each supported flash mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to invoke
  * @param[in] user_data The user data passed to the callback registration function
@@ -2974,7 +3011,7 @@ int camera_attr_foreach_supported_flash_mode(camera_h camera,
 
 /**
  * @brief Gets the camera len's orientation angle.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] angle The orientation angle
  * @return @c 0 on success, otherwise a negative error value
@@ -2988,7 +3025,7 @@ int camera_attr_get_lens_orientation(camera_h camera, int *angle);
 
 /**
  * @brief Sets the stream rotation.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] rotation The stream rotation
  * @return @c 0 on success, otherwise a negative error value
@@ -3003,7 +3040,7 @@ int camera_attr_set_stream_rotation(camera_h camera , camera_rotation_e rotation
 
 /**
  * @brief Gets the stream rotation.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] rotation	The stream rotation
  * @return @c 0 on success, otherwise a negative error value
@@ -3027,7 +3064,7 @@ int camera_attr_get_stream_rotation(camera_h camera , camera_rotation_e *rotatio
 
 /**
  * @brief Retrieves all supported stream rotation modes by invoking callback function once for each supported stream rotation mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to invoke
  * @param[in] user_data The user data to be passed to the callback function
@@ -3055,7 +3092,7 @@ int camera_attr_foreach_supported_stream_rotation(camera_h camera,
 
 /**
  * @brief Sets the stream flip.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] flip The stream flip
  * @return @c 0 on success, otherwise a negative error value
@@ -3070,7 +3107,7 @@ int camera_attr_set_stream_flip(camera_h camera , camera_flip_e flip);
 
 /**
  * @brief Gets the stream flip.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] flip  The stream flip
  * @return @c 0 on success, otherwise a negative error value
@@ -3094,7 +3131,7 @@ int camera_attr_get_stream_flip(camera_h camera , camera_flip_e *flip);
 
 /**
  * @brief Retrieves all supported stream flip modes by invoking callback function once for each supported stream flip mode.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to invoke
  * @param[in] user_data The user data to be passed to the callback function
@@ -3122,7 +3159,7 @@ int camera_attr_foreach_supported_stream_flip(camera_h camera,
 
 /**
  * @brief Called when the HDR capture process is updated.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] percent The progress percentage of HDR capture
  * @param[in] user_data The user data passed from the callback registration function
  * @pre camera_start_capture() will invoke this callback if you register it using camera_attr_set_hdr_capture_progress_cb().
@@ -3135,7 +3172,7 @@ typedef void (*camera_attr_hdr_progress_cb)(int percent, void *user_data);
 
 /**
  * @brief Sets the mode of HDR(High dynamic range) capture.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @remarks Taking multiple pictures at different exposure levels and intelligently stitching them together so that we eventually arrive at a picture that is representative in both dark and bright areas.\n
@@ -3158,7 +3195,7 @@ int camera_attr_set_hdr_mode(camera_h camera, camera_attr_hdr_mode_e mode);
 
 /**
  * @brief Gets the mode of HDR(High dynamic range) capture.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] mode The mode of HDR capture
  * @return @c 0 on success, otherwise a negative error value
@@ -3175,7 +3212,7 @@ int camera_attr_get_hdr_mode(camera_h camera, camera_attr_hdr_mode_e *mode);
 
 /**
  * @brief Registers a callback function to be called when HDR capture is progressing.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks This callback notifies progress of the HDR process.
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to invoke
@@ -3194,7 +3231,7 @@ int camera_attr_set_hdr_capture_progress_cb(camera_h camera, camera_attr_hdr_pro
 
 /**
  * @brief Unregisters the callback function.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @return @c 0 on success, otherwise a negative error value
  * @retval #CAMERA_ERROR_NONE Successful
@@ -3211,7 +3248,7 @@ int camera_attr_unset_hdr_capture_progress_cb(camera_h camera);
 /**
  * @ingroup CAPI_MEDIA_CAMERA_CAPABILITY_MODULE
  * @brief Gets the support state of HDR capture.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
  * @param[in] camera The handle to the camera
  * @return @c true if supported, otherwise @c false
@@ -3228,7 +3265,7 @@ bool camera_attr_is_supported_hdr_capture(camera_h camera);
 
 /**
  * @brief Enables/Disables the anti-shake feature.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @remarks This feature is used for image capture.
@@ -3247,7 +3284,7 @@ int camera_attr_enable_anti_shake(camera_h camera, bool enable);
 
 /**
  * @brief Gets the state of the anti-shake feature.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] enabled The state of anti-shake
  * @return @c 0 on success, otherwise a negative error value
@@ -3263,7 +3300,7 @@ int camera_attr_is_enabled_anti_shake(camera_h camera , bool *enabled);
 /**
  * @ingroup CAPI_MEDIA_CAMERA_CAPABILITY_MODULE
  * @brief Gets the support state of the anti-shake feature.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
  * @param[in] camera The handle to the camera
  * @return @c true if supported, otherwise @c false
@@ -3278,7 +3315,7 @@ bool camera_attr_is_supported_anti_shake(camera_h camera);
 
 /**
  * @brief Enables/Disables the video stabilization feature.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @remarks If video stabilization is enabled, zero shutter lag is disabled.\n
@@ -3298,7 +3335,7 @@ int camera_attr_enable_video_stabilization(camera_h camera, bool enable);
 
 /**
  * @brief Gets the state of the video stabilization feature.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] enabled The state of video stabilization
  * @return @c 0 on success, otherwise a negative error value
@@ -3312,9 +3349,9 @@ int camera_attr_enable_video_stabilization(camera_h camera, bool enable);
 int camera_attr_is_enabled_video_stabilization(camera_h camera, bool *enabled);
 
 /**
-  * @ingroup CAPI_MEDIA_CAMERA_CAPABILITY_MODULE
+ * @ingroup CAPI_MEDIA_CAMERA_CAPABILITY_MODULE
  * @brief Gets the support state of the video stabilization feature.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
  * @param[in] camera The handle to the camera
  * @return @c true if supported, otherwise @c false
@@ -3329,7 +3366,7 @@ bool camera_attr_is_supported_video_stabilization(camera_h camera);
 
 /**
  * @brief Enables/Disables auto contrast.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @param[in] camera The handle to the camera
@@ -3345,7 +3382,7 @@ int camera_attr_enable_auto_contrast(camera_h camera, bool enable);
 
 /**
  * @brief Gets the state of auto contrast.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @param[in] camera The handle to the camera
  * @param[out] enabled The state of auto contrast
  * @return @c 0 on success, otherwise a negative error value
@@ -3369,7 +3406,7 @@ int camera_attr_is_enabled_auto_contrast(camera_h camera, bool *enabled);
 /**
  * @brief Gets state of support of auto contrast feature.
  * @ingroup CAPI_MEDIA_CAMERA_CAPABILITY_MODULE
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks The specific error code can be obtained using the get_last_result() method. Error codes are described in Exception section.
  * @param[in] camera The handle to the camera
  * @return true on supported, otherwise false
@@ -3393,7 +3430,7 @@ bool camera_attr_is_supported_auto_contrast(camera_h camera);
 
 /**
  * @brief Disables shutter sound.
- * @since_tizen 2.3
+ * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks In some countries, this operation is not permitted.
  * @param[in] camera The handle to the camera
  * @param[in] disable If @c true shutter sound is disabled, otherwise @c false

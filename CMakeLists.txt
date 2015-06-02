@@ -23,7 +23,7 @@ SET(service "media")
 SET(submodule "camera")
 
 # for package file
-SET(dependents "dlog audio-session-mgr mm-camcorder capi-base-common capi-media-tool gstreamer-1.0 libtbm evas ecore elementary")
+SET(dependents "dlog audio-session-mgr mm-camcorder capi-base-common capi-media-tool gstreamer-1.0 libtbm evas ecore elementary vconf")
 SET(pc_dependents "mm-camcorder capi-base-common capi-media-tool gstreamer-1.0 libtbm evas ecore elementary")
 
 SET(fw_name "${project_prefix}-${service}-${submodule}")
