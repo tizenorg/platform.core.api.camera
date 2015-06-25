@@ -194,7 +194,7 @@ int __convert_camera_error_code(const char *func, int code)
 	}
 
 	if (code != MM_ERROR_NONE) {
-		LOGE("%s(0x%08x) : core frameworks error code(0x%08x)", errorstr, ret, code);
+		LOGE("[%s] %s(0x%08x) : core frameworks error code(0x%08x)", func ? func : "NULL_FUNC", errorstr, ret, code);
 	}
 
 	return ret;
@@ -1573,7 +1573,10 @@ int camera_set_preview_resolution(camera_h camera, int width, int height)
 				    MMCAM_CAMERA_FPS, &mm_fps,
 				    NULL);
 
-	mm_camcorder_get_fps_list_by_resolution(handle->mm_handle, width, height, &info);
+	ret = mm_camcorder_get_fps_list_by_resolution(handle->mm_handle, width, height, &info);
+	if (ret != MM_ERROR_NONE) {
+		return __convert_camera_error_code(__func__, ret);
+	}
 
 	for (i = 0 ; i < info.int_array.count ; i++) {
 		if (info.int_array.array[i] == mm_fps) {
