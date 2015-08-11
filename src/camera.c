@@ -32,6 +32,7 @@
 #include <tbm_surface_internal.h>
 #include <Evas.h>
 #include <Ecore.h>
+#include <Ecore_Wayland.h>
 #include <Elementary.h>
 
 #ifdef LOG_TAG
