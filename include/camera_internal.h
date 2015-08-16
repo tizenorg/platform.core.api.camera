@@ -218,6 +218,12 @@ int camera_get_x11_display_mode(camera_h camera, camera_display_mode_e *mode);
  */
 int camera_set_x11_display_pixmap(camera_h camera, camera_x11_pixmap_updated_cb callback, void *user_data);
 
+int camera_set_mused_display(camera_h camera, camera_display_type_e type, void *display_handle);
+
+int camera_get_video_caps(camera_h camera, char **caps);
+
+int camera_set_shm_socket_path_for_mused(camera_h camera, char *socket_path);
+
 /**
  * @}
  */

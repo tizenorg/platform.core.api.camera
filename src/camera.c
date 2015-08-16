@@ -54,7 +54,7 @@ void _camera_remove_cb_message(camera_s *handle)
 		return;
 	}
 
-	LOGI("start");
+	LOGW("start");
 
 	g_mutex_lock(&handle->idle_cb_lock);
 
@@ -85,7 +85,7 @@ void _camera_remove_cb_message(camera_s *handle)
 
 	g_mutex_unlock(&handle->idle_cb_lock);
 
-	LOGI("done");
+	LOGW("done");
 
 	return;
 }
@@ -542,7 +542,7 @@ static int __mm_camera_message_callback(int message, void *param, void *user_dat
 		    (m->state.previous < MM_CAMCORDER_STATE_NONE ||
 		     m->state.previous > MM_CAMCORDER_STATE_PAUSED ||
 		     m->state.code != 0)) {
-			LOGI( "Invalid state changed message");
+			LOGW( "Invalid state changed message");
 			break;
 		}
 
@@ -2291,7 +2291,7 @@ int camera_get_recommended_preview_resolution(camera_h camera, int *width, int *
 		return CAMERA_ERROR_INVALID_OPERATION;
 	}
 
-	LOGI("recommend resolution %dx%d, type %d", *width, *height, wide);
+	LOGW("recommend resolution %dx%d, type %d", *width, *height, wide);
 
 	return CAMERA_ERROR_NONE;
 }
