@@ -77,16 +77,13 @@ cp LICENSE.APLv2 %{buildroot}%{_datadir}/license/%{name}
 
 %postun -p /sbin/ldconfig
 
-
 %files
 %manifest capi-media-camera.manifest
 %{_libdir}/libcapi-media-camera.so.*
 %{_datadir}/license/%{name}
-
 
 %files devel
 %{_includedir}/media/camera.h
 %{_includedir}/media/camera_internal.h
 %{_libdir}/pkgconfig/*.pc
 %{_libdir}/libcapi-media-camera.so
-

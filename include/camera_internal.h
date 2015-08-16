@@ -219,6 +219,64 @@ int camera_get_x11_display_mode(camera_h camera, camera_display_mode_e *mode);
 int camera_set_x11_display_pixmap(camera_h camera, camera_x11_pixmap_updated_cb callback, void *user_data);
 
 /**
+ * @brief Registers a callback function to be invoked when camera needs updated xid.
+ * @ingroup CAPI_MEDIA_CAMERA_MUSED_MODULE
+ * @remarks This function is valid only for #CAMERA_DISPLAY_TYPE_OVERLAY.
+ * @param[in] camera The handle to the camera
+ * @param[in] type The type of the display
+ * @param[in] display_handle The handle of the created display
+ *
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Invalid operation
+ * @retval #CAMERA_ERROR_INVALID_STATE Invalid state
+ * @pre	The camera state must be #CAMERA_STATE_CREATED by camera_create().
+ * @post camera_set_mused_display() will be invoked.
+ *
+ * @see camera_set_mused_display()
+ */
+int camera_set_mused_display(camera_h camera, camera_display_type_e type, void *display_handle);
+
+/**
+ * @brief Registers a callback function to be invoked when camera needs updated xid.
+ * @ingroup CAPI_MEDIA_CAMERA_MUSED_MODULE
+ * @remarks This function is valid only for #CAMERA_DISPLAY_TYPE_OVERLAY.
+ * @param[in] camera The handle to the camera
+ * @param[in] caps The caps information of the server's video element
+ *
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Invalid operation
+ * @retval #CAMERA_ERROR_INVALID_STATE Invalid state
+ * @pre	The camera state must be #CAMERA_STATE_CREATED by camera_create().
+ * @post camera_get_video_caps() will be invoked.
+ *
+ * @see camera_get_video_caps()
+ */
+int camera_get_video_caps(camera_h camera, char **caps);
+
+/**
+ * @brief Registers a callback function to be invoked when camera needs updated xid.
+ * @ingroup CAPI_MEDIA_CAMERA_MUSED_MODULE
+ * @remarks This function is valid only for #CAMERA_DISPLAY_TYPE_OVERLAY.
+ * @param[in] camera The handle to the camera
+ * @param[in] socket_path The socket file path for the display data ipc
+ *
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Invalid operation
+ * @retval #CAMERA_ERROR_INVALID_STATE Invalid state
+ * @pre	The camera state must be #CAMERA_STATE_CREATED by camera_create().
+ * @post camera_set_shm_socket_path_for_mused() will be invoked.
+ *
+ * @see camera_set_shm_socket_path_for_mused()
+ */
+int camera_set_shm_socket_path_for_mused(camera_h camera, char *socket_path);
+
+/**
  * @}
  */
 
