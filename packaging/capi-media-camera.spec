@@ -1,13 +1,13 @@
 %bcond_with wayland
 %bcond_with x
 
-Name:       capi-media-camera
+Name:       legacy-capi-media-camera
 Summary:    A Camera library in Tizen C API
 Version:    0.2.4
 Release:    0
 Group:      Multimedia/API
 License:    Apache-2.0
-Source0:    %{name}-%{version}.tar.gz
+Source0:    %{originality}-%{name}-%{version}.tar.gz
 BuildRequires:  cmake
 BuildRequires:  pkgconfig(gstreamer-1.0)
 BuildRequires:  pkgconfig(dlog)
@@ -78,12 +78,12 @@ cp LICENSE.APLv2 %{buildroot}%{_datadir}/license/%{name}
 %postun -p /sbin/ldconfig
 
 %files
-%manifest capi-media-camera.manifest
-%{_libdir}/libcapi-media-camera.so.*
+%manifest legacy-capi-media-camera.manifest
+%{_libdir}/liblegacy-capi-media-camera.so.*
 %{_datadir}/license/%{name}
 
 %files devel
 %{_includedir}/media/camera.h
 %{_includedir}/media/camera_internal.h
 %{_libdir}/pkgconfig/*.pc
-%{_libdir}/libcapi-media-camera.so
+%{_libdir}/liblegacy-capi-media-camera.so
