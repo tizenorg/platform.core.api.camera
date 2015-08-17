@@ -14,6 +14,7 @@ SET(Services
    )
 
 # project
+SET(originality "legacy")
 SET(project_prefix "capi")
 SET(prefix "/usr")
 SET(version "0.0.1")
@@ -26,7 +27,7 @@ SET(submodule "camera")
 SET(dependents "dlog audio-session-mgr mm-camcorder capi-base-common capi-media-tool gstreamer-1.0 libtbm evas ecore elementary vconf")
 SET(pc_dependents "mm-camcorder capi-base-common capi-media-tool gstreamer-1.0 libtbm evas ecore elementary")
 
-SET(fw_name "${project_prefix}-${service}-${submodule}")
+SET(fw_name "${originality}-${project_prefix}-${service}-${submodule}")
 
 PROJECT(${fw_name})
 
