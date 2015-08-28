@@ -49,15 +49,16 @@ typedef enum
     CAMERA_ERROR_OUT_OF_MEMORY          = TIZEN_ERROR_OUT_OF_MEMORY,            /**< Out of memory */
     CAMERA_ERROR_DEVICE                 = CAMERA_ERROR_CLASS | 0x04,            /**< Device error */
     CAMERA_ERROR_INVALID_OPERATION      = TIZEN_ERROR_INVALID_OPERATION,        /**< Internal error */
-    CAMERA_ERROR_SOUND_POLICY           = CAMERA_ERROR_CLASS | 0x06,            /**< Blocked by Audio Session Manager */
+    CAMERA_ERROR_SOUND_POLICY           = CAMERA_ERROR_CLASS | 0x06,            /**< Blocked by Audio Session Manager (Deprecated since 3.0) */
     CAMERA_ERROR_SECURITY_RESTRICTED    = CAMERA_ERROR_CLASS | 0x07,            /**< Restricted by security system policy */
     CAMERA_ERROR_DEVICE_BUSY            = CAMERA_ERROR_CLASS | 0x08,            /**< The device is using another application or working on some operation */
     CAMERA_ERROR_DEVICE_NOT_FOUND       = CAMERA_ERROR_CLASS | 0x09,            /**< No camera device */
-    CAMERA_ERROR_SOUND_POLICY_BY_CALL   = CAMERA_ERROR_CLASS | 0x0a,            /**< Blocked by Audio Session Manager - CALL */
-    CAMERA_ERROR_SOUND_POLICY_BY_ALARM  = CAMERA_ERROR_CLASS | 0x0b,            /**< Blocked by Audio Session Manager - ALARM */
+    CAMERA_ERROR_SOUND_POLICY_BY_CALL   = CAMERA_ERROR_CLASS | 0x0a,            /**< Blocked by Audio Session Manager - CALL (Deprecated since 3.0) */
+    CAMERA_ERROR_SOUND_POLICY_BY_ALARM  = CAMERA_ERROR_CLASS | 0x0b,            /**< Blocked by Audio Session Manager - ALARM (Deprecated since 3.0) */
     CAMERA_ERROR_ESD                    = CAMERA_ERROR_CLASS | 0x0c,            /**< ESD situation */
     CAMERA_ERROR_PERMISSION_DENIED      = TIZEN_ERROR_PERMISSION_DENIED,        /**< The access to the resources can not be granted*/
     CAMERA_ERROR_NOT_SUPPORTED          = TIZEN_ERROR_NOT_SUPPORTED,            /**< The feature is not supported */
+    CAMERA_ERROR_RESOURCE_CONFLICT      = CAMERA_ERROR_CLASS | 0x0d,            /**< Blocked by resource conflict (Since 3.0) */
 } camera_error_e;
 
 /**
@@ -124,10 +125,11 @@ typedef enum
 typedef enum
 {
 	CAMERA_POLICY_NONE = 0,         /**< None */
-	CAMERA_POLICY_SOUND,            /**< Sound policy */
-	CAMERA_POLICY_SOUND_BY_CALL,    /**< Sound policy by CALL */
-	CAMERA_POLICY_SOUND_BY_ALARM,   /**< Sound policy by ALARM */
-	CAMERA_POLICY_SECURITY          /**< Security policy */
+	CAMERA_POLICY_SOUND,            /**< Sound policy (Deprecated since 3.0) */
+	CAMERA_POLICY_SOUND_BY_CALL,    /**< Sound policy by CALL (Deprecated since 3.0) */
+	CAMERA_POLICY_SOUND_BY_ALARM,   /**< Sound policy by ALARM (Deprecated since 3.0) */
+	CAMERA_POLICY_SECURITY,         /**< Security policy */
+	CAMERA_POLICY_RESOURCE_CONFLICT /**< Resource conflict (Since 3.0) */
 } camera_policy_e;
 
 /**
@@ -754,6 +756,7 @@ int camera_destroy(camera_h camera);
  * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
  * @retval #CAMERA_ERROR_INVALID_STATE Invalid state
  * @retval #CAMERA_ERROR_SOUND_POLICY Sound policy error
+ * @retval #CAMERA_ERROR_RESOURCE_CONFLICT Resource conflict error
  * @retval #CAMERA_ERROR_INVALID_OPERATION Invalid operation
  * @retval #CAMERA_ERROR_DEVICE_BUSY The device is being used in another application or is performing other operations
  * @retval #CAMERA_ERROR_DEVICE_NOT_FOUND No camera device
