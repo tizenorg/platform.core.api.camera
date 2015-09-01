@@ -20,7 +20,9 @@
 #include <string.h>
 #include <mm.h>
 #include <mm_camcorder.h>
+#ifdef HAVE_WAYLAND
 #include <mm_camcorder_mused.h>
+#endif /* HAVE_WAYLAND */
 #include <mm_types.h>
 #include <camera.h>
 #include <camera_internal.h>
@@ -164,10 +166,12 @@ int camera_get_video_caps(camera_h camera, char **caps)
 	int ret;
 	camera_s *handle = (camera_s *)camera;
 
+#ifdef HAVE_WAYLAND
 	ret = mm_camcorder_mused_get_video_caps(handle->mm_handle, caps);
 	if(ret != MM_ERROR_NONE) {
 		return __convert_camera_error_code(__func__, ret);
 	}
+#endif /* HAVE_WAYLAND */
 
 	return CAMERA_ERROR_NONE;
 }

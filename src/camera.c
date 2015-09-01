@@ -32,7 +32,9 @@
 #include <tbm_surface_internal.h>
 #include <Evas.h>
 #include <Ecore.h>
+#ifdef HAVE_WAYLAND
 #include <Ecore_Wayland.h>
+#endif /* HAVE_WAYLAND */
 #include <Elementary.h>
 
 #ifdef LOG_TAG
