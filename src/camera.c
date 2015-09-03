@@ -530,7 +530,6 @@ static int __mm_camera_message_callback(int message, void *param, void *user_dat
 	MMMessageParamType *m = (MMMessageParamType *)param;
 	camera_state_e previous_state;
 	camera_policy_e policy = CAMERA_POLICY_NONE;
-	MMCamRecordingReport *report = NULL;
 	MMCamFaceDetectInfo *cam_fd_info = NULL;
 
 	if (handle->relay_message_callback) {
@@ -619,18 +618,6 @@ static int __mm_camera_message_callback(int message, void *param, void *user_dat
 			if (handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE]) {
 				((camera_capture_completed_cb)handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE])(handle->user_data[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE]);
 			}
-		}
-		break;
-	case MM_MESSAGE_CAMCORDER_VIDEO_CAPTURED:
-	case MM_MESSAGE_CAMCORDER_AUDIO_CAPTURED:
-		report = (MMCamRecordingReport *)m->data;
-		if (report != NULL && report->recording_filename) {
-			free(report->recording_filename);
-			report->recording_filename = NULL;
-		}
-		if (report) {
-			free(report);
-			report = NULL;
 		}
 		break;
 	case MM_MESSAGE_CAMCORDER_VIDEO_SNAPSHOT_CAPTURED:
