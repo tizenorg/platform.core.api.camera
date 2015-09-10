@@ -23,8 +23,8 @@ SET(service "media")
 SET(submodule "camera")
 
 # for package file
-SET(dependents "dlog audio-session-mgr mm-camcorder capi-base-common capi-media-tool gstreamer-1.0 libtbm evas ecore elementary vconf")
-SET(pc_dependents "mm-camcorder capi-base-common capi-media-tool gstreamer-1.0 libtbm evas ecore elementary")
+SET(dependents "dlog mm-common capi-base-common capi-media-tool capi-media-sound-manager mm-camcorder ecore evas ecore-wayland elementary mused")
+SET(pc_dependents "dlog libtbm capi-media-sound-manager")
 
 SET(fw_name "${project_prefix}-${service}-${submodule}")
 
@@ -73,7 +73,7 @@ SET_TARGET_PROPERTIES(${fw_name}
 )
 
 
-TARGET_LINK_LIBRARIES(${fw_name} ${${fw_name}_LDFLAGS})
+TARGET_LINK_LIBRARIES(${fw_name} mused-camera ${${fw_name}_LDFLAGS})
 
 INSTALL(TARGETS ${fw_name} DESTINATION ${LIB_INSTALL_DIR})
 INSTALL(
@@ -94,16 +94,14 @@ CONFIGURE_FILE(
 )
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${fw_name}.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
 
-#ADD_SUBDIRECTORY(test)
-
 IF(UNIX)
 
 ADD_CUSTOM_TARGET (distclean @echo cleaning for source distribution)
 ADD_CUSTOM_COMMAND(
-        DEPENDS clean 
+        DEPENDS clean
         COMMENT "distribution clean"
         COMMAND find
-        ARGS    . 
+        ARGS    .
         -not -name config.cmake -and \(
         -name tester.c -or
         -name Testing -or
