@@ -19,1431 +19,930 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mm.h>
-#include <audio-session-manager-types.h>
-#include <mm_camcorder.h>
 #include <mm_types.h>
-#include <math.h>
 #include <camera.h>
+#include <mused_camera.h>
+#include <mused_camera_msg.h>
+#include <mmsvc_core_ipc.h>
 #include <camera_private.h>
-#include <glib.h>
+#include <mmsvc_core.h>
+//#include <glib.h>
 #include <dlog.h>
-#include <gst/gst.h>
-#include <tbm_bufmgr.h>
-#include <tbm_surface_internal.h>
+#include <Elementary.h>
+#include <mm_camcorder_mused.h>
 #include <Evas.h>
-#include <Ecore.h>
 #ifdef HAVE_WAYLAND
 #include <Ecore_Wayland.h>
-#endif /* HAVE_WAYLAND */
-#include <Elementary.h>
+#else
+#include <Ecore.h>
+#endif
 
 #ifdef LOG_TAG
 #undef LOG_TAG
 #endif
-#define LOG_TAG "TIZEN_N_CAMERA"
+#define LOG_TAG "TIZEN_N_CAMERA_CLIENT"
 
-static gboolean __mm_videostream_callback(MMCamcorderVideoStreamDataType *stream, void *user_data);
-static gboolean __mm_capture_callback(MMCamcorderCaptureDataType *frame, MMCamcorderCaptureDataType *thumbnail, void *user_data);
+//int mmsvc_camera_ipc_import_tbm(mmsvc_camera_transport_info_s *transport_info);
+//export int mmsvc_camera_ipc_export_tbm_bo(mmsvc_camera_transport_info_s transport_info);
 
-
-void _camera_remove_cb_message(camera_s *handle)
+static void _client_user_callback(callback_cb_info_s * cb_info, mmsvc_camera_event_e event )
 {
-	int ret = 0;
-	GList *list = NULL;
-	camera_cb_data *cb_data = NULL;
+	char *recvMsg = cb_info->recvMsg;
+	int param, param1, param2;
+	LOGW("get event %d", event);
 
-	if (handle == NULL) {
-		LOGE("handle is NULL");
-		return;
+	switch (event) {
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_PREVIEW_RESOLUTION:
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_CAPTURE_RESOLUTION:
+			mmsvc_camera_msg_get(param1, recvMsg);
+			mmsvc_camera_msg_get(param2, recvMsg);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_THEATER_MODE:
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_CAPTURE_FORMAT:
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_PREVIEW_FORMAT:
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_AF_MODE:
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_EXPOSURE_MODE:
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_ISO:
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_WHITEBALANCE:
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_EFFECT:
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_SCENE_MODE:
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FLASH_MODE:
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FPS:
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FPS_BY_RESOLUTION:
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_STREAM_FLIP:
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_STREAM_ROTATION:
+			mmsvc_camera_msg_get(param, recvMsg);
+			break;
+		default:
+			break;
 	}
 
-	LOGI("start");
+	switch(event) {
+		case MMSVC_CAMERA_EVENT_TYPE_STATE_CHANGE:
+		{
+			int cb_previous, cb_current, cb_by_policy;
+			mmsvc_camera_msg_get(cb_previous, recvMsg);
+			mmsvc_camera_msg_get(cb_current, recvMsg);
+			mmsvc_camera_msg_get(cb_by_policy, recvMsg);
+			((camera_state_changed_cb)cb_info->user_cb[event])((camera_state_e)cb_previous,
+													(camera_state_e)cb_current,
+													(bool)cb_by_policy,
+													cb_info->user_data[event]);
+			break;
+		}
+		case MMSVC_CAMERA_EVENT_TYPE_FOCUS_CHANGE:
+		{
+			int cb_state;
+			mmsvc_camera_msg_get(cb_state, recvMsg);
+			((camera_focus_changed_cb)cb_info->user_cb[event])((camera_focus_state_e)cb_state,
+													cb_info->user_data[event]);
+			break;
+		}
+		case MMSVC_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE:
+			((camera_capture_completed_cb)cb_info->user_cb[event])(cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_PREVIEW:
+			((camera_preview_cb)cb_info->user_cb[event])(NULL,
+													cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW:
+			((camera_media_packet_preview_cb)cb_info->user_cb[event])(NULL,
+															cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_HDR_PROGRESS:
+		{
+			int progress;
+			mmsvc_camera_msg_get(progress, recvMsg);
+			((camera_attr_hdr_progress_cb)cb_info->user_cb[event])(progress,
+															cb_info->user_data[event]);
+			break;
+		}
+		case MMSVC_CAMERA_EVENT_TYPE_INTERRUPTED:
+		{
+			int cb_policy, cb_previous, cb_current;
+			mmsvc_camera_msg_get(cb_policy, recvMsg);
+			mmsvc_camera_msg_get(cb_previous, recvMsg);
+			mmsvc_camera_msg_get(cb_current, recvMsg);
+			((camera_interrupted_cb)cb_info->user_cb[event])((camera_policy_e)cb_policy,
+														(camera_state_e)cb_previous,
+														(camera_state_e)cb_current,
+														cb_info->user_data[event]);
+			break;
+		}
+		case MMSVC_CAMERA_EVENT_TYPE_FACE_DETECTION:
+		{
+			int count;
+			mmsvc_camera_msg_get(count, recvMsg);
+			((camera_face_detected_cb)cb_info->user_cb[event])(NULL,
+													count,
+													cb_info->user_data[event]);
+			break;
+		}
+		case MMSVC_CAMERA_EVENT_TYPE_ERROR:
+		{
+			int cb_error, cb_current_state;
+			mmsvc_camera_msg_get(cb_error, recvMsg);
+			mmsvc_camera_msg_get(cb_current_state, recvMsg);
+			((camera_error_cb)cb_info->user_cb[event])((camera_error_e)cb_error,
+													(camera_state_e)cb_current_state,
+													cb_info->user_data[event]);
+			break;
+		}
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_PREVIEW_RESOLUTION:
+			((camera_supported_preview_resolution_cb)cb_info->user_cb[event])(param1, param2,
+																	cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_CAPTURE_RESOLUTION:
+			((camera_supported_capture_resolution_cb)cb_info->user_cb[event])(param1, param2,
+																	cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_CAPTURE_FORMAT:
+			((camera_supported_capture_format_cb)cb_info->user_cb[event])((camera_pixel_format_e)param,
+																	cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_PREVIEW_FORMAT:
+			((camera_supported_preview_format_cb)cb_info->user_cb[event])((camera_pixel_format_e)param,
+																	cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_AF_MODE:
+			((camera_attr_supported_af_mode_cb)cb_info->user_cb[event])((camera_attr_af_mode_e)param,
+																	cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_EXPOSURE_MODE:
+			((camera_attr_supported_exposure_mode_cb)cb_info->user_cb[event])((camera_attr_exposure_mode_e)param,
+																	cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_ISO:
+			((camera_attr_supported_iso_cb)cb_info->user_cb[event])((camera_attr_iso_e)param,
+															cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_WHITEBALANCE:
+			((camera_attr_supported_whitebalance_cb)cb_info->user_cb[event])((camera_attr_whitebalance_e)param,
+																		cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_EFFECT:
+			((camera_attr_supported_effect_cb)cb_info->user_cb[event])((camera_attr_effect_mode_e)param,
+																cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_SCENE_MODE:
+			((camera_attr_supported_scene_mode_cb)cb_info->user_cb[event])((camera_attr_scene_mode_e)param,
+																	cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FLASH_MODE:
+			((camera_attr_supported_flash_mode_cb)cb_info->user_cb[event])((camera_attr_flash_mode_e)param,
+																	cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FPS:
+			((camera_attr_supported_fps_cb)cb_info->user_cb[event])((camera_attr_fps_e)param,
+															cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FPS_BY_RESOLUTION:
+			((camera_attr_supported_fps_cb)cb_info->user_cb[event])((camera_attr_fps_e)param,
+															cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_STREAM_FLIP:
+			((camera_attr_supported_stream_flip_cb)cb_info->user_cb[event])((camera_flip_e)param,
+																	cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_STREAM_ROTATION:
+			((camera_attr_supported_stream_rotation_cb)cb_info->user_cb[event])((camera_rotation_e)param,
+																	cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_THEATER_MODE:
+			((camera_attr_supported_theater_mode_cb)cb_info->user_cb[event])((camera_attr_theater_mode_e)param,
+																	cb_info->user_data[event]);
+			break;
+		case MMSVC_CAMERA_EVENT_TYPE_CAPTURE:
+		{
+			camera_image_data_s *rImage = NULL;
+			camera_image_data_s *rPostview = NULL;
+			camera_image_data_s *rThumbnail = NULL;
+			unsigned char *buf_pos = NULL;
+			mmsvc_camera_transport_info_s transport_info;
+			int tKey = 0;
+			int is_postview = 0;
+			int is_thumbnail = 0;
 
-	g_mutex_lock(&handle->idle_cb_lock);
+			LOGW("camera2 capture callback came in.");
+			mmsvc_camera_msg_get(tKey, recvMsg);
+			mmsvc_camera_msg_get(is_postview, recvMsg);
+			mmsvc_camera_msg_get(is_thumbnail, recvMsg);
 
-	if (handle->cb_data_list) {
-		list = handle->cb_data_list;
+			if (tKey != 0) {
+				transport_info.tbm_key = tKey;
+				LOGE("Read key_info INFO : %d", transport_info.tbm_key);
 
-		while (list) {
-			cb_data = list->data;
-			list =  g_list_next(list);
+				if(mmsvc_camera_ipc_import_tbm(&transport_info) == FALSE) {
+					LOGE("camera2_import_tbm ERROR!!");
+					break;
+				} else {
+					buf_pos = (unsigned char *)transport_info.bo_handle.ptr;
+					rImage = (camera_image_data_s *)g_new(camera_image_data_s, sizeof(camera_image_data_s));
 
-			if (!cb_data) {
-				LOGW("cb_data is NULL");
+					if (rImage != NULL) {
+						memcpy(rImage, buf_pos, sizeof(camera_image_data_s));
+						buf_pos += sizeof(camera_image_data_s);
+						if (rImage->size > 0) {
+							rImage->data = (unsigned char *)g_new(unsigned char, rImage->size);
+							if (rImage->data != NULL) {
+								memcpy(rImage->data, buf_pos, rImage->size);
+								buf_pos += rImage->size;
+							}
+						} else {
+				 			g_free(rImage);
+							rImage = NULL;
+						}
+					}
+					if (is_postview) {
+						rPostview = (camera_image_data_s *)g_new(camera_image_data_s, sizeof(camera_image_data_s));
+						if (rPostview != NULL) {
+							memcpy(rPostview, buf_pos, sizeof(camera_image_data_s));
+							buf_pos += sizeof(camera_image_data_s);
+							if (rPostview->size > 0) {
+								rPostview->data = (unsigned char *)g_new(unsigned char, rImage->size);
+								if (rPostview->data != NULL) {
+									memcpy(rPostview->data, buf_pos, rPostview->size);
+									buf_pos += rPostview->size;
+								}
+							} else {
+					 			g_free(rPostview);
+								rPostview = NULL;
+							}
+						}
+					}
+					if (is_thumbnail) {
+						rThumbnail = (camera_image_data_s *)g_new(camera_image_data_s, sizeof(camera_image_data_s));
+						if (rThumbnail != NULL) {
+							memcpy(rThumbnail, buf_pos, sizeof(camera_image_data_s));
+							buf_pos += sizeof(camera_image_data_s);
+							if (rThumbnail->size > 0) {
+								rThumbnail->data = (unsigned char *)g_new(unsigned char, rThumbnail->size);
+								if (rThumbnail->data != NULL) {
+									memcpy(rImage->data, buf_pos, rThumbnail->size);
+								}
+							} else {
+					 			g_free(rThumbnail);
+								rThumbnail = NULL;
+							}
+						}
+					}
+					mmsvc_camera_deinit_tbm(transport_info);
+				}
 			} else {
-				ret = g_idle_remove_by_data (cb_data);
-				LOGW("Remove cb_data[%p]. ret[%d]", cb_data, ret);
+				LOGE("Get KEY INFO sock msg ERROR!!");
+				break;
+			}
 
-				handle->cb_data_list = g_list_remove(handle->cb_data_list, cb_data);
-				free(cb_data);
-				cb_data = NULL;
+			LOGW("read image info height: %d, width : %d, size : %d", rImage->height, rImage->width, rImage->size);
+
+			((camera_capturing_cb)cb_info->user_cb[event])(rImage, rPostview, rThumbnail, cb_info->user_data[event]);
+
+			if(rImage) {
+				if(rImage->data)
+					g_free(rImage->data);
+	 			g_free(rImage);
+			}
+			if (is_postview) {
+				if(rPostview) {
+					if(rPostview->data)
+						g_free(rPostview->data);
+		 			g_free(rPostview);
+				}
+			}
+			if (is_thumbnail) {
+				if(rThumbnail) {
+					if(rThumbnail->data)
+						g_free(rThumbnail->data);
+		 			g_free(rThumbnail);
+				}
+			}
+			LOGW("finished capture callback");
+			break;
+		}
+		case MMSVC_CAMERA_EVENT_TYPE_VIDEO_FRAME_RENDER_ERROR:
+			break;
+
+		default:
+			LOGE("Unknonw event");
+			break;
+	}
+}
+
+static void *client_cb_handler(gpointer data)
+{
+	int ret;
+	int api;
+	int num_token = 0;
+	int i = 0;
+	int str_pos = 0;
+	int prev_pos = 0;
+	callback_cb_info_s *cb_info = data;
+	char *recvMsg = cb_info->recvMsg;
+	char parseStr[MMSVC_PARSE_STRING_SIZE][MMSVC_MSG_MAX_LENGTH] = {{0,0},};
+
+	while (g_atomic_int_get(&cb_info->running)) {
+		ret = mmsvc_core_ipc_recv_msg(cb_info->fd, recvMsg);
+		if (ret <= 0)
+			break;
+		recvMsg[ret] = '\0';
+
+		str_pos = 0;
+		prev_pos = 0;
+		num_token = 0;
+		memset(parseStr, 0, MMSVC_PARSE_STRING_SIZE * MMSVC_MSG_MAX_LENGTH);
+
+		LOGW("recvMSg : %s, length : %d", recvMsg, ret);
+
+		/* Need to split the combined entering msgs. 
+ 		    This module supports up to 5 combined msgs. */
+		for (str_pos = 0; str_pos < ret; str_pos++) {
+			if(recvMsg[str_pos] == '}') {
+				strncpy(&(parseStr[num_token][0]), recvMsg + prev_pos, str_pos - prev_pos + 1);
+				LOGW("splitted msg : %s, Index : %d", &(parseStr[num_token][0]), num_token);
+				prev_pos = str_pos+1;
+				num_token++;
+			}
+		}
+		LOGW("num_token : %d", num_token);
+
+		/* Re-construct to the useful single msg. */
+		for (i = 0; i < num_token; i++) {
+
+			if (i >= MMSVC_PARSE_STRING_SIZE)
+				break;
+
+			if (mmsvc_camera_msg_get(api, &(parseStr[i][0]))) {
+				if(api < MMSVC_CAMERA_API_MAX){
+					LOGW("Set Condition");
+					g_mutex_lock(&(cb_info->pMutex[api]));
+					/* The api msgs should be distinguished from the event msg. */
+					memset(cb_info->recvApiMsg, 0, strlen(cb_info->recvApiMsg));
+					strcpy(cb_info->recvApiMsg, &(parseStr[i][0]));
+					LOGW("cb_info->recvApiMsg : %s", cb_info->recvApiMsg);
+					cb_info->activating[api] = 1;
+					g_cond_signal(&(cb_info->pCond[api]));
+					g_mutex_unlock(&(cb_info->pMutex[api]));
+					//msleep(100);
+					if(api == MMSVC_CAMERA_API_DESTROY) {
+						g_atomic_int_set(&cb_info->running, 0);
+						LOGW("close client cb handler");
+					}
+
+				} else if(api == MMSVC_CAMERA_CB_EVENT) {
+					int event;
+					if (mmsvc_camera_msg_get(event, &(parseStr[i][0]))) {
+						LOGW("go callback : %d", event);
+						_client_user_callback(cb_info, event);
+					}
+				}
+			}else{
+				LOGE("Get Msg Failed");
 			}
 		}
 
-		g_list_free(handle->cb_data_list);
-		handle->cb_data_list = NULL;
-	} else {
-		LOGW("There is no remained callback");
 	}
+	LOGW("client cb exit");
 
-	g_mutex_unlock(&handle->idle_cb_lock);
-
-	LOGI("done");
-
-	return;
+	return NULL;
 }
 
+static callback_cb_info_s *client_callback_new(gint sockfd)
+{
+	callback_cb_info_s *cb_info;
+	GCond *camera_cond;
+	GMutex *camera_mutex;
+	gint *camera_activ;
+	g_return_val_if_fail(sockfd > 0, NULL);
 
-int __convert_camera_error_code(const char *func, int code)
+	cb_info = g_new0(callback_cb_info_s, 1);
+	camera_cond = g_new0(GCond, MMSVC_CAMERA_API_MAX);
+	camera_mutex = g_new0(GMutex, MMSVC_CAMERA_API_MAX);
+	camera_activ = g_new0(gint, MMSVC_CAMERA_API_MAX);
+
+	g_atomic_int_set(&cb_info->running, 1);
+	cb_info->fd = sockfd;
+	cb_info->pCond = camera_cond;
+	cb_info->pMutex = camera_mutex;
+	cb_info->activating = camera_activ;
+	cb_info->thread =
+		g_thread_new("callback_thread", client_cb_handler,
+			     (gpointer) cb_info);
+
+	return cb_info;
+}
+
+static int client_wait_for_cb_return(mmsvc_camera_api_e api, callback_cb_info_s *cb_info, int time_out)
 {
 	int ret = CAMERA_ERROR_NONE;
-	const char *errorstr = NULL;
+	gint64 end_time;
 
-	switch (code) {
-	case MM_ERROR_NONE:
-		ret = CAMERA_ERROR_NONE;
-		errorstr = "ERROR_NONE";
-		break;
-	case MM_ERROR_CAMCORDER_INVALID_ARGUMENT:
-	case MM_ERROR_COMMON_INVALID_ATTRTYPE:
-		ret = CAMERA_ERROR_INVALID_PARAMETER;
-		errorstr = "INVALID_PARAMETER";
-		break;
-	case MM_ERROR_CAMCORDER_NOT_INITIALIZED:
-	case MM_ERROR_CAMCORDER_INVALID_STATE:
-		ret = CAMERA_ERROR_INVALID_STATE;
-		errorstr = "INVALID_STATE";
-		break;
-	case MM_ERROR_CAMCORDER_DEVICE_NOT_FOUND:
-		ret = CAMERA_ERROR_DEVICE_NOT_FOUND;
-		errorstr = "DEVICE_NOT_FOUND";
-		break;
-	case MM_ERROR_CAMCORDER_DEVICE_BUSY:
-	case MM_ERROR_CAMCORDER_DEVICE_OPEN:
-	case MM_ERROR_CAMCORDER_CMD_IS_RUNNING:
-		ret = CAMERA_ERROR_DEVICE_BUSY;
-		errorstr = "DEVICE_BUSY";
-		break;
-	case MM_ERROR_CAMCORDER_DEVICE:
-	case MM_ERROR_CAMCORDER_DEVICE_IO:
-	case MM_ERROR_CAMCORDER_DEVICE_TIMEOUT:
-	case MM_ERROR_CAMCORDER_DEVICE_WRONG_JPEG:
-	case MM_ERROR_CAMCORDER_DEVICE_LACK_BUFFER:
-		ret = CAMERA_ERROR_DEVICE;
-		errorstr = "ERROR_DEVICE";
-		break;
-	case MM_ERROR_CAMCORDER_GST_CORE:
-	case MM_ERROR_CAMCORDER_GST_LIBRARY:
-	case MM_ERROR_CAMCORDER_GST_RESOURCE:
-	case MM_ERROR_CAMCORDER_GST_STREAM:
-	case MM_ERROR_CAMCORDER_GST_STATECHANGE:
-	case MM_ERROR_CAMCORDER_GST_NEGOTIATION:
-	case MM_ERROR_CAMCORDER_GST_LINK:
-	case MM_ERROR_CAMCORDER_GST_FLOW_ERROR:
-	case MM_ERROR_CAMCORDER_ENCODER:
-	case MM_ERROR_CAMCORDER_ENCODER_BUFFER:
-	case MM_ERROR_CAMCORDER_ENCODER_WRONG_TYPE:
-	case MM_ERROR_CAMCORDER_ENCODER_WORKING:
-	case MM_ERROR_CAMCORDER_INTERNAL:
-	case MM_ERROR_CAMCORDER_RESPONSE_TIMEOUT:
-	case MM_ERROR_CAMCORDER_DSP_FAIL:
-	case MM_ERROR_CAMCORDER_AUDIO_EMPTY:
-	case MM_ERROR_CAMCORDER_CREATE_CONFIGURE:
-	case MM_ERROR_CAMCORDER_FILE_SIZE_OVER:
-	case MM_ERROR_CAMCORDER_DISPLAY_DEVICE_OFF:
-	case MM_ERROR_CAMCORDER_INVALID_CONDITION:
-		ret = CAMERA_ERROR_INVALID_OPERATION;
-		errorstr = "INVALID_OPERATION";
-		break;
-	case MM_ERROR_CAMCORDER_RESOURCE_CREATION:
-	case MM_ERROR_COMMON_OUT_OF_MEMORY:
-		ret = CAMERA_ERROR_OUT_OF_MEMORY;
-		errorstr = "OUT_OF_MEMORY";
-		break;
-	case MM_ERROR_POLICY_BLOCKED:
-		ret = CAMERA_ERROR_SOUND_POLICY;
-		errorstr = "ERROR_SOUND_POLICY";
-		break;
-	case MM_ERROR_POLICY_BLOCKED_BY_CALL:
-		ret = CAMERA_ERROR_SOUND_POLICY_BY_CALL;
-		errorstr = "ERROR_SOUND_POLICY_BY_CALL";
-		break;
-	case MM_ERROR_POLICY_BLOCKED_BY_ALARM:
-		ret = CAMERA_ERROR_SOUND_POLICY_BY_ALARM;
-		errorstr = "ERROR_SOUND_POLICY_BY_ALARM";
-		break;
-	case MM_ERROR_POLICY_RESTRICTED:
-		ret = CAMERA_ERROR_SECURITY_RESTRICTED;
-		errorstr = "ERROR_RESTRICTED";
-		break;
-	case MM_ERROR_CAMCORDER_DEVICE_REG_TROUBLE:
-		ret = CAMERA_ERROR_ESD;
-		errorstr = "ERROR_ESD";
-		break;
-	case MM_ERROR_COMMON_INVALID_PERMISSION:
-		ret = CAMERA_ERROR_PERMISSION_DENIED;
-		errorstr = "ERROR_PERMISSION_DENIED";
-		break;
-	case MM_ERROR_COMMON_OUT_OF_ARRAY:
-	case MM_ERROR_COMMON_OUT_OF_RANGE:
-	case MM_ERROR_COMMON_ATTR_NOT_EXIST:
-	case MM_ERROR_CAMCORDER_NOT_SUPPORTED:
-		ret = CAMERA_ERROR_NOT_SUPPORTED;
-		errorstr = "ERROR_NOT_SUPPORTED";
-		break;
-	default:
-		ret = CAMERA_ERROR_INVALID_OPERATION;
-		errorstr = "INVALID_OPERATION";
+	LOGW("Enter api : %d", api);
+	g_mutex_lock(&(cb_info->pMutex[api]));
+
+	if (cb_info->activating[api] == 0) {
+		end_time = g_get_monotonic_time() + time_out * G_TIME_SPAN_SECOND;
+		if (g_cond_wait_until(&(cb_info->pCond[api]), &(cb_info->pMutex[api]), end_time)) {
+			LOGW("cb_info->recvApiMsg : %s", cb_info->recvApiMsg);
+			if (!mmsvc_camera_msg_get(ret, cb_info->recvApiMsg)) {
+				LOGE("Get cb msg failed.");
+				ret = CAMERA_ERROR_INVALID_OPERATION;
+			} else {
+				LOGW("Wait passed, ret : 0x%x", ret);
+			}
+			if (cb_info->activating[api])
+				cb_info->activating[api] = 0;
+		} else {
+			ret = CAMERA_ERROR_INVALID_OPERATION;
+		}
+	} else {
+		LOGE("condition is already checked for the api : %d.", api);
+		if (!mmsvc_camera_msg_get(ret, cb_info->recvApiMsg)) {
+			LOGE("Get cb msg failed.");
+			ret = CAMERA_ERROR_INVALID_OPERATION;
+		} else {
+			LOGW("Already checked condition, Wait passed, ret : 0x%x", ret);
+		}	
 	}
-
-	if (code != MM_ERROR_NONE) {
-		LOGE("[%s] %s(0x%08x) : core frameworks error code(0x%08x)", func ? func : "NULL_FUNC", errorstr, ret, code);
-	}
-
+	g_mutex_unlock(&(cb_info->pMutex[api]));
+	LOGW("ret : 0x%x", ret);
 	return ret;
 }
 
-
-static gboolean __mm_videostream_callback(MMCamcorderVideoStreamDataType *stream, void *user_data)
+static void client_callback_destroy(callback_cb_info_s * cb_info)
 {
-	if (user_data == NULL || stream == NULL) {
-		return 0;
+	g_return_if_fail(cb_info != NULL);
+
+	LOGI("%p Callback destroyed", cb_info->thread);
+
+	g_thread_join(cb_info->thread);
+	g_thread_unref(cb_info->thread);
+
+	if (cb_info->pCond) {
+		g_free(cb_info->pCond);
 	}
-
-	camera_s *handle = (camera_s *)user_data;
-
-	if (handle->user_cb[_CAMERA_EVENT_TYPE_PREVIEW]) {
-		camera_preview_data_s frame;
-
-		if (stream->format == MM_PIXEL_FORMAT_ITLV_JPEG_UYVY) {
-			frame.format  = MM_PIXEL_FORMAT_UYVY;
-		} else {
-			frame.format = stream->format;
-		}
-		frame.width = stream->width;
-		frame.height = stream->height;
-		frame.timestamp = stream->timestamp;
-		frame.num_of_planes = stream->num_planes;
-
-		switch (stream->data_type) {
-		case MM_CAM_STREAM_DATA_YUV420:
-			frame.data.single_plane.yuv = stream->data.yuv420.yuv;
-			frame.data.single_plane.size = stream->data.yuv420.length_yuv;
-			break;
-		case MM_CAM_STREAM_DATA_YUV422:
-			frame.data.single_plane.yuv = stream->data.yuv422.yuv;
-			frame.data.single_plane.size = stream->data.yuv422.length_yuv;
-			break;
-		case MM_CAM_STREAM_DATA_YUV420SP:
-			frame.data.double_plane.y = stream->data.yuv420sp.y;
-			frame.data.double_plane.uv = stream->data.yuv420sp.uv;
-			frame.data.double_plane.y_size = stream->data.yuv420sp.length_y;
-			frame.data.double_plane.uv_size = stream->data.yuv420sp.length_uv;
-			break;
-		case MM_CAM_STREAM_DATA_YUV420P:
-			frame.data.triple_plane.y = stream->data.yuv420p.y;
-			frame.data.triple_plane.u = stream->data.yuv420p.u;
-			frame.data.triple_plane.v = stream->data.yuv420p.v;
-			frame.data.triple_plane.y_size = stream->data.yuv420p.length_y;
-			frame.data.triple_plane.u_size = stream->data.yuv420p.length_u;
-			frame.data.triple_plane.v_size = stream->data.yuv420p.length_v;
-			break;
-		case MM_CAM_STREAM_DATA_YUV422P:
-			frame.data.triple_plane.y = stream->data.yuv422p.y;
-			frame.data.triple_plane.u = stream->data.yuv422p.u;
-			frame.data.triple_plane.v = stream->data.yuv422p.v;
-			frame.data.triple_plane.y_size = stream->data.yuv422p.length_y;
-			frame.data.triple_plane.u_size = stream->data.yuv422p.length_u;
-			frame.data.triple_plane.v_size = stream->data.yuv422p.length_v;
-			break;
-		default :
-			break;
-		}
-
-		((camera_preview_cb)handle->user_cb[_CAMERA_EVENT_TYPE_PREVIEW])(&frame, handle->user_data[_CAMERA_EVENT_TYPE_PREVIEW]);
+	if (cb_info->pMutex) {
+		g_free(cb_info->pMutex);
 	}
-
-	if (handle->user_cb[_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW]) {
-		media_packet_h pkt = NULL;
-		tbm_surface_h tsurf = NULL;
-		uint32_t bo_format = 0;
-		int i;
-		int bo_num;
-		int ret = 0;
-		media_format_mimetype_e mimetype = MEDIA_FORMAT_NV12;
-		bool make_pkt_fmt = false;
-		tbm_surface_info_s tsurf_info;
-
-		memset(&tsurf_info, 0x0, sizeof(tbm_surface_info_s));
-
-		/* create tbm surface */
-		for (i = 0, bo_num = 0 ; i < BUFFER_MAX_PLANE_NUM ; i++) {
-			if (stream->bo[i]) {
-				bo_num++;
-			}
-			tsurf_info.planes[i].stride = stream->stride[i];
-		}
-
-		/* get tbm surface format */
-		ret = _camera_get_tbm_surface_format(stream->format, &bo_format);
-		ret |= _camera_get_media_packet_mimetype(stream->format, &mimetype);
-
-		if (bo_num > 0 && ret == CAMERA_ERROR_NONE) {
-			tsurf_info.width = stream->width;
-			tsurf_info.height = stream->height;
-			tsurf_info.format = bo_format;
-			tsurf_info.bpp = tbm_surface_internal_get_bpp(bo_format);
-			tsurf_info.num_planes = tbm_surface_internal_get_num_planes(bo_format);
-
-			switch (bo_format) {
-			case TBM_FORMAT_NV12:
-			case TBM_FORMAT_NV21:
-				tsurf_info.planes[0].size = stream->stride[0] * stream->elevation[0];
-				tsurf_info.planes[1].size = stream->stride[1] * stream->elevation[1];
-				tsurf_info.planes[0].offset = 0;
-				if (bo_num == 1) {
-					tsurf_info.planes[1].offset = tsurf_info.planes[0].size;
-				}
-				tsurf_info.size = tsurf_info.planes[0].size + tsurf_info.planes[1].size;
-				break;
-			case TBM_FORMAT_YUV420:
-			case TBM_FORMAT_YVU420:
-				tsurf_info.planes[0].size = stream->stride[0] * stream->elevation[0];
-				tsurf_info.planes[1].size = stream->stride[1] * stream->elevation[1];
-				tsurf_info.planes[2].size = stream->stride[2] * stream->elevation[2];
-				tsurf_info.planes[0].offset = 0;
-				if (bo_num == 1) {
-					tsurf_info.planes[1].offset = tsurf_info.planes[0].size;
-					tsurf_info.planes[2].offset = tsurf_info.planes[0].size + tsurf_info.planes[1].size;
-				}
-				tsurf_info.size = tsurf_info.planes[0].size + tsurf_info.planes[1].size + tsurf_info.planes[2].size;
-				break;
-			case TBM_FORMAT_UYVY:
-			case TBM_FORMAT_YUYV:
-				tsurf_info.planes[0].size = (stream->stride[0] * stream->elevation[0]) << 1;
-				tsurf_info.planes[0].offset = 0;
-				tsurf_info.size = tsurf_info.planes[0].size;
-				break;
-			default:
-				break;
-			}
-
-			tsurf = tbm_surface_internal_create_with_bos(&tsurf_info, (tbm_bo *)stream->bo, bo_num);
-			/*LOGD("tbm surface %p", tsurf);*/
-		}
-
-		if (tsurf) {
-			/* check media packet format */
-			if (handle->pkt_fmt) {
-				int pkt_fmt_width = 0;
-				int pkt_fmt_height = 0;
-				media_format_mimetype_e pkt_fmt_mimetype = MEDIA_FORMAT_NV12;
-
-				media_format_get_video_info(handle->pkt_fmt, &pkt_fmt_mimetype, &pkt_fmt_width, &pkt_fmt_height, NULL, NULL);
-				if (pkt_fmt_mimetype != mimetype ||
-				    pkt_fmt_width != stream->width ||
-				    pkt_fmt_height != stream->height) {
-					LOGW("different format. current 0x%x, %dx%d, new 0x%x, %dx%d",
-					     pkt_fmt_mimetype, pkt_fmt_width, pkt_fmt_height, mimetype, stream->width, stream->height);
-					media_format_unref(handle->pkt_fmt);
-					handle->pkt_fmt = NULL;
-					make_pkt_fmt = true;
-				}
-			} else {
-				make_pkt_fmt = true;
-			}
-
-			/* create packet format */
-			if (make_pkt_fmt) {
-				LOGW("make new pkt_fmt - mimetype 0x%x, %dx%d", mimetype, stream->width, stream->height);
-				ret = media_format_create(&handle->pkt_fmt);
-				if (ret == MEDIA_FORMAT_ERROR_NONE) {
-					ret = media_format_set_video_mime(handle->pkt_fmt, mimetype);
-					ret |= media_format_set_video_width(handle->pkt_fmt, stream->width);
-					ret |= media_format_set_video_height(handle->pkt_fmt, stream->height);
-					LOGW("media_format_set_video_mime,width,height ret : 0x%x", ret);
-				} else {
-					LOGW("media_format_create failed");
-				}
-			}
-
-			/* create media packet */
-			ret = media_packet_create_from_tbm_surface(handle->pkt_fmt, tsurf, (media_packet_finalize_cb)_camera_media_packet_finalize, (void *)handle, &pkt);
-			if (ret != MEDIA_PACKET_ERROR_NONE) {
-				LOGE("media_packet_create_from_tbm_surface failed");
-
-				tbm_surface_destroy(tsurf);
-				tsurf = NULL;
-			}
-		} else {
-			LOGE("failed to create tbm surface %dx%d, format %d, bo_num %d", stream->width, stream->height, stream->format, bo_num);
-		}
-
-		if (pkt) {
-			/*LOGD("media packet %p, internal buffer %p", pkt, stream->internal_buffer);*/
-
-			/* set internal buffer */
-			ret = media_packet_set_extra(pkt, stream->internal_buffer);
-			if (ret != MEDIA_PACKET_ERROR_NONE) {
-				LOGE("media_packet_set_extra failed");
-
-				media_packet_destroy(pkt);
-				pkt = NULL;
-			} else {
-				/* set timestamp : msec -> nsec */
-				if (media_packet_set_pts(pkt, (uint64_t)(stream->timestamp) * 1000000) != MEDIA_PACKET_ERROR_NONE) {
-					LOGW("media_packet_set_pts failed");
-				}
-
-				/* increase ref count of gst buffer */
-				gst_buffer_ref((GstBuffer *)stream->internal_buffer);
-
-				/* call media packet callback */
-				((camera_media_packet_preview_cb)handle->user_cb[_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW])(pkt, handle->user_data[_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW]);
-			}
-		}
+	if (cb_info->activating) {
+		g_free(cb_info->activating);
 	}
-
-	return 1;
-}
-
-
-static gboolean __mm_capture_callback(MMCamcorderCaptureDataType *frame, MMCamcorderCaptureDataType *thumbnail, void *user_data)
-{
-	if (user_data == NULL || frame == NULL) {
-		return 0;
-	}
-
-	camera_s *handle = (camera_s *)user_data;
-	int ret = MM_ERROR_NONE;
-	unsigned char *exif = NULL;
-	int exif_size = 0;
-	MMCamcorderCaptureDataType *scrnl = NULL;
-	int scrnl_size = 0;
-
-	handle->current_capture_count++;
-
-	if (handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE]) {
-		camera_image_data_s image = { NULL, 0, 0, 0, 0, NULL, 0 };
-		camera_image_data_s thumb = { NULL, 0, 0, 0, 0, NULL, 0 };
-		camera_image_data_s postview = { NULL, 0, 0, 0, 0, NULL, 0 };
-
-		if (frame) {
-			image.data = frame->data;
-			image.size = frame->length;
-			image.width = frame->width;
-			image.height = frame->height;
-			image.format = frame->format;
-
-			ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-							  "captured-exif-raw-data", &exif, &exif_size,
-							  NULL);
-			if (ret == MM_ERROR_NONE) {
-				image.exif = exif;
-				image.exif_size = exif_size;
-			}
-		}
-
-		if (thumbnail) {
-			thumb.data = thumbnail->data;
-			thumb.size = thumbnail->length;
-			thumb.width = thumbnail->width;
-			thumb.height = thumbnail->height;
-			thumb.format = thumbnail->format;
-		}
-
-		ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-						  "captured-screennail", &scrnl, &scrnl_size,
-						  NULL);
-		if (ret == MM_ERROR_NONE && scrnl) {
-			postview.data = scrnl->data;
-			postview.size = scrnl->length;
-			postview.width = scrnl->width;
-			postview.height = scrnl->height;
-			postview.format = scrnl->format;
-		}
-
-		((camera_capturing_cb)handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE])(&image,
-										   scrnl ? &postview : NULL,
-										   thumbnail ? &thumb : NULL,
-										   handle->user_data[_CAMERA_EVENT_TYPE_CAPTURE]);
-	}
-
-	/* update captured state */
-	if (handle->capture_count == 1 && handle->hdr_keep_mode) {
-		if (handle->current_capture_count == 2) {
-			handle->is_capture_completed = true;
-		}
-	} else if (handle->capture_count == handle->current_capture_count ||
-	           handle->is_continuous_shot_break) {
-		handle->is_capture_completed = true;
-	}
-
-	return 1;
-}
-
-
-static camera_state_e __camera_state_convert(MMCamcorderStateType mm_state)
-{
-	camera_state_e state = CAMERA_STATE_NONE;
-
-	switch (mm_state) {
-	case MM_CAMCORDER_STATE_NONE:
-		state = CAMERA_STATE_NONE;
-		break;
-	case MM_CAMCORDER_STATE_NULL:
-		state = CAMERA_STATE_CREATED;
-		break;
-	case MM_CAMCORDER_STATE_READY:
-		state = CAMERA_STATE_CREATED;
-		break;
-	case MM_CAMCORDER_STATE_PREPARE:
-		state = CAMERA_STATE_PREVIEW;
-		break;
-	case MM_CAMCORDER_STATE_CAPTURING:
-		state = CAMERA_STATE_CAPTURING;
-		break;
-	case MM_CAMCORDER_STATE_RECORDING:
-		state = CAMERA_STATE_PREVIEW;
-		break;
-	case MM_CAMCORDER_STATE_PAUSED:
-		state = CAMERA_STATE_PREVIEW;
-		break;
-	default:
-		state = CAMERA_STATE_NONE;
-		break;
-	}
-
-	return state;
-}
-
-
-static int __mm_camera_message_callback(int message, void *param, void *user_data)
-{
-	if (user_data == NULL || param == NULL) {
-		return 0;
-	}
-
-	int i = 0;
-	int camera_error = 0;
-	camera_s *handle = (camera_s *)user_data;
-	MMMessageParamType *m = (MMMessageParamType *)param;
-	camera_state_e previous_state;
-	camera_policy_e policy = CAMERA_POLICY_NONE;
-	MMCamFaceDetectInfo *cam_fd_info = NULL;
-
-	if (handle->relay_message_callback) {
-		handle->relay_message_callback(message, param, handle->relay_user_data);
-	}
-
-	switch (message) {
-	case MM_MESSAGE_CAMCORDER_STATE_CHANGED:
-	case MM_MESSAGE_CAMCORDER_STATE_CHANGED_BY_ASM:
-	case MM_MESSAGE_CAMCORDER_STATE_CHANGED_BY_SECURITY:
-		if (message == MM_MESSAGE_CAMCORDER_STATE_CHANGED &&
-		    (m->state.previous < MM_CAMCORDER_STATE_NONE ||
-		     m->state.previous > MM_CAMCORDER_STATE_PAUSED ||
-		     m->state.code != 0)) {
-			LOGI( "Invalid state changed message");
-			break;
-		}
-
-		previous_state = handle->state;
-		handle->state = __camera_state_convert(m->state.current );
-
-		if (message == MM_MESSAGE_CAMCORDER_STATE_CHANGED_BY_ASM) {
-			switch (m->state.code) {
-			case ASM_EVENT_SOURCE_CALL_START:
-			case ASM_EVENT_SOURCE_CALL_END:
-				policy = CAMERA_POLICY_SOUND_BY_CALL;
-				LOGW("CAMERA_POLICY_SOUND_BY_CALL");
-				break;
-			case ASM_EVENT_SOURCE_ALARM_START:
-			case ASM_EVENT_SOURCE_ALARM_END:
-				policy = CAMERA_POLICY_SOUND_BY_ALARM;
-				LOGW("CAMERA_POLICY_SOUND_BY_ALARM");
-				break;
-			default:
-				policy = CAMERA_POLICY_SOUND;
-				LOGW("CAMERA_POLICY_SOUND");
-				break;
-			}
-		} else if (message == MM_MESSAGE_CAMCORDER_STATE_CHANGED_BY_SECURITY) {
-			policy = CAMERA_POLICY_SECURITY;
-			LOGW("CAMERA_POLICY_SECURITY");
-		}
-
-		if (previous_state != handle->state && handle->user_cb[_CAMERA_EVENT_TYPE_STATE_CHANGE]) {
-			((camera_state_changed_cb)handle->user_cb[_CAMERA_EVENT_TYPE_STATE_CHANGE])(previous_state,
-												    handle->state,
-												    policy,
-												    handle->user_data[_CAMERA_EVENT_TYPE_STATE_CHANGE]);
-		}
-
-		/* should change intermediate state MM_CAMCORDER_STATE_READY is not valid in capi , change to NULL state */
-		if (policy != CAMERA_POLICY_NONE &&
-		    m->state.current == MM_CAMCORDER_STATE_NULL) {
-			if (handle->user_cb[_CAMERA_EVENT_TYPE_INTERRUPTED]) {
-				((camera_interrupted_cb)handle->user_cb[_CAMERA_EVENT_TYPE_INTERRUPTED])(policy,
-													 previous_state,
-													 handle->state,
-													 handle->user_data[_CAMERA_EVENT_TYPE_INTERRUPTED]);
-			} else {
-				LOGW("_CAMERA_EVENT_TYPE_INTERRUPTED cb is NULL");
-			}
-		}
-		break;
-	case MM_MESSAGE_CAMCORDER_FOCUS_CHANGED :
-		if (handle->user_cb[_CAMERA_EVENT_TYPE_FOCUS_CHANGE]) {
-			((camera_focus_changed_cb)handle->user_cb[_CAMERA_EVENT_TYPE_FOCUS_CHANGE])(m->code,
-												    handle->user_data[_CAMERA_EVENT_TYPE_FOCUS_CHANGE]);
-		}
-		break;
-	case MM_MESSAGE_CAMCORDER_CAPTURED:
-		handle->current_capture_complete_count = m->code;
-		if (handle->capture_count == 1 ||
-		    m->code == handle->capture_count ||
-		    (handle->is_continuous_shot_break &&
-		     handle->state == CAMERA_STATE_CAPTURING)) {
-			/* pseudo state change */
-			previous_state = handle->state ;
-			handle->state = CAMERA_STATE_CAPTURED;
-			if (previous_state != handle->state &&
-			    handle->user_cb[_CAMERA_EVENT_TYPE_STATE_CHANGE]) {
-				((camera_state_changed_cb)handle->user_cb[_CAMERA_EVENT_TYPE_STATE_CHANGE])(previous_state,
-													    handle->state,
-													    0,
-													    handle->user_data[_CAMERA_EVENT_TYPE_STATE_CHANGE]);
-			}
-			if (handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE]) {
-				((camera_capture_completed_cb)handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE])(handle->user_data[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE]);
-			}
-		}
-		break;
-	case MM_MESSAGE_CAMCORDER_VIDEO_SNAPSHOT_CAPTURED:
-		if (handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE]) {
-			((camera_capture_completed_cb)handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE])(handle->user_data[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE]);
-		}
-		break;
-	case MM_MESSAGE_CAMCORDER_ERROR:
-		switch (m->code) {
-		case MM_ERROR_CAMCORDER_DEVICE :
-		case MM_ERROR_CAMCORDER_DEVICE_TIMEOUT:
-		case MM_ERROR_CAMCORDER_DEVICE_WRONG_JPEG:
-			camera_error = CAMERA_ERROR_DEVICE;
-			break;
-		case MM_ERROR_CAMCORDER_GST_CORE:
-		case MM_ERROR_CAMCORDER_GST_LIBRARY:
-		case MM_ERROR_CAMCORDER_GST_RESOURCE:
-		case MM_ERROR_CAMCORDER_GST_STREAM:
-		case MM_ERROR_CAMCORDER_GST_NEGOTIATION:
-		case MM_ERROR_CAMCORDER_GST_FLOW_ERROR:
-		case MM_ERROR_CAMCORDER_ENCODER:
-		case MM_ERROR_CAMCORDER_ENCODER_BUFFER:
-		case MM_ERROR_CAMCORDER_ENCODER_WORKING:
-		case MM_ERROR_CAMCORDER_MNOTE_CREATION:
-		case MM_ERROR_CAMCORDER_MNOTE_ADD_ENTRY:
-		case MM_ERROR_CAMCORDER_INTERNAL:
-		case MM_ERROR_FILE_NOT_FOUND:
-		case MM_ERROR_FILE_READ:
-			camera_error = CAMERA_ERROR_INVALID_OPERATION;
-			break;
-		case MM_ERROR_CAMCORDER_LOW_MEMORY:
-		case MM_ERROR_CAMCORDER_MNOTE_MALLOC:
-			camera_error = CAMERA_ERROR_OUT_OF_MEMORY;
-			break;
-		case MM_ERROR_CAMCORDER_DEVICE_REG_TROUBLE:
-			camera_error = CAMERA_ERROR_ESD;
-			break;
-		default :
-			camera_error = CAMERA_ERROR_INVALID_OPERATION;
-			break;
-		}
-
-		/* set capture completed flag as true to release camera handle */
-		handle->is_capture_completed = true;
-
-		if (camera_error != 0 && handle->user_cb[_CAMERA_EVENT_TYPE_ERROR]) {
-			((camera_error_cb)handle->user_cb[_CAMERA_EVENT_TYPE_ERROR])(camera_error,
-										     handle->state,
-										     handle->user_data[_CAMERA_EVENT_TYPE_ERROR]);
-		}
-
-		break;
-	case MM_MESSAGE_CAMCORDER_HDR_PROGRESS:
-		if (handle->user_cb[_CAMERA_EVENT_TYPE_HDR_PROGRESS]) {
-			((camera_attr_hdr_progress_cb)handle->user_cb[_CAMERA_EVENT_TYPE_HDR_PROGRESS])(m->code,
-													handle->user_data[_CAMERA_EVENT_TYPE_HDR_PROGRESS]);
-		}
-		break;
-	case MM_MESSAGE_CAMCORDER_FACE_DETECT_INFO:
-		cam_fd_info = (MMCamFaceDetectInfo *)(m->data);
-		if (cam_fd_info) {
-			camera_detected_face_s faces[cam_fd_info->num_of_faces];
-			handle->num_of_faces = cam_fd_info->num_of_faces > MAX_DETECTED_FACE ? MAX_DETECTED_FACE : cam_fd_info->num_of_faces;
-
-			for (i = 0 ; i < handle->num_of_faces ; i++) {
-				faces[i].id = cam_fd_info->face_info[i].id;
-				faces[i].score = cam_fd_info->face_info[i].score;
-				faces[i].x = cam_fd_info->face_info[i].rect.x;
-				faces[i].y = cam_fd_info->face_info[i].rect.y;
-				faces[i].width = cam_fd_info->face_info[i].rect.width;
-				faces[i].height = cam_fd_info->face_info[i].rect.height;
-				handle->faceinfo[i] = faces[i];	//cache face coordinate
-			}
-
-			if (handle->user_cb[_CAMERA_EVENT_TYPE_FACE_DETECTION]) {
-				((camera_face_detected_cb)handle->user_cb[_CAMERA_EVENT_TYPE_FACE_DETECTION])(faces,
-													      handle->num_of_faces,
-													      handle->user_data[_CAMERA_EVENT_TYPE_FACE_DETECTION]);
-			}
-		} else {
-			handle->num_of_faces = 0;
-		}
-		break;
-	default:
-		break;
-	}
-
-	return 1;
-}
-
-
-static int __capture_completed_event_cb(void *data)
-{
-	camera_s *handle = (camera_s *)data;
-	camera_state_e previous_state = CAMERA_STATE_NONE;
-
-	if (handle == NULL) {
-		LOGE("handle is NULL");
-		return false;
-	}
-
-	if (handle->current_capture_count > 0 &&
-	    handle->current_capture_count == handle->current_capture_complete_count &&
-	    handle->state == CAMERA_STATE_CAPTURING) {
-		/* pseudo state change */
-		previous_state = handle->state;
-		handle->state = CAMERA_STATE_CAPTURED;
-
-		if (previous_state != handle->state &&
-		    handle->user_cb[_CAMERA_EVENT_TYPE_STATE_CHANGE]) {
-			((camera_state_changed_cb)handle->user_cb[_CAMERA_EVENT_TYPE_STATE_CHANGE])(previous_state,
-												    handle->state,
-												    0,
-												    handle->user_data[_CAMERA_EVENT_TYPE_STATE_CHANGE]);
-		}
-
-		if (handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE]) {
-			((camera_capture_completed_cb)handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE])(handle->user_data[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE]);
-		}
-	}
-
-	return false;
+	g_free(cb_info);
 }
 
 int camera_create(camera_device_e device, camera_h* camera)
 {
 	if (camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;;
-	MMCamPreset info;
-	int preview_format;
-	int rotation;
-	camera_s *handle = NULL;
-	char *error = NULL;
+	int sock_fd = -1;
+	char *sndMsg;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = NULL;
 
-	LOGW("device name = [%d]",device);
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_CREATE;
+	mmsvc_api_client_e api_client = MMSVC_CAMERA;
+	int device_type = (int)device;
 
-	info.videodev_type = device;
+	sock_fd = mmsvc_core_client_new();
 
-	handle = (camera_s*)malloc( sizeof(camera_s) );
-	if (handle == NULL) {
-		LOGE("malloc fail");
-		return CAMERA_ERROR_OUT_OF_MEMORY;
+	sndMsg = mmsvc_core_msg_json_factory_new(api, "client", api_client,
+											      MUSED_TYPE_INT, PARAM_DEVICE_TYPE, (int)device_type,
+											      0);
+	mmsvc_core_ipc_send_msg(sock_fd, sndMsg);
+	mmsvc_core_msg_json_factory_free(sndMsg);
+
+	LOGW("sock_fd : %d, msg : %s", sock_fd, sndMsg);
+
+	pc = g_new0(camera_cli_s, 1);
+	if (pc == NULL) {
+		return 0;
 	}
 
-	memset(handle, 0x0, sizeof(camera_s));
+	pc->cb_info = client_callback_new(sock_fd);
+	LOGW("cb info : %d", pc->cb_info->fd);
 
-	ret = mm_camcorder_create(&handle->mm_handle, &info);
-	if (ret != MM_ERROR_NONE) {
-		free(handle);
-		return __convert_camera_error_code(__func__,ret);
-	}
+	ret = client_wait_for_cb_return(api, pc->cb_info, CALLBACK_TIME_OUT);
+	LOGW("ret value : 0x%x", ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		int handle = 0;
 
-	preview_format = MM_PIXEL_FORMAT_YUYV;
-	rotation = MM_DISPLAY_ROTATION_NONE;
-	ret = mm_camcorder_get_attributes(handle->mm_handle, &error,
-					  MMCAM_RECOMMEND_PREVIEW_FORMAT_FOR_CAPTURE, &preview_format,
-					  MMCAM_RECOMMEND_DISPLAY_ROTATION, &rotation,
-					  MMCAM_CAPTURE_WIDTH, &handle->capture_width,
-					  MMCAM_CAPTURE_HEIGHT, &handle->capture_height,
-					  NULL);
-	if (ret != MM_ERROR_NONE) {
-		LOGE("mm_camcorder_get_attributes fail(%x)", ret);
-		if (error) {
-			LOGE("failed attribute name %s", error);
-			free(error);
+		mmsvc_camera_msg_get(handle, pc->cb_info->recvMsg);
+		if (handle == 0) {
+			LOGE("Receiving Handle Failed!!");
+			goto ErrorExit;
+		} else {
+			pc->remote_handle = handle;
 		}
+		LOGW("camera create 0x%x", pc->remote_handle);
+		*camera = (camera_h) pc;
+	} else
+		goto ErrorExit;
 
-		mm_camcorder_destroy(handle->mm_handle);
-		free(handle);
+	return ret;
 
-		return __convert_camera_error_code(__func__, ret);
-	}
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, &error,
-					  MMCAM_MODE, MM_CAMCORDER_MODE_VIDEO_CAPTURE,
-					  MMCAM_CAMERA_FORMAT,  preview_format,
-					  MMCAM_IMAGE_ENCODER, MM_IMAGE_CODEC_JPEG,
-					  MMCAM_CAPTURE_FORMAT,  MM_PIXEL_FORMAT_ENCODED,
-					  MMCAM_DISPLAY_SURFACE, MM_DISPLAY_SURFACE_NULL,
-					  MMCAM_DISPLAY_ROTATION, rotation,
-					  MMCAM_CAPTURE_COUNT, 1,
-					  NULL);
-
-	handle->display_type = CAMERA_DISPLAY_TYPE_NONE;
-
-	if (ret != MM_ERROR_NONE) {
-		LOGE("mm_camcorder_set_attributes fail(%x)", ret);
-		if (error) {
-			LOGE("failed attribute name %s", error);
-			free(error);
-		}
-
-		mm_camcorder_destroy(handle->mm_handle);
-		free(handle);
-
-		return __convert_camera_error_code(__func__, ret);
-	}
-
-	handle->state = CAMERA_STATE_CREATED;
-	handle->relay_message_callback = NULL;
-	handle->relay_user_data = NULL;
-	handle->capture_resolution_modified = false;
-	handle->hdr_keep_mode = false;
-	handle->focus_area_valid = false;
-	handle->is_used_in_recorder = false;
-	handle->on_continuous_focusing = false;
-	handle->cached_focus_mode = -1;
-
-	g_mutex_init(&handle->idle_cb_lock);
-
-	mm_camcorder_set_message_callback(handle->mm_handle,
-					  __mm_camera_message_callback,
-					  (void*)handle);
-
-	*camera = (camera_h)handle;
-
-	LOGW("camera handle %p", handle);
-
-	return __convert_camera_error_code(__func__, ret);
+ErrorExit:
+	g_free(pc);
+	LOGW("ret value : %d", ret);
+	return ret;
 }
 
-
-int camera_destroy(camera_h camera)
+ int camera_destroy(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_DESTROY;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	int sock_fd = pc->cb_info->fd;
+	LOGW("ENTER");
 
-	if (handle->is_used_in_recorder) {
-		LOGE("camera is using in another recorder.");
+	if (pc == NULL) {
+		LOGW("pc is already nul!!");
+		return CAMERA_ERROR_INVALID_OPERATION;
+	} else if (pc->cb_info == NULL) {
 		return CAMERA_ERROR_INVALID_OPERATION;
 	}
 
-	LOGW("camera handle %p", handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	if(ret == CAMERA_ERROR_NONE) {
+		LOGW("destroy client");
 
-	if (handle->pkt_fmt) {
-		media_format_unref(handle->pkt_fmt);
-		handle->pkt_fmt = NULL;
-	}
-
-	ret = mm_camcorder_destroy(handle->mm_handle);
-	if (ret == MM_ERROR_NONE) {
-		_camera_remove_cb_message(handle);
-		g_mutex_clear(&handle->idle_cb_lock);
-#ifdef HAVE_WAYLAND
-		if (handle->wl_info) {
-			free(handle->wl_info);
-			handle->wl_info = NULL;
+#if 0//def HAVE_WAYLAND
+		if (pc->wl_info) {
+			free(pc->wl_info);
+			pc->wl_info = NULL;
 		}
 #endif /* HAVE_WAYLAND */
-		free(handle);
+/*
+		if (pc->client_handle != NULL) {
+			mm_camcorder_mused_destroy(pc->client_handle);
+		}*/
 	}
+	client_callback_destroy(pc->cb_info);
 
-	return __convert_camera_error_code(__func__, ret);
+	if (pc != NULL) {
+		g_free(pc);
+		pc = NULL;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_start_preview(camera_h camera)
 {
+	LOGW("start");
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_START_PREVIEW;
+	int sock_fd = pc->cb_info->fd;
+	char caps[MM_MSG_MAX_LENGTH] = {0};
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	camera_state_e capi_state = CAMERA_STATE_NONE;
-	MMCamcorderStateType mm_state = MM_CAMCORDER_STATE_NONE;
-
-	camera_get_state(camera, &capi_state);
-	if (capi_state == CAMERA_STATE_CAPTURED) {
-		ret = mm_camcorder_capture_stop(handle->mm_handle);
-		return __convert_camera_error_code(__func__, ret);
-	}
-
-	/* for receving MM_MESSAGE_CAMCORDER_CAPTURED evnet must be seted capture callback */
-	mm_camcorder_set_video_capture_callback(handle->mm_handle,
-						(mm_camcorder_video_capture_callback)__mm_capture_callback,
-						(void *)handle);
-
-	mm_camcorder_get_state(handle->mm_handle, &mm_state);
-	if (mm_state != MM_CAMCORDER_STATE_READY) {
-		ret = mm_camcorder_realize(handle->mm_handle);
-		if (ret != MM_ERROR_NONE) {
-			LOGE("mm_camcorder_realize failed 0x%x", ret);
-			return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter,  handle :0x%x", pc->remote_handle);
+	mmsvc_camera_msg_send_longtime(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("Enter,  ret :0x%x", ret);
+	if(ret == CAMERA_ERROR_NONE) {
+		LOGW("Enter");
+		mmsvc_camera_msg_get_string(caps, pc->cb_info->recvMsg);
+		LOGW("caps : %s", caps);
+		if (pc->cli_display_handle != 0) {
+			LOGW("client's display handle is : 0x%x", pc->cli_display_handle);
+			if(strlen(caps) > 0 &&
+					mm_camcorder_mused_realize(pc->client_handle, caps) != MM_ERROR_NONE)
+				ret = CAMERA_ERROR_INVALID_OPERATION;
+		} else {
+			LOGW("display handle is NULL");
 		}
 	}
-
-	ret = mm_camcorder_start(handle->mm_handle);
-	if (ret != MM_ERROR_NONE) {
-		LOGE("mm_camcorder_start failed 0x%x, call mm_camcorder_unrealize", ret);
-		mm_camcorder_unrealize(handle->mm_handle);
-	}
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_stop_preview(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	int sock_fd = pc->cb_info->fd;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_STOP_PREVIEW;
+	LOGW("Enter,  handle :%x", pc->remote_handle);
 
-	int ret = MM_ERROR_NONE;;
-	camera_s *handle = (camera_s *)camera;
-	MMCamcorderStateType state = MM_CAMCORDER_STATE_NONE;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	mm_camcorder_get_state(handle->mm_handle, &state);
-	if (state == MM_CAMCORDER_STATE_PREPARE) {
-		ret = mm_camcorder_stop(handle->mm_handle);
-		if (ret != MM_ERROR_NONE) {
-			LOGE("mm_camcorder_stop failed 0x%x", ret);
-			return __convert_camera_error_code(__func__, ret);
+	if(ret == CAMERA_ERROR_NONE) {
+		if (pc->cli_display_handle != 0) {
+			LOGW("Unrealize client");
+			ret = mm_camcorder_mused_unrealize(pc->client_handle);
+			if (pc->client_handle != NULL) {
+				mm_camcorder_mused_destroy(pc->client_handle);
+			}
+		} else {
+			LOGW("Client did not realized : Display handle is NULL");
 		}
 	}
-
-	camera_stop_face_detection(camera);
-
-	ret = mm_camcorder_unrealize(handle->mm_handle);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
-
-int camera_start_capture(camera_h camera, camera_capturing_cb capturing_cb, camera_capture_completed_cb completed_cb, void *user_data)
+int camera_start_capture(camera_h camera, camera_capturing_cb capturing_cb , camera_capture_completed_cb completed_cb , void *user_data)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_s *handle = (camera_s *)camera;
-	int ret = MM_ERROR_NONE;
-	MMCamcorderStateType state = MM_CAMCORDER_STATE_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_START_CAPTURE;
+	int sock_fd = pc->cb_info->fd;
+	int is_capturing_cb = 0;
+	int is_completed_cb = 0;
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	mm_camcorder_get_state(handle->mm_handle, &state);
-	if (state != MM_CAMCORDER_STATE_PREPARE &&
-	    state != MM_CAMCORDER_STATE_RECORDING &&
-	    state != MM_CAMCORDER_STATE_PAUSED) {
-		LOGE("INVALID_STATE(0x%08x)", CAMERA_ERROR_INVALID_STATE);
-		return CAMERA_ERROR_INVALID_STATE;
+	if (capturing_cb != NULL) {
+		is_capturing_cb = 1;
+		pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_CAPTURE] = capturing_cb;
+		pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_CAPTURE] = user_data;
 	}
 
-	if (handle->capture_resolution_modified) {
-		mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					    MMCAM_CAPTURE_WIDTH, handle->capture_width,
-					    MMCAM_CAPTURE_HEIGHT, handle->capture_height,
-					    NULL);
-
-		handle->capture_resolution_modified = false;
+	if(completed_cb != NULL) {
+		is_completed_cb = 1;
+		pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE] = completed_cb;
+		pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE] = user_data;
 	}
 
-	mm_camcorder_set_attributes(handle->mm_handle, NULL,
-				    MMCAM_CAPTURE_COUNT, 1,
-				    NULL);
-
-	handle->capture_count = 1;
-	handle->is_continuous_shot_break = false;
-	handle->current_capture_count = 0;
-	handle->current_capture_complete_count = 0;
-	handle->is_capture_completed = false;
-
-	handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE] = (void *)capturing_cb;
-	handle->user_data[_CAMERA_EVENT_TYPE_CAPTURE] = (void *)user_data;
-	handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE] = (void *)completed_cb;
-	handle->user_data[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE] = (void *)user_data;
-
-	ret = mm_camcorder_capture_start(handle->mm_handle);
-	if (ret != MM_ERROR_NONE) {
-		handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE] = NULL;
-		handle->user_data[_CAMERA_EVENT_TYPE_CAPTURE] = NULL;
-		handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE] = NULL;
-		handle->user_data[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE] = NULL;
-	}
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("is_capturing_cb :%d, is_completed_cb : %d", is_capturing_cb, is_completed_cb);
+	mmsvc_camera_msg_send2(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, is_capturing_cb, INT, is_completed_cb);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 bool camera_is_supported_continuous_capture(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return false;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo info;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SUPPORT_CONTINUOUS_CAPTURE;
+	int sock_fd = pc->cb_info->fd;
 
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAPTURE_COUNT, &info);
-	set_last_result(__convert_camera_error_code(__func__, ret));
-	if (ret != MM_ERROR_NONE) {
-		LOGE("MMCAM_CAPTURE_COUNT info get failed 0x%x", ret);
-		return false;
-	}
-
-	if (info.int_range.max > 1) {
-		return true;
-	} else {
-		return false;
-	}
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return (bool)ret;
 }
 
-
-int camera_start_continuous_capture(camera_h camera, int count, int interval, camera_capturing_cb capturing_cb, camera_capture_completed_cb completed_cb, void *user_data)
+int camera_start_continuous_capture(camera_h camera, int count, int interval, camera_capturing_cb capturing_cb, camera_capture_completed_cb completed_cb , void *user_data)
 {
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (camera_is_supported_continuous_capture(camera) == false) {
-		LOGE("NOT_SUPPORTED(0x%08x)", CAMERA_ERROR_NOT_SUPPORTED);
-		return CAMERA_ERROR_NOT_SUPPORTED;
-	}
+	int ret = CAMERA_ERROR_NONE;
 
-	if (count < 2 || interval < 0) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_START_CONTINUOUS_CAPTURE;
 
-	camera_s *handle = (camera_s *)camera;
-	MMCamcorderStateType state = MM_CAMCORDER_STATE_NONE;
-	int supported_zsl = FALSE;
-	int ret = MM_ERROR_NONE;
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	mm_camcorder_get_state(handle->mm_handle, &state);
-	if (state != MM_CAMCORDER_STATE_PREPARE) {
-		LOGE("INVALID_STATE(0x%08x)", CAMERA_ERROR_INVALID_STATE);
-		return CAMERA_ERROR_INVALID_STATE;
-	}
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_CAPTURE] = capturing_cb;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_CAPTURE] = user_data;
+	pc->cb_info->user_cb_completed[MMSVC_CAMERA_EVENT_TYPE_CAPTURE] = completed_cb;
 
-	supported_zsl = FALSE;
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAPTURE_COUNT, count,
-					  MMCAM_CAPTURE_INTERVAL, interval,
-					  NULL);
-	if (ret != MM_ERROR_NONE) {
-		LOGE("error set continuous shot attribute 0x%x", ret);
-		return __convert_camera_error_code(__func__, ret);
-	}
-
-	handle->capture_count = count;
-	handle->is_continuous_shot_break = false;
-	handle->current_capture_count = 0;
-	handle->current_capture_complete_count = 0;
-	handle->is_capture_completed = false;
-
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_SUPPORT_ZSL_CAPTURE, &supported_zsl,
-					  NULL);
-	if (ret != MM_ERROR_NONE) {
-		LOGE("(%x) error get continuous shot attribute", ret);
-	}
-
-	if (!supported_zsl) {
-		int preview_width;
-		int preview_height;
-		int capture_width;
-		int capture_height;
-
-		mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					    MMCAM_CAMERA_WIDTH, &preview_width,
-					    MMCAM_CAMERA_HEIGHT, &preview_height,
-					    MMCAM_CAPTURE_WIDTH, &capture_width,
-					    MMCAM_CAPTURE_HEIGHT, &capture_height,
-					    NULL);
-
-		if (preview_width != capture_width || preview_height != capture_height) {
-			mm_camcorder_set_attributes(handle->mm_handle, NULL,
-						    MMCAM_CAPTURE_WIDTH, preview_width,
-						    MMCAM_CAPTURE_HEIGHT, preview_height,
-						    NULL);
-
-			handle->capture_resolution_modified = true;
-		}
-	}
-
-	handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE] = (void *)capturing_cb;
-	handle->user_data[_CAMERA_EVENT_TYPE_CAPTURE] = (void *)user_data;
-	handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE] = (void *)completed_cb;
-	handle->user_data[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE] = (void *)user_data;
-
-	ret = mm_camcorder_capture_start(handle->mm_handle);
-	if(ret != MM_ERROR_NONE ){
-		LOGE("mm_camcorder_capture_start failed 0x%x", ret);
-		handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE] = NULL;
-		handle->user_data[_CAMERA_EVENT_TYPE_CAPTURE] = NULL;
-		handle->user_cb[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE] = NULL;
-		handle->user_data[_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE] = NULL;
-	}
-
-	return __convert_camera_error_code(__func__, ret);
-
+	mmsvc_camera_msg_send2(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, count, INT, interval);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_stop_continuous_capture(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (camera_is_supported_continuous_capture(camera) == false) {
-		LOGE("NOT_SUPPORTED(0x%08x)", CAMERA_ERROR_NOT_SUPPORTED);
-		return CAMERA_ERROR_NOT_SUPPORTED;
-	}
 
-	camera_s *handle = (camera_s *)camera;
-	int ret = MM_ERROR_NONE;
-	camera_state_e state = CAMERA_STATE_NONE;
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_get_state(camera, &state);
-	if (state != CAMERA_STATE_CAPTURING && handle->capture_count > 1) {
-		LOGE("INVALID_STATE(0x%08x)", CAMERA_ERROR_INVALID_STATE);
-		return CAMERA_ERROR_INVALID_STATE;
-	}
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  "capture-break-cont-shot", 1,
-					  NULL);
-	if (ret == MM_ERROR_NONE) {
-		handle->is_continuous_shot_break = true;
-
-		if (handle->current_capture_count > 0) {
-			handle->is_capture_completed = true;
-		}
-
-		g_idle_add_full(G_PRIORITY_DEFAULT_IDLE, __capture_completed_event_cb, handle, NULL);
-	}
-
-	return __convert_camera_error_code(__func__, ret);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_STOP_CONTINUOUS_CAPTURE;
+	LOGW("Enter,  handle :%x", pc->remote_handle);
+	int sock_fd = pc->cb_info->fd;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 bool camera_is_supported_face_detection(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return false;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo info;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SUPPORT_FACE_DETECTION;
+	int sock_fd = pc->cb_info->fd;
 
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_DETECT_MODE , &info);
-	set_last_result(__convert_camera_error_code(__func__, ret));
-	if (ret != MM_ERROR_NONE) {
-		LOGE("MMCAM_DETECT_MODE get attr info failed");
-		return false;
-	}
-
-	if (info.validity_type == MM_CAM_ATTRS_VALID_TYPE_INT_ARRAY) {
-		for (i = 0 ; i < info.int_array.count ; i++) {
-			if (info.int_array.array[i] == MM_CAMCORDER_DETECT_MODE_ON) {
-				LOGD("face detection supported");
-				return true;
-			}
-		}
-	}
-
-	LOGD("face detection NOT supported");
-
-	return false;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return (bool)ret;
 }
-
 
 bool camera_is_supported_zero_shutter_lag(camera_h camera)
 {
-	int ret = MM_ERROR_NONE;
-	int supported_zsl = false;
-	camera_s *handle = (camera_s *)camera;
-
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return false;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_SUPPORT_ZSL_CAPTURE, &supported_zsl,
-					  NULL);
-	set_last_result(__convert_camera_error_code(__func__, ret));
-	if (ret != MM_ERROR_NONE) {
-		LOGE("MMCAM_SUPPORT_ZSL_CAPTURE get failed");
-		return false;
-	}
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SUPPORT_ZERO_SHUTTER_LAG;
+	int sock_fd = pc->cb_info->fd;
 
-	LOGD("support zero shutter lag : %d", supported_zsl);
-
-	return supported_zsl;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return (bool)ret;
 }
-
 
 bool camera_is_supported_media_packet_preview_cb(camera_h camera)
 {
-	int ret = MM_ERROR_NONE;
-	int supported = false;
-	camera_s *handle = (camera_s *)camera;
-
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return false;
 	}
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_SUPPORT_MEDIA_PACKET_PREVIEW_CB, &supported,
-					  NULL);
-	set_last_result(__convert_camera_error_code(__func__, ret));
-	if (ret != MM_ERROR_NONE) {
-		LOGE("MMCAM_SUPPORT_MEDIA_PACKET_PREVIEW_CB get failed");
-		return false;
-	}
+	int ret = CAMERA_ERROR_NONE;
 
-	LOGD("support media packet preview callback : %d", supported);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SUPPORT_MEDIA_PACKET_PREVIEW_CB;
+	int sock_fd = pc->cb_info->fd;
 
-	return supported;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return (bool)ret;
 }
-
 
 int camera_get_device_count(camera_h camera, int *device_count)
 {
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
 	if (camera == NULL || device_count == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_DEVICE_COUNT, device_count,
-					  NULL);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_GET_DEVICE_COUNT;
+	int sock_fd = pc->cb_info->fd;
+	int get_device_count;
 
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_device_count, pc->cb_info->recvMsg);
+		*device_count = get_device_count;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
-
-int camera_start_face_detection(camera_h camera, camera_face_detected_cb callback, void *user_data)
+int camera_start_face_detection(camera_h camera, camera_face_detected_cb callback, void * user_data)
 {
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (camera_is_supported_face_detection(camera) == false) {
-		LOGE("NOT_SUPPORTED(0x%08x)", CAMERA_ERROR_NOT_SUPPORTED);
-		return CAMERA_ERROR_NOT_SUPPORTED;
-	}
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_s *handle = (camera_s *)camera;
-	camera_state_e state = CAMERA_STATE_NONE;
-	int ret = MM_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_START_FACE_DETECTION;
 
-	camera_get_state(camera, &state);
-	if (state != CAMERA_STATE_PREVIEW) {
-		LOGE("INVALID_STATE(0x%08x)", CAMERA_ERROR_INVALID_STATE);
-		return CAMERA_ERROR_INVALID_STATE;
-	}
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_DETECT_MODE, MM_CAMCORDER_DETECT_MODE_ON,
-					  NULL);
-	if (ret == MM_ERROR_NONE) {
-		handle->user_cb[_CAMERA_EVENT_TYPE_FACE_DETECTION] = (void *)callback;
-		handle->user_data[_CAMERA_EVENT_TYPE_FACE_DETECTION] = (void *)user_data;
-		handle->num_of_faces = 0;
-	}
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FACE_DETECTION] = callback;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FACE_DETECTION] = user_data;
 
-	return __convert_camera_error_code(__func__,ret);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_stop_face_detection(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	camera_s *handle = (camera_s *)camera;
-	int ret = MM_ERROR_NONE;
+	int ret = CAMERA_ERROR_NONE;
 
-	if (camera_is_supported_face_detection(camera) == false) {
-		LOGE("NOT_SUPPORTED(0x%08x)", CAMERA_ERROR_NOT_SUPPORTED);
-		return CAMERA_ERROR_NOT_SUPPORTED;
-	}
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_DETECT_MODE, MM_CAMCORDER_DETECT_MODE_OFF,
-					  NULL);
-	if (ret == MM_ERROR_NONE) {
-		handle->user_cb[_CAMERA_EVENT_TYPE_FACE_DETECTION] = NULL;
-		handle->user_data[_CAMERA_EVENT_TYPE_FACE_DETECTION] = NULL;
-		handle->num_of_faces = 0;
-	}
-
-	return __convert_camera_error_code(__func__,ret);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_STOP_FACE_DETECTION;
+	LOGW("Enter,  handle :%x", pc->remote_handle);
+	int sock_fd = pc->cb_info->fd;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
-
-int camera_get_state(camera_h camera, camera_state_e *state)
+int camera_get_state(camera_h camera, camera_state_e * state)
 {
 	if (camera == NULL || state == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_s *handle = (camera_s *)camera;
-	camera_state_e capi_state = CAMERA_STATE_NONE;
-	MMCamcorderStateType mmstate = MM_CAMCORDER_STATE_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_GET_STATE;
+	int sock_fd = pc->cb_info->fd;
+	int get_state;
 
-	mm_camcorder_get_state(handle->mm_handle, &mmstate);
-	capi_state = __camera_state_convert(mmstate);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	if ((handle->state == CAMERA_STATE_CAPTURED || handle->is_capture_completed) &&
-            (handle->current_capture_count > 0 || handle->is_capture_completed) &&
-	    mmstate == MM_CAMCORDER_STATE_CAPTURING) {
-		capi_state = CAMERA_STATE_CAPTURED;
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_state, pc->cb_info->recvMsg);
+		*state = (camera_state_e)get_state;
 	}
-
-	*state = capi_state;
-
-	return CAMERA_ERROR_NONE;
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_start_focusing(camera_h camera, bool continuous)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
 
-	if (handle->cached_focus_mode != -1) {
-		LOGD("apply cached focus mode %d", handle->cached_focus_mode);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_START_FOCUSING;
+	int sock_fd = pc->cb_info->fd;
+	int is_continuous = (int)continuous;
 
-		mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					    MMCAM_CAMERA_AF_SCAN_RANGE, handle->cached_focus_mode,
-					    NULL);
-
-		handle->cached_focus_mode = -1;
-	}
-
-	if (continuous) {
-		return __camera_start_continuous_focusing(camera);
-	} else {
-		mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					    MMCAM_CAMERA_FOCUS_MODE, handle->focus_area_valid ? \
-					                             MM_CAMCORDER_FOCUS_MODE_TOUCH_AUTO : MM_CAMCORDER_FOCUS_MODE_AUTO,
-					    NULL);
-
-		return __convert_camera_error_code(__func__, mm_camcorder_start_focusing(((camera_s *)camera)->mm_handle));
-	}
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, is_continuous);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
-
-int __camera_start_continuous_focusing(camera_h camera)
-{
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
-
-	camera_s *handle = (camera_s *)camera;
-	int ret = MM_ERROR_NONE;
-	int mode = MM_CAMCORDER_FOCUS_MODE_NONE;
-
-	handle->on_continuous_focusing = true;
-	mm_camcorder_get_attributes(handle->mm_handle, NULL,
-				    MMCAM_CAMERA_FOCUS_MODE, &mode,
-				    NULL);
-
-	if (mode == MM_CAMCORDER_FOCUS_MODE_CONTINUOUS) {
-		ret = mm_camcorder_start_focusing(handle->mm_handle);
-	} else {
-		ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-						  MMCAM_CAMERA_FOCUS_MODE, MM_CAMCORDER_FOCUS_MODE_CONTINUOUS,
-						  NULL);
-	}
-
-	return __convert_camera_error_code(__func__, ret);
-}
-
 
 int camera_cancel_focusing(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
 
-	handle->on_continuous_focusing = false;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_CANCEL_FOCUSING;
+	int sock_fd = pc->cb_info->fd;
 
-	return __convert_camera_error_code(__func__, mm_camcorder_stop_focusing(handle->mm_handle));
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_set_display(camera_h camera, camera_display_type_e type, camera_display_h display)
 {
-	int ret = MM_ERROR_NONE;
+	int ret = CAMERA_ERROR_NONE;
+	int display_handle;
+	int display_surface;
+	void *set_display_handle = NULL;
 	int set_surface = MM_DISPLAY_SURFACE_X;
-	void *set_handle = NULL;
 	camera_s *handle = NULL;
-
 	Evas_Object *obj = NULL;
 	const char *object_type = NULL;
+	char socket_path[MM_MSG_MAX_LENGTH] = {0,};
 
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
@@ -1455,29 +954,33 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
+	int display_type = (int)type;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_DISPLAY;
+	int sock_fd = pc->cb_info->fd;
+
+	LOGW("Enter, remote_handle : %x display : 0x%x", pc->remote_handle, display);
+
 	handle = (camera_s *)camera;
 	handle->display_type = type;
 
 	if (type == CAMERA_DISPLAY_TYPE_NONE) {
-		/* NULL surface */
+		set_display_handle = 0;
 		set_surface = MM_DISPLAY_SURFACE_NULL;
-		handle->display_handle = 0;
-
-		LOGD("display type NONE");
+		LOGW("display type NONE");
 	} else {
 		obj = (Evas_Object *)display;
 		object_type = evas_object_type_get(obj);
 		if (object_type) {
 			if (type == CAMERA_DISPLAY_TYPE_OVERLAY && !strcmp(object_type, "elm_win")) {
 #ifdef HAVE_WAYLAND
-				MMCamWaylandInfo *wl_info = (MMCamWaylandInfo *)malloc(sizeof(MMCamWaylandInfo));
+				//MMCamWaylandInfo *wl_info = (MMCamWaylandInfo *)g_new0(sizeof(MMCamWaylandInfo), 1);
+				MMCamWaylandInfo *wl_info = g_new0(MMCamWaylandInfo, 1);
 
 				if (wl_info == NULL) {
 					LOGE("wl_info alloc failed : %d", sizeof(MMCamWaylandInfo));
-					return __convert_camera_error_code(__func__, MM_ERROR_CAMCORDER_LOW_MEMORY);
+					return CAMERA_ERROR_OUT_OF_MEMORY;
 				}
-
-				memset(wl_info, 0x0, sizeof(MMCamWaylandInfo));
 
 				wl_info->evas_obj = (void *)obj;
 				wl_info->window = (void *)elm_win_wl_window_get(obj);
@@ -1486,41 +989,33 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 
 				if (wl_info->window == NULL || wl_info->surface == NULL || wl_info->display == NULL) {
 					LOGE("something is NULL %p, %p, %p", wl_info->window, wl_info->surface, wl_info->display);
-					free(wl_info);
-					return __convert_camera_error_code(__func__, MM_ERROR_CAMCORDER_INTERNAL);
+					//free(wl_info);
+					return CAMERA_ERROR_INVALID_OPERATION;
 				}
 
 				evas_object_geometry_get(obj, &wl_info->window_x, &wl_info->window_y,
 							      &wl_info->window_width, &wl_info->window_height);
 
-				if (handle->wl_info) {
-					free(handle->wl_info);
-					handle->wl_info = NULL;
-				}
-
 				/* set wayland info */
 				handle->wl_info = (void *)wl_info;
+				pc->wl_info = wl_info;
 				set_surface = MM_DISPLAY_SURFACE_X;
-				set_handle = (void *)wl_info;
+				set_display_handle = (void *)wl_info;
 
 				LOGD("wayland obj %p, window %p, surface %p, display %p, size %d,%d,%dx%d",
 				     wl_info->evas_obj, wl_info->window, wl_info->surface, wl_info->display,
 				     wl_info->window_x, wl_info->window_y, wl_info->window_width, wl_info->window_height);
 #else /* HAVE_WAYLAND */
 				/* x window overlay surface */
-				handle->display_handle = (void *)elm_win_xwindow_get(obj);
+				set_display_handle = (void *)elm_win_xwindow_get(obj);
 				set_surface = MM_DISPLAY_SURFACE_X;
-				set_handle = &(handle->display_handle);
-
-				LOGD("display type OVERLAY : handle %p, %d", set_handle, (int)handle->display_handle);
-#endif /* HAVE_WAYLAND */
+				LOGW("display type OVERLAY : handle %p", set_display_handle);
+#endif
 			} else if (type == CAMERA_DISPLAY_TYPE_EVAS && !strcmp(object_type, "image")) {
 				/* evas object surface */
-				handle->display_handle = display;
+				set_display_handle = (void *)display;
 				set_surface = MM_DISPLAY_SURFACE_EVAS;
-				set_handle = display;
-
-				LOGD("display type EVAS : handle %p", set_handle);
+				LOGW("display type EVAS : handle %p", set_display_handle);
 			} else {
 				LOGE("unknown evas object [%p,%s] or type [%d] mismatch", obj, object_type, type);
 				return CAMERA_ERROR_INVALID_PARAMETER;
@@ -1531,441 +1026,473 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 		}
 	}
 
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_DISPLAY_DEVICE, MM_DISPLAY_DEVICE_MAINLCD,
-					  MMCAM_DISPLAY_SURFACE, set_surface,
-					  NULL);
+	display_handle = (int)set_display_handle;
+	pc->cli_display_handle = display_handle;
+	display_surface = (int)set_surface;
+	mmsvc_camera_msg_send3(api, pc->remote_handle, sock_fd, pc->cb_info, ret,
+							    INT, display_type,
+							    INT, display_surface,
+							    INT, display_handle);
 
-	if (ret == MM_ERROR_NONE && type != CAMERA_DISPLAY_TYPE_NONE) {
-		ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-						  MMCAM_DISPLAY_HANDLE, set_handle, sizeof(void *),
+	if (ret == CAMERA_ERROR_NONE && type == CAMERA_DISPLAY_TYPE_OVERLAY && !strcmp(object_type, "elm_win")) {
+		if (mm_camcorder_mused_create(&(pc->client_handle))) {
+			LOGE("camera client create Failed");
+			return CAMERA_ERROR_INVALID_OPERATION;
+		}
+		mmsvc_camera_msg_get_string(socket_path, pc->cb_info->recvMsg);
+		LOGD("shmsrc stream path : %s", socket_path);
+		if(mm_camcorder_mused_set_shm_socket_path(pc->client_handle, socket_path)
+				!= MM_ERROR_NONE)
+			return CAMERA_ERROR_INVALID_OPERATION;
+
+		ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
+						  MMCAM_MUSED_DISPLAY_SURFACE, set_surface,
 						  NULL);
-	}
 
-	return __convert_camera_error_code(__func__, ret);
+		if (ret == MM_ERROR_NONE && type != CAMERA_DISPLAY_TYPE_NONE) {
+			ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
+							  MMCAM_MUSED_DISPLAY_HANDLE, display_handle, sizeof(void *),
+							  NULL);
+		}
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
-
-int camera_set_preview_resolution(camera_h camera, int width, int height)
+int camera_set_preview_resolution(camera_h camera,  int width, int height)
 {
 	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo info;
-	int mm_fps = 0;
-	int i = 0;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_PREVIEW_RESOLUTION;
+	int sock_fd = pc->cb_info->fd;
 
-	mm_camcorder_get_attributes(handle->mm_handle, NULL,
-				    MMCAM_CAMERA_FPS, &mm_fps,
-				    NULL);
-
-	ret = mm_camcorder_get_fps_list_by_resolution(handle->mm_handle, width, height, &info);
-	if (ret != MM_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
-
-	for (i = 0 ; i < info.int_array.count ; i++) {
-		if (info.int_array.array[i] == mm_fps) {
-			break;
-		}
-		if (i == info.int_array.count - 1) {
-			LOGE("Not supported resolution: Current set Resolution's FPS is not supported in wanted resolution.");
-			return CAMERA_ERROR_NOT_SUPPORTED;
-		}
-	}
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_WIDTH, width,
-					  MMCAM_CAMERA_HEIGHT, height,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send2(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, width, INT, height);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_set_capture_resolution(camera_h camera,  int width, int height)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
 
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAPTURE_WIDTH, width,
-					  MMCAM_CAPTURE_HEIGHT, height,
-					  NULL);
-	if (ret == MM_ERROR_NONE) {
-		handle->capture_width = width;
-		handle->capture_height = height;
-	}
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_CAPTURE_RESOLUTION;
+	int sock_fd = pc->cb_info->fd;
 
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send2(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, width, INT, height);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_set_capture_format(camera_h camera, camera_pixel_format_e format)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
+	int set_format = (int)format;
 
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAPTURE_FORMAT, format,
-					  NULL);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_CAPTURE_FORMAT;
+	int sock_fd = pc->cb_info->fd;
 
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x, capture_format: %d", pc->remote_handle, set_format);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_format);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_set_preview_format(camera_h camera, camera_pixel_format_e format)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
+	int set_format = (int)format;
 
-	if (format == CAMERA_PIXEL_FORMAT_UYVY) {
-		bool supported_ITLV_UYVY = false;
-		MMCamAttrsInfo supported_format;
-		ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_FORMAT , &supported_format);
-		for (i = 0 ; i < supported_format.int_array.count ; i++) {
-			if (supported_format.int_array.array[i] == MM_PIXEL_FORMAT_ITLV_JPEG_UYVY) {
-				supported_ITLV_UYVY = true;
-			}
-		}
-		ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-						  MMCAM_CAMERA_FORMAT, supported_ITLV_UYVY ? MM_PIXEL_FORMAT_ITLV_JPEG_UYVY : MM_PIXEL_FORMAT_UYVY,
-						  NULL);
-	} else {
-		ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-						  MMCAM_CAMERA_FORMAT, format,
-						  NULL);
-	}
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_PREVIEW_FORMAT;
+	int sock_fd = pc->cb_info->fd;
 
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x, capture_format: %d", pc->remote_handle, set_format);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_format);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
-
-int camera_get_preview_resolution(camera_h camera, int *width, int *height)
+int camera_get_preview_resolution(camera_h camera,  int *width, int *height)
 {
 	if (camera == NULL || width == NULL || height == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_WIDTH, width,
-					  MMCAM_CAMERA_HEIGHT, height,
-					  NULL);
+	int ret = CAMERA_ERROR_NONE;
 
-	return __convert_camera_error_code(__func__, ret);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_GET_PREVIEW_RESOLUTION;
+	int sock_fd = pc->cb_info->fd;
+	int get_width;
+	int get_height;
+
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_width, pc->cb_info->recvMsg);
+		mmsvc_camera_msg_get(get_height, pc->cb_info->recvMsg);
+		*width = get_width;
+		*height = get_height;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_set_display_rotation(camera_h camera, camera_rotation_e rotation)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (rotation > CAMERA_ROTATION_270) {
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_DISPLAY_ROTATION;
+	int sock_fd = pc->cb_info->fd;
+	int set_rotation = (int)rotation;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_DISPLAY_ROTATION, rotation,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_rotation);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_get_display_rotation(camera_h camera, camera_rotation_e *rotation)
 {
-	if (camera == NULL || rotation == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || rotation == NULL ){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_DISPLAY_ROTATION, rotation,
-					  NULL);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_GET_DISPLAY_ROTATION;
+	int sock_fd = pc->cb_info->fd;
+	int get_rotation;
 
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_rotation, pc->cb_info->recvMsg);
+		*rotation = (camera_rotation_e)get_rotation;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_set_display_flip(camera_h camera, camera_flip_e flip)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (flip > CAMERA_FLIP_BOTH) {
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_DISPLAY_FLIP;
+	int sock_fd = pc->cb_info->fd;
+	int set_flip = (int)flip;
 
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_DISPLAY_FLIP, flip,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_flip);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_get_display_flip(camera_h camera, camera_flip_e *flip)
 {
-	if (camera == NULL || flip == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || flip == NULL ){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_DISPLAY_FLIP, flip,
-					  NULL);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_GET_DISPLAY_FLIP;
+	int sock_fd = pc->cb_info->fd;
+	int get_flip;
 
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_flip, pc->cb_info->recvMsg);
+		*flip = (camera_flip_e)get_flip;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_set_display_visible(camera_h camera, bool visible)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
 
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_DISPLAY_VISIBLE, visible,
-					  NULL);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_DISPLAY_VISIBLE;
+	int set_visible = (int)visible;
+	int sock_fd = pc->cb_info->fd;
 
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_visible);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_is_display_visible(camera_h camera, bool* visible)
 {
-	if (camera == NULL || visible == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || visible == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	int result = false;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_DISPLAY_VISIBLE, &result,
-					  NULL);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_IS_DISPLAY_VISIBLE;
+	int sock_fd = pc->cb_info->fd;
+	int get_visible;
 
-	if (ret == MM_ERROR_NONE) {
-		*visible = result;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_visible, pc->cb_info->recvMsg);
+		*visible = (bool)get_visible;
 	}
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_set_display_mode(camera_h camera, camera_display_mode_e mode)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (mode > CAMERA_DISPLAY_MODE_CROPPED_FULL) {
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
+	int ret = CAMERA_ERROR_NONE;
+	int set_mode = (int)mode;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_DISPLAY_MODE;
+	int sock_fd = pc->cb_info->fd;
 
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_DISPLAY_GEOMETRY_METHOD, mode,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_mode);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
-
-int camera_get_display_mode(camera_h camera, camera_display_mode_e *mode)
+int camera_get_display_mode(camera_h camera, camera_display_mode_e* mode)
 {
-	if (camera == NULL || mode == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || mode == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_DISPLAY_GEOMETRY_METHOD, mode,
-					  NULL);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_GET_DISPLAY_MODE;
+	int sock_fd = pc->cb_info->fd;
+	int get_mode;
 
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_mode, pc->cb_info->recvMsg);
+		*mode = (camera_display_mode_e)get_mode;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_get_capture_resolution(camera_h camera, int *width, int *height)
 {
-	if (camera == NULL || width == NULL || height == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || width== NULL || height == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_GET_CAPTURE_RESOLUTION;
+	int sock_fd = pc->cb_info->fd;
+	int get_width;
+	int get_height;
 
-	*width = handle->capture_width;
-	*height = handle->capture_height;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	return CAMERA_ERROR_NONE;
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_width, pc->cb_info->recvMsg);
+		mmsvc_camera_msg_get(get_height, pc->cb_info->recvMsg);
+		*width = get_width;
+		*height = get_height;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_get_capture_format(camera_h camera, camera_pixel_format_e *format)
 {
-	if (camera == NULL || format == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || format == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_GET_CAPTURE_FORMAT;
+	int get_format;
+	int sock_fd = pc->cb_info->fd;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAPTURE_FORMAT, format,
-					  NULL);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_format, pc->cb_info->recvMsg);
+		*format = (camera_pixel_format_e)get_format;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_get_preview_format(camera_h camera, camera_pixel_format_e *format)
 {
-	if (camera == NULL || format == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || format == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_FORMAT, format,
-					  NULL);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_GET_PREVIEW_FORMAT;
+	int get_format;
+	int sock_fd = pc->cb_info->fd;
 
-	if ((MMPixelFormatType)*format == MM_PIXEL_FORMAT_ITLV_JPEG_UYVY) {
-		*format = CAMERA_PIXEL_FORMAT_UYVY;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_format, pc->cb_info->recvMsg);
+		*format = (camera_pixel_format_e)get_format;
 	}
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
-
-int camera_set_preview_cb(camera_h camera, camera_preview_cb callback, void *user_data)
+int camera_set_preview_cb(camera_h camera, camera_preview_cb callback, void* user_data)
 {
 	if (camera == NULL || callback == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_s *handle = (camera_s *)camera;
-	handle->user_cb[_CAMERA_EVENT_TYPE_PREVIEW] = (void *)callback;
-	handle->user_data[_CAMERA_EVENT_TYPE_PREVIEW] = (void *)user_data;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	int sock_fd = pc->cb_info->fd;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_PREVIEW_CB;
 
-	mm_camcorder_set_video_stream_callback(handle->mm_handle,
-					       (mm_camcorder_video_stream_callback)__mm_videostream_callback,
-					       (void *)handle);
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	return CAMERA_ERROR_NONE;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_PREVIEW] = callback;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_PREVIEW] = user_data;
+
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_unset_preview_cb(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
 
-	if (handle->user_cb[_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW] == NULL) {
-		mm_camcorder_set_video_stream_callback(handle->mm_handle,
-						       (mm_camcorder_video_stream_callback)NULL,
-						       (void *)NULL);
-	}
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_UNSET_PREVIEW_CB;
 
-	handle->user_cb[_CAMERA_EVENT_TYPE_PREVIEW] = (void *)NULL;
-	handle->user_data[_CAMERA_EVENT_TYPE_PREVIEW] = (void *)NULL;
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	return CAMERA_ERROR_NONE;
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_PREVIEW] = (void *)NULL;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_PREVIEW] = (void *)NULL;
+
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
-
-int camera_set_media_packet_preview_cb(camera_h camera, camera_media_packet_preview_cb callback, void *user_data)
+int camera_set_media_packet_preview_cb(camera_h camera, camera_media_packet_preview_cb callback, void* user_data)
 {
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x) - handle", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (camera_is_supported_media_packet_preview_cb(camera) == false) {
-		LOGE("NOT SUPPORTED");
+	if (callback == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x) - callback", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_NOT_SUPPORTED;
 	}
 
-	if (callback == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x) - callback", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_s *handle = (camera_s *)camera;
-	handle->user_cb[_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW] = (void *)callback;
-	handle->user_data[_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW] = (void *)user_data;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_MEDIA_PACKET_PREVIEW_CB;
 
-	mm_camcorder_set_video_stream_callback(handle->mm_handle,
-					       (mm_camcorder_video_stream_callback)__mm_videostream_callback,
-					       (void *)handle);
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	return CAMERA_ERROR_NONE;
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW] = callback;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW] = user_data;
+
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_unset_media_packet_preview_cb(camera_h camera)
 {
@@ -1974,357 +1501,338 @@ int camera_unset_media_packet_preview_cb(camera_h camera)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (camera_is_supported_media_packet_preview_cb(camera) == false) {
-		LOGE("NOT SUPPORTED");
-		return CAMERA_ERROR_NOT_SUPPORTED;
-	}
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_UNSET_MEDIA_PACKET_PREVIEW_CB;
 
-	if (handle->user_cb[_CAMERA_EVENT_TYPE_PREVIEW] == NULL) {
-		mm_camcorder_set_video_stream_callback(handle->mm_handle,
-						       (mm_camcorder_video_stream_callback)NULL,
-						       (void *)NULL);
-	}
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	handle->user_cb[_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW] = (void *)NULL;
-	handle->user_data[_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW] = (void *)NULL;
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW] = (void *)NULL;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW] = (void *)NULL;
 
-	return CAMERA_ERROR_NONE;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
-
-int camera_set_state_changed_cb(camera_h camera, camera_state_changed_cb callback, void *user_data)
+int camera_set_state_changed_cb(camera_h camera, camera_state_changed_cb callback, void* user_data)
 {
-	if (camera == NULL || callback == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || callback == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_s *handle = (camera_s *)camera;
-	handle->user_cb[_CAMERA_EVENT_TYPE_STATE_CHANGE] = (void *)callback;
-	handle->user_data[_CAMERA_EVENT_TYPE_STATE_CHANGE] = (void *)user_data;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_STATE_CHANGED_CB;
 
-	return CAMERA_ERROR_NONE;
+	LOGW("Enter, handle :%x", pc->remote_handle);
+
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_STATE_CHANGE] = callback;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_STATE_CHANGE] = user_data;
+
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
-
 int camera_unset_state_changed_cb(camera_h camera)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_s *handle = (camera_s *)camera;
-	handle->user_cb[_CAMERA_EVENT_TYPE_STATE_CHANGE] = (void *)NULL;
-	handle->user_data[_CAMERA_EVENT_TYPE_STATE_CHANGE] = (void *)NULL;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_UNSET_STATE_CHANGED_CB;
 
-	return CAMERA_ERROR_NONE;
+	LOGW("Enter, handle :%x", pc->remote_handle);
+
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_STATE_CHANGE] = (void *)NULL;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_STATE_CHANGE] = (void *)NULL;
+
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_set_interrupted_cb(camera_h camera, camera_interrupted_cb callback, void *user_data)
 {
-	if (camera == NULL || callback == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || callback == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_s *handle = (camera_s *)camera;
-	handle->user_cb[_CAMERA_EVENT_TYPE_INTERRUPTED] = (void *)callback;
-	handle->user_data[_CAMERA_EVENT_TYPE_INTERRUPTED] = (void *)user_data;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_INTERRUPTED_CB;
 
-	return CAMERA_ERROR_NONE;
+	LOGW("Enter, handle :%x", pc->remote_handle);
+
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_INTERRUPTED] = callback;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_INTERRUPTED] = user_data;
+
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_unset_interrupted_cb(camera_h camera)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_UNSET_INTERRUPTED_CB;
 
-	handle->user_cb[_CAMERA_EVENT_TYPE_INTERRUPTED] = (void *)NULL;
-	handle->user_data[_CAMERA_EVENT_TYPE_INTERRUPTED] = (void *)NULL;
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	return CAMERA_ERROR_NONE;
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_INTERRUPTED] = (void *)NULL;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_INTERRUPTED] = (void *)NULL;
+
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
-
-int camera_set_focus_changed_cb(camera_h camera, camera_focus_changed_cb callback, void *user_data)
+int camera_set_focus_changed_cb(camera_h camera, camera_focus_changed_cb callback, void* user_data)
 {
-	if (camera == NULL || callback == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || callback == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_FOCUS_CHANGED_CB;
 
-	handle->user_cb[_CAMERA_EVENT_TYPE_FOCUS_CHANGE] = (void *)callback;
-	handle->user_data[_CAMERA_EVENT_TYPE_FOCUS_CHANGE] = (void *)user_data;
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	return CAMERA_ERROR_NONE;
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOCUS_CHANGE] = callback;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOCUS_CHANGE] = user_data;
+
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_unset_focus_changed_cb(camera_h camera)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_UNSET_FOCUS_CHANGED_CB;
 
-	handle->user_cb[_CAMERA_EVENT_TYPE_FOCUS_CHANGE] = (void *)NULL;
-	handle->user_data[_CAMERA_EVENT_TYPE_FOCUS_CHANGE] = (void *)NULL;
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	return CAMERA_ERROR_NONE;
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOCUS_CHANGE] = (void *)NULL;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOCUS_CHANGE] = (void *)NULL;
+
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_set_error_cb(camera_h camera, camera_error_cb callback, void *user_data)
 {
-	if (camera == NULL || callback == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || callback == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_ERROR_CB;
 
-	handle->user_cb[_CAMERA_EVENT_TYPE_ERROR] = (void *)callback;
-	handle->user_data[_CAMERA_EVENT_TYPE_ERROR] = (void *)user_data;
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	return CAMERA_ERROR_NONE;
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_ERROR] = callback;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_ERROR] = user_data;
+
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_unset_error_cb(camera_h camera)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_UNSET_ERROR_CB;
 
-	handle->user_cb[_CAMERA_EVENT_TYPE_ERROR] = (void *)NULL;
-	handle->user_data[_CAMERA_EVENT_TYPE_ERROR] = (void *)NULL;
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	return CAMERA_ERROR_NONE;
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_ERROR] = (void *)NULL;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_ERROR] = (void *)NULL;
+
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
+}
+
+int camera_foreach_supported_preview_resolution(camera_h camera, camera_supported_preview_resolution_cb foreach_cb , void *user_data)
+{
+	if( camera == NULL || foreach_cb == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+	int ret = CAMERA_ERROR_NONE;
+
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_FOREACH_SUPPORTED_PREVIEW_RESOLUTION;
+
+	LOGW("Enter, handle :%x", pc->remote_handle);
+
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_PREVIEW_RESOLUTION] = foreach_cb;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_PREVIEW_RESOLUTION] = user_data;
+
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
+}
+
+int camera_foreach_supported_capture_resolution(camera_h camera, camera_supported_capture_resolution_cb foreach_cb , void *user_data)
+{
+	if( camera == NULL || foreach_cb == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+	int ret = CAMERA_ERROR_NONE;
+
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_FOREACH_SUPPORTED_CAPTURE_RESOLUTION;
+
+	LOGW("Enter, handle :%x", pc->remote_handle);
+
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_CAPTURE_RESOLUTION] = foreach_cb;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_CAPTURE_RESOLUTION] = user_data;
+
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
+}
+
+int camera_foreach_supported_capture_format(camera_h camera, camera_supported_capture_format_cb foreach_cb , void *user_data)
+{
+	if( camera == NULL || foreach_cb == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+	int ret = CAMERA_ERROR_NONE;
+
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_FOREACH_SUPPORTED_CAPTURE_FORMAT;
+
+	LOGW("Enter, handle :%x", pc->remote_handle);
+
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_CAPTURE_FORMAT] = foreach_cb;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_CAPTURE_FORMAT] = user_data;
+
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_foreach_supported_preview_resolution(camera_h camera, camera_supported_preview_resolution_cb foreach_cb, void *user_data)
+int camera_foreach_supported_preview_format(camera_h camera, camera_supported_preview_format_cb foreach_cb , void *user_data)
 {
-	if (camera == NULL || foreach_cb == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || foreach_cb == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo preview_width;
-	MMCamAttrsInfo preview_height;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_SET_FOREACH_SUPPORTED_PREVIEW_FORMAT;
 
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_WIDTH, &preview_width);
-	ret |= mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_HEIGHT, &preview_height);
-	if (ret != CAMERA_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	for (i = 0 ; i < preview_width.int_array.count ; i++) {
-		if (!foreach_cb(preview_width.int_array.array[i], preview_height.int_array.array[i], user_data)) {
-			break;
-		}
-	}
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_PREVIEW_FORMAT] = foreach_cb;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_PREVIEW_FORMAT] = user_data;
 
-	return CAMERA_ERROR_NONE;
-}
-
-
-int camera_foreach_supported_capture_resolution(camera_h camera, camera_supported_capture_resolution_cb foreach_cb, void *user_data)
-{
-	if (camera == NULL || foreach_cb == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
-
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo capture_width;
-	MMCamAttrsInfo capture_height;
-
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAPTURE_WIDTH, &capture_width);
-	ret |= mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAPTURE_HEIGHT, &capture_height);
-	if (ret != CAMERA_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
-
-	for (i = 0 ; i < capture_width.int_array.count ; i++) {
-		if (!foreach_cb(capture_width.int_array.array[i], capture_height.int_array.array[i], user_data)) {
-			break;
-		}
-	}
-
-	return CAMERA_ERROR_NONE;
-}
-
-
-int camera_foreach_supported_capture_format(camera_h camera, camera_supported_capture_format_cb foreach_cb, void *user_data)
-{
-	if (camera == NULL || foreach_cb == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
-
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo format;
-
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAPTURE_FORMAT, &format);
-	if (ret != CAMERA_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
-
-	for (i = 0 ; i < format.int_array.count ; i++) {
-		if (format.int_array.array[i] != MM_PIXEL_FORMAT_ITLV_JPEG_UYVY) {
-			if (!foreach_cb(format.int_array.array[i], user_data)) {
-				break;
-			}
-		}
-	}
-
-	return CAMERA_ERROR_NONE;
-}
-
-
-int camera_foreach_supported_preview_format(camera_h camera, camera_supported_preview_format_cb foreach_cb, void *user_data)
-{
-	if (camera == NULL || foreach_cb == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
-
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo format;
-
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_FORMAT, &format);
-	if (ret != CAMERA_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
-
-	for (i = 0 ; i < format.int_array.count ; i++) {
-		if (format.int_array.array[i] != MM_PIXEL_FORMAT_ITLV_JPEG_UYVY) {
-			if (!foreach_cb(format.int_array.array[i], user_data)) {
-				break;
-			}
-		}
-	}
-
-	return CAMERA_ERROR_NONE;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_get_recommended_preview_resolution(camera_h camera, int *width, int *height)
 {
 	if (camera == NULL || width == NULL || height == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	enum MMCamcorderPreviewType wide = MM_CAMCORDER_PREVIEW_TYPE_NORMAL;
-	int capture_w = 0;
-	int capture_h = 0;
-	double ratio = 0.0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo width_info;
-	MMCamAttrsInfo height_info;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_GET_RECOMMENDED_PREVIEW_RESOLUTION;
+	int sock_fd = pc->cb_info->fd;
+	int get_width;
+	int get_height;
 
-	camera_get_capture_resolution(camera, &capture_w, &capture_h);
-	ratio = (double)capture_w / (double)capture_h;
-	if (ratio > 1.5) {
-		wide = MM_CAMCORDER_PREVIEW_TYPE_WIDE;
-	} else if (ratio == 1.0) {
-		wide = MM_CAMCORDER_PREVIEW_TYPE_SQUARE;
-	} else {
-		wide = MM_CAMCORDER_PREVIEW_TYPE_NORMAL;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_width, pc->cb_info->recvMsg);
+		mmsvc_camera_msg_get(get_height, pc->cb_info->recvMsg);
+		*width = get_width;
+		*height = get_height;
 	}
-
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_RECOMMEND_CAMERA_WIDTH, &width_info);
-	ret |= mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_RECOMMEND_CAMERA_HEIGHT, &height_info);
-	if (ret != MM_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
-
-	if (width && (unsigned int)width_info.int_array.count > wide) {
-		*width = width_info.int_array.array[wide];
-	} else {
-		LOGE("there is no width value for resolution %dx%d type %d", capture_w, capture_h, wide);
-		return CAMERA_ERROR_INVALID_OPERATION;
-	}
-
-	if (height && (unsigned int)height_info.int_array.count > wide) {
-		*height = height_info.int_array.array[wide];
-	} else {
-		LOGE("there is no height value for resolution %dx%d type %d", capture_w, capture_h, wide);
-		return CAMERA_ERROR_INVALID_OPERATION;
-	}
-
-	LOGI("recommend resolution %dx%d, type %d", *width, *height, wide);
-
-	return CAMERA_ERROR_NONE;
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_get_lens_orientation(camera_h camera, int *angle)
 {
-	if (camera == NULL || angle == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || angle == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	int rotation = MM_DISPLAY_ROTATION_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_LENS_ORIENTATION;
+	int sock_fd = pc->cb_info->fd;
+	int get_angle;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_RECOMMEND_DISPLAY_ROTATION, &rotation,
-					  NULL);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	if (ret == MM_ERROR_NONE) {
-		switch (rotation) {
-		case MM_DISPLAY_ROTATION_NONE:
-			*angle = 0;
-			break;
-		case MM_DISPLAY_ROTATION_90:
-			*angle = 270;
-			break;
-		case MM_DISPLAY_ROTATION_180:
-			*angle = 180;
-			break;
-		case MM_DISPLAY_ROTATION_270:
-			*angle = 90;
-			break;
-		default :
-			*angle = 0;
-			break;
-		}
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_angle, pc->cb_info->recvMsg);
+		*angle = get_angle;
 	}
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_attr_set_theater_mode(camera_h camera, camera_attr_theater_mode_e mode)
 {
@@ -2332,17 +1840,16 @@ int camera_attr_set_theater_mode(camera_h camera, camera_attr_theater_mode_e mod
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_DISPLAY_MODE, mode,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_THEATER_MODE;
+	int sock_fd = pc->cb_info->fd;
+	int set_mode = (int)mode;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_mode);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_attr_get_theater_mode(camera_h camera, camera_attr_theater_mode_e *mode)
 {
@@ -2351,16 +1858,21 @@ int camera_attr_get_theater_mode(camera_h camera, camera_attr_theater_mode_e *mo
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_THEATER_MODE;
+	int sock_fd = pc->cb_info->fd;
+	int get_mode;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_DISPLAY_MODE, mode,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_mode, pc->cb_info->recvMsg);
+		*mode = (camera_attr_theater_mode_e)get_mode;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_attr_foreach_supported_theater_mode(camera_h camera, camera_attr_supported_theater_mode_cb foreach_cb, void *user_data)
 {
@@ -2368,1933 +1880,1584 @@ int camera_attr_foreach_supported_theater_mode(camera_h camera, camera_attr_supp
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo info;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_FOREACH_SUPPORTED_THEATER_MODE;
 
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_DISPLAY_MODE, &info);
-	if (ret != CAMERA_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	for (i = 0 ; i < info.int_array.count ; i++) {
-		if (!foreach_cb(info.int_array.array[i], user_data)) {
-			break;
-		}
-	}
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_THEATER_MODE] = foreach_cb;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_THEATER_MODE] = user_data;
 
-	return CAMERA_ERROR_NONE;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+
+	LOGW("Finish, return :%x", ret);
+
+	return ret;
 }
-
 
 int camera_attr_set_preview_fps(camera_h camera,  camera_attr_fps_e fps)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
-	if (fps == CAMERA_ATTR_FPS_AUTO) {
-		ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-						  MMCAM_CAMERA_FPS_AUTO, true,
-						  NULL);
-	} else {
-		ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-						  MMCAM_CAMERA_FPS_AUTO, false,
-						  MMCAM_CAMERA_FPS, fps,
-						  NULL);
-	}
-
-	return __convert_camera_error_code(__func__, ret);
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_PREVIEW_FPS;
+	int sock_fd = pc->cb_info->fd;
+	int set_fps = (int)fps;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_fps);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_set_image_quality(camera_h camera, int quality)
+int camera_attr_set_image_quality(camera_h camera,  int quality)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_IMAGE_ENCODER_QUALITY, quality,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_IMAGE_QUALITY;
+	int sock_fd = pc->cb_info->fd;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, quality);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
-
-int camera_attr_get_preview_fps(camera_h camera, camera_attr_fps_e *fps)
+int camera_attr_get_preview_fps(camera_h camera,  camera_attr_fps_e *fps)
 {
-	if (camera == NULL || fps == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || fps == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	int mm_fps = 0;
-	int is_auto = false;
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_PREVIEW_FPS;
+	int get_fps;
+	int sock_fd = pc->cb_info->fd;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_FPS, &mm_fps,
-					  MMCAM_CAMERA_FPS_AUTO, &is_auto,
-					  NULL);
-	if (ret == MM_ERROR_NONE) {
-		if (is_auto) {
-			*fps = CAMERA_ATTR_FPS_AUTO;
-		} else {
-			*fps = mm_fps;
-		}
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_fps, pc->cb_info->recvMsg);
+		*fps = (camera_attr_fps_e)get_fps;
 	}
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_get_image_quality(camera_h camera, int *quality)
 {
-	if (camera == NULL || quality == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || quality == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_IMAGE_QUALITY;
+	int sock_fd = pc->cb_info->fd;
+	int get_quality;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_IMAGE_ENCODER_QUALITY, quality,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_quality, pc->cb_info->recvMsg);
+		*quality = get_quality;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_set_zoom(camera_h camera, int zoom)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_ZOOM;
+	int sock_fd = pc->cb_info->fd;
 
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_DIGITAL_ZOOM, zoom,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, zoom);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
-
-int camera_attr_set_af_mode(camera_h camera, camera_attr_af_mode_e mode)
+int camera_attr_set_af_mode(camera_h camera,  camera_attr_af_mode_e mode)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	int focus_mode;
-	bool should_change_focus_mode = false;
-
-	mm_camcorder_get_attributes(handle->mm_handle, NULL,
-				    MMCAM_CAMERA_FOCUS_MODE, &focus_mode,
-				    NULL);
-
-	if (focus_mode != MM_CAMCORDER_FOCUS_MODE_TOUCH_AUTO &&
-	    focus_mode != MM_CAMCORDER_FOCUS_MODE_CONTINUOUS &&
-	    focus_mode != MM_CAMCORDER_FOCUS_MODE_AUTO) {
-		should_change_focus_mode = true;
-	}
-
-	if (mode != CAMERA_ATTR_AF_NONE &&
-	    focus_mode == MM_CAMCORDER_FOCUS_MODE_CONTINUOUS &&
-	    !handle->on_continuous_focusing) {
-		handle->cached_focus_mode = mode;
-		LOGD("af mode will be set actually start focusing");
-		return __convert_camera_error_code(__func__, MM_ERROR_NONE);
-	} else {
-		handle->cached_focus_mode = -1;
-	}
-
-	if (mode != CAMERA_ATTR_AF_NONE && should_change_focus_mode) {
-		mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					    MMCAM_CAMERA_FOCUS_MODE, MM_CAMCORDER_FOCUS_MODE_AUTO,
-					    NULL);
-	}
-
-	switch (mode) {
-	case CAMERA_ATTR_AF_NONE:
-		ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-						  MMCAM_CAMERA_FOCUS_MODE, MM_CAMCORDER_FOCUS_MODE_NONE,
-						  MMCAM_CAMERA_AF_SCAN_RANGE, MM_CAMCORDER_AUTO_FOCUS_NONE,
-						  NULL);
-		break;
-	case CAMERA_ATTR_AF_NORMAL:
-		ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-						  MMCAM_CAMERA_AF_SCAN_RANGE, MM_CAMCORDER_AUTO_FOCUS_NORMAL,
-						  NULL);
-		break;
-	case CAMERA_ATTR_AF_MACRO:
-		ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-						  MMCAM_CAMERA_AF_SCAN_RANGE, MM_CAMCORDER_AUTO_FOCUS_MACRO,
-						  NULL);
-		break;
-	case CAMERA_ATTR_AF_FULL:
-		ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-						  MMCAM_CAMERA_AF_SCAN_RANGE, MM_CAMCORDER_AUTO_FOCUS_FULL,
-						  NULL);
-		break;
-	default:
-		LOGE("invalid mode %d", mode);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
-
-	return __convert_camera_error_code(__func__, ret);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_AF_MODE;
+	int sock_fd = pc->cb_info->fd;
+	int set_mode = (int)mode;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_mode);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_attr_set_af_area(camera_h camera, int x, int y)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	camera_attr_af_mode_e mode;
-
-	camera_attr_get_af_mode(camera, &mode);
-	if (mode == CAMERA_ATTR_AF_NONE) {
-		LOGE("INVALID_OPERATION(0x%08x) AF mode is CAMERA_ATTR_AF_NONE", CAMERA_ERROR_INVALID_OPERATION);
-		return CAMERA_ERROR_INVALID_OPERATION;
-	}
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_AF_TOUCH_X, x,
-					  MMCAM_CAMERA_AF_TOUCH_Y, y,
-					  NULL);
-	if (ret == MM_ERROR_NONE) {
-		handle->focus_area_valid = true;
-	}
-
-	return __convert_camera_error_code(__func__, ret);
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_AF_AREA;
+	int sock_fd = pc->cb_info->fd;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send2(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, x, INT, y);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_clear_af_area(camera_h camera)
 {
-	if (camera == NULL) {
+	if( camera == NULL){
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_s *handle = (camera_s *)camera;
-
-	handle->focus_area_valid = false;
-
-	return 0;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_CLEAR_AF_AREA;
+	int sock_fd = pc->cb_info->fd;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_set_exposure_mode(camera_h camera, camera_attr_exposure_mode_e mode)
+int camera_attr_set_exposure_mode(camera_h camera,  camera_attr_exposure_mode_e mode)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-
-	int maptable[] = {MM_CAMCORDER_AUTO_EXPOSURE_OFF,       /* CAMERA_ATTR_EXPOSURE_MODE_OFF */
-			  MM_CAMCORDER_AUTO_EXPOSURE_ALL,       /* CAMERA_ATTR_EXPOSURE_MODE_ALL */
-			  MM_CAMCORDER_AUTO_EXPOSURE_CENTER_1,  /* CAMERA_ATTR_EXPOSURE_MODE_CENTER */
-			  MM_CAMCORDER_AUTO_EXPOSURE_SPOT_1,    /* CAMERA_ATTR_EXPOSURE_MODE_SPOT */
-			  MM_CAMCORDER_AUTO_EXPOSURE_CUSTOM_1,  /* CAMERA_ATTR_EXPOSURE_MODE_CUSTOM */
-			 };
-
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
 
 	if (mode < CAMERA_ATTR_EXPOSURE_MODE_OFF || mode > CAMERA_ATTR_EXPOSURE_MODE_CUSTOM) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_NOT_SUPPORTED);
+		return CAMERA_ERROR_NOT_SUPPORTED;
 	}
 
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_EXPOSURE_MODE, maptable[mode],
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_EXPOSURE_MODE;
+	int set_mode = (int)mode;
+	int sock_fd = pc->cb_info->fd;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_mode);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_set_exposure(camera_h camera, int value)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_EXPOSURE;
+	int sock_fd = pc->cb_info->fd;
 
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_EXPOSURE_VALUE, value,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, value);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_set_iso(camera_h camera, camera_attr_iso_e iso)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s*)camera;
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_ISO, iso,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_ISO;
+	int sock_fd = pc->cb_info->fd;
+	int set_iso = (int)iso;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_iso);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_set_brightness(camera_h camera, int level)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_BRIGHTNESS;
+	int sock_fd = pc->cb_info->fd;
 
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_FILTER_BRIGHTNESS, level,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, level);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_set_contrast(camera_h camera, int level)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_CONTRAST;
+	int sock_fd = pc->cb_info->fd;
 
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_FILTER_CONTRAST, level,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, level);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_set_whitebalance(camera_h camera, camera_attr_whitebalance_e wb)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	if (wb < CAMERA_ATTR_WHITE_BALANCE_NONE || wb > CAMERA_ATTR_WHITE_BALANCE_CUSTOM) {
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_NOT_SUPPORTED);
+		return CAMERA_ERROR_NOT_SUPPORTED;
+	}
 
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_FILTER_WB, wb,
-					  NULL);
+	
+	int ret = CAMERA_ERROR_NONE;
 
-	return __convert_camera_error_code(__func__, ret);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_WHITEBALANCE;
+	int sock_fd = pc->cb_info->fd;
+	int set_whitebalance = (int)wb;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_whitebalance);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_set_effect(camera_h camera, camera_attr_effect_mode_e effect)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_FILTER_COLOR_TONE, effect,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_EFFECT;
+	int sock_fd = pc->cb_info->fd;
+	int set_effect = (int)effect;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_effect);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_set_scene_mode(camera_h camera, camera_attr_scene_mode_e mode)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_FILTER_SCENE_MODE, mode,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_SCENE_MODE;
+	int sock_fd = pc->cb_info->fd;
+	int set_mode = (int)mode;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_mode);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_enable_tag(camera_h camera, bool enable)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_ENABLE_TAG;
+	int sock_fd =  pc->cb_info->fd;
+	int set_enable = (int)enable;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_TAG_ENABLE, enable,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_enable);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_set_tag_image_description(camera_h camera, const char *description)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_TAG_IMAGE_DESCRIPTION, description, strlen(description),
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	if( description == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_TAG_IMAGE_DESCRIPTION;
+	int sock_fd =  pc->cb_info->fd;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, STRING, description);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_set_tag_orientation(camera_h camera, camera_attr_tag_orientation_e orientation)
+int camera_attr_set_tag_orientation(camera_h camera,  camera_attr_tag_orientation_e orientation)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_TAG_ORIENTATION;
+	int sock_fd =  pc->cb_info->fd;
+	int set_orientation = (int)orientation;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_TAG_ORIENTATION, orientation,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_orientation);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_set_tag_software(camera_h camera, const char *software)
+int camera_attr_set_tag_software(camera_h camera,  const char *software)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_TAG_SOFTWARE, software, strlen(software),
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	if( software == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_TAG_SOFTWARE;
+	int sock_fd =  pc->cb_info->fd;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, STRING, software);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_set_geotag(camera_h camera, double latitude , double longitude, double altitude)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_GEOTAG;
+	int sock_fd =  pc->cb_info->fd;
+	double set_geotag[3] = { latitude, longitude, altitude };
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_TAG_GPS_ENABLE, true,
-					  MMCAM_TAG_LATITUDE, latitude,
-					  MMCAM_TAG_LONGITUDE, longitude,
-					  MMCAM_TAG_ALTITUDE, altitude,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send_array(api, pc->remote_handle, sock_fd, pc->cb_info, ret,
+									set_geotag, sizeof(set_geotag), sizeof(double));
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_remove_geotag(camera_h camera)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_TAG_GPS_ENABLE, false,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_REMOVE_GEOTAG;
+	int sock_fd =  pc->cb_info->fd;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_set_flash_mode(camera_h camera, camera_attr_flash_mode_e mode)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_FLASH_MODE;
+	int sock_fd =  pc->cb_info->fd;
+	int set_mode = (int)mode;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_STROBE_MODE, mode,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_mode);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_get_zoom(camera_h camera, int *zoom)
 {
-	if (camera == NULL || zoom == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || zoom == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_ZOOM;
+	int get_zoom;
+	int sock_fd = pc->cb_info->fd;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_DIGITAL_ZOOM, zoom,
-					  NULL);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_zoom, pc->cb_info->recvMsg);
+		*zoom = get_zoom;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_get_zoom_range(camera_h camera, int *min, int *max)
 {
-	if (camera == NULL || min == NULL || max == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || min == NULL || max == NULL ){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	int sock_fd = pc->cb_info->fd;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_ZOOM_RANGE;
+	int get_min;
+	int get_max;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo ainfo;
-
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_DIGITAL_ZOOM, &ainfo);
-	if (ret == MM_ERROR_NONE) {
-		*min = ainfo.int_range.min;
-		*max = ainfo.int_range.max;
-	}
-
-	return __convert_camera_error_code(__func__, ret);
-}
-
-
-int camera_attr_get_af_mode(camera_h camera, camera_attr_af_mode_e *mode)
-{
-	if (camera == NULL || mode == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
-
-	int ret = MM_ERROR_NONE;
-	int focus_mode;
-	int af_range;
-	int detect_mode;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_FOCUS_MODE, &focus_mode,
-					  MMCAM_CAMERA_AF_SCAN_RANGE, &af_range,
-					  MMCAM_DETECT_MODE, &detect_mode,
-					  NULL);
-	if (ret == MM_ERROR_NONE) {
-		switch (focus_mode) {
-		case MM_CAMCORDER_FOCUS_MODE_NONE:
-		case MM_CAMCORDER_FOCUS_MODE_PAN:
-		case MM_CAMCORDER_FOCUS_MODE_MANUAL:
-			*mode = CAMERA_ATTR_AF_NONE;
-			break;
-		case MM_CAMCORDER_FOCUS_MODE_AUTO:
-		case MM_CAMCORDER_FOCUS_MODE_TOUCH_AUTO:
-		case MM_CAMCORDER_FOCUS_MODE_CONTINUOUS:
-			switch (af_range) {
-			case MM_CAMCORDER_AUTO_FOCUS_NONE:
-				*mode = CAMERA_ATTR_AF_NORMAL;
-				break;
-			case MM_CAMCORDER_AUTO_FOCUS_NORMAL:
-				*mode = CAMERA_ATTR_AF_NORMAL;
-				break;
-			case MM_CAMCORDER_AUTO_FOCUS_MACRO:
-				*mode = CAMERA_ATTR_AF_MACRO;
-				break;
-			case MM_CAMCORDER_AUTO_FOCUS_FULL:
-				*mode = CAMERA_ATTR_AF_FULL;
-				break;
-			default :
-				*mode = CAMERA_ATTR_AF_NORMAL;
-				break;
-			}
-			break;
-		default:
-			*mode = CAMERA_ATTR_AF_NONE;
-			break;
-		}
-	}
-
-	return __convert_camera_error_code(__func__, ret);
-}
-
-
-int camera_attr_get_exposure_mode(camera_h camera, camera_attr_exposure_mode_e *mode)
-{
-	if (camera == NULL || mode == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
-
-	int maptable[] = {CAMERA_ATTR_EXPOSURE_MODE_OFF,        /* MM_CAMCORDER_AUTO_EXPOSURE_OFF */
-			  CAMERA_ATTR_EXPOSURE_MODE_ALL,        /* MM_CAMCORDER_AUTO_EXPOSURE_ALL */
-			  CAMERA_ATTR_EXPOSURE_MODE_CENTER,     /* MM_CAMCORDER_AUTO_EXPOSURE_CENTER_1 */
-			  CAMERA_ATTR_EXPOSURE_MODE_CENTER,     /* MM_CAMCORDER_AUTO_EXPOSURE_CENTER_2 */
-			  CAMERA_ATTR_EXPOSURE_MODE_CENTER,     /* MM_CAMCORDER_AUTO_EXPOSURE_CENTER_3 */
-			  CAMERA_ATTR_EXPOSURE_MODE_SPOT,       /* MM_CAMCORDER_AUTO_EXPOSURE_SPOT_1 */
-			  CAMERA_ATTR_EXPOSURE_MODE_SPOT,       /* MM_CAMCORDER_AUTO_EXPOSURE_SPOT_2 */
-			  CAMERA_ATTR_EXPOSURE_MODE_CUSTOM,     /* MM_CAMCORDER_AUTO_EXPOSURE_CUSTOM_1 */
-			  CAMERA_ATTR_EXPOSURE_MODE_CUSTOM      /* MM_CAMCORDER_AUTO_EXPOSURE_CUSTOM_2 */
-			 };
-	int ret = MM_ERROR_NONE;
-	int exposure_mode;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_EXPOSURE_MODE, &exposure_mode,
-					  NULL);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
 	if (ret == CAMERA_ERROR_NONE) {
-		*mode = maptable[abs(exposure_mode%9)];
+		mmsvc_camera_msg_get(get_min, pc->cb_info->recvMsg);
+		mmsvc_camera_msg_get(get_max, pc->cb_info->recvMsg);
+		*min = get_min;
+		*max = get_max;
 	}
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
+
+int camera_attr_get_af_mode( camera_h camera,  camera_attr_af_mode_e *mode)
+{
+	if( camera == NULL || mode == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	int sock_fd = pc->cb_info->fd;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_AF_MODE;
+	int get_mode;
+
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_mode, pc->cb_info->recvMsg);
+		*mode = (camera_attr_af_mode_e)get_mode;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
+}
+
+
+int camera_attr_get_exposure_mode( camera_h camera, camera_attr_exposure_mode_e *mode)
+{
+	if( camera == NULL|| mode == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	int sock_fd = pc->cb_info->fd;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_EXPOSURE_MODE;
+	int get_mode;
+
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_mode, pc->cb_info->recvMsg);
+		*mode = (camera_attr_exposure_mode_e)get_mode;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
+}
 
 int camera_attr_get_exposure(camera_h camera, int *value)
 {
-	if (camera == NULL || value == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || value == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	int sock_fd = pc->cb_info->fd;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_EXPOSURE;
+	int get_value;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_EXPOSURE_VALUE, value,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_value, pc->cb_info->recvMsg);
+		*value = get_value;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_get_exposure_range(camera_h camera, int *min, int *max)
 {
-	if (camera == NULL || min == NULL || max == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || min == NULL || max == NULL ){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	int sock_fd = pc->cb_info->fd;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_EXPOSURE_RANGE;
+	int get_min;
+	int get_max;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo ainfo;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_EXPOSURE_VALUE, &ainfo);
-	if (ret == MM_ERROR_NONE) {
-		*min = ainfo.int_range.min;
-		*max = ainfo.int_range.max;
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_min, pc->cb_info->recvMsg);
+		mmsvc_camera_msg_get(get_max, pc->cb_info->recvMsg);
+		*min = get_min;
+		*max = get_max;
 	}
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_get_iso(camera_h camera, camera_attr_iso_e *iso)
+int camera_attr_get_iso( camera_h camera,  camera_attr_iso_e *iso)
 {
-	if (camera == NULL || iso == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || iso == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	int sock_fd = pc->cb_info->fd;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_ISO;
+	int get_iso;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_ISO, iso,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_iso, pc->cb_info->recvMsg);
+		*iso = (camera_attr_iso_e)get_iso;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_get_brightness(camera_h camera, int *level)
+int camera_attr_get_brightness(camera_h camera,  int *level)
 {
-	if (camera == NULL || level == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || level == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	int sock_fd = pc->cb_info->fd;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_BRIGHTNESS;
+	int get_level;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_FILTER_BRIGHTNESS, level,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_level, pc->cb_info->recvMsg);
+		*level = get_level;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_get_brightness_range(camera_h camera, int *min, int *max)
 {
-	if (camera == NULL || min == NULL || max == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || min == NULL || max == NULL ){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	int sock_fd = pc->cb_info->fd;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_BRIGHTNESS_RANGE;
+	int get_min;
+	int get_max;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo ainfo;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_FILTER_BRIGHTNESS, &ainfo);
-	if (ret == MM_ERROR_NONE) {
-		*min = ainfo.int_range.min;
-		*max = ainfo.int_range.max;
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_min, pc->cb_info->recvMsg);
+		mmsvc_camera_msg_get(get_max, pc->cb_info->recvMsg);
+		*min = get_min;
+		*max = get_max;
 	}
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_get_contrast(camera_h camera, int *level)
+int camera_attr_get_contrast(camera_h camera,  int *level)
 {
-	if (camera == NULL || level == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || level == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_CONTRAST;
+	int sock_fd = pc->cb_info->fd;
+	int get_level;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_FILTER_CONTRAST, level,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_level, pc->cb_info->recvMsg);
+		*level = get_level;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_get_contrast_range(camera_h camera, int *min, int *max)
+int camera_attr_get_contrast_range(camera_h camera, int *min , int *max)
 {
-	if (camera == NULL || min == NULL || max == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || min == NULL || max == NULL ){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_CONTRAST_RANGE;
+	int sock_fd = pc->cb_info->fd;
+	int get_min;
+	int get_max;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo ainfo;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_FILTER_CONTRAST, &ainfo);
-	if (ret == MM_ERROR_NONE) {
-		*min = ainfo.int_range.min;
-		*max = ainfo.int_range.max;
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_min, pc->cb_info->recvMsg);
+		mmsvc_camera_msg_get(get_max, pc->cb_info->recvMsg);
+		*min = get_min;
+		*max = get_max;
 	}
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_get_whitebalance(camera_h camera, camera_attr_whitebalance_e *wb)
+int camera_attr_get_whitebalance(camera_h camera,  camera_attr_whitebalance_e *wb)
 {
-	if (camera == NULL || wb == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || wb == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_WHITEBALANCE;
+	int sock_fd = pc->cb_info->fd;
+	int get_wb;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_FILTER_WB, wb,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_wb, pc->cb_info->recvMsg);
+		*wb = (camera_attr_whitebalance_e)get_wb;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_get_effect(camera_h camera, camera_attr_effect_mode_e *effect)
 {
-	if (camera == NULL || effect == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || effect == NULL ){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_EFFECT;
+	int sock_fd = pc->cb_info->fd;
+	int get_effect;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_FILTER_COLOR_TONE, effect,
-					  NULL);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_effect, pc->cb_info->recvMsg);
+		*effect = (camera_attr_effect_mode_e)get_effect;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_get_scene_mode(camera_h camera, camera_attr_scene_mode_e *mode)
+int camera_attr_get_scene_mode(camera_h camera,  camera_attr_scene_mode_e *mode)
 {
-	if (camera == NULL || mode == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || mode == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_SCENE_MODE;
+	int sock_fd = pc->cb_info->fd;
+	int get_mode;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_FILTER_SCENE_MODE, mode,
-					  NULL);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_mode, pc->cb_info->recvMsg);
+		*mode = (camera_attr_scene_mode_e)get_mode;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_is_enabled_tag(camera_h camera, bool *enable)
+int camera_attr_is_enabled_tag(camera_h camera,  bool *enable)
 {
-	if (camera == NULL || enable == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || enable == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_IS_ENABLED_TAG;
+	int sock_fd = pc->cb_info->fd;
+	int get_enable;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_TAG_ENABLE, enable,
-					  NULL);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_enable, pc->cb_info->recvMsg);
+		*enable = (bool)get_enable;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_get_tag_image_description(camera_h camera, char **description)
+int camera_attr_get_tag_image_description(camera_h camera,  char **description)
 {
-	if (camera == NULL || description == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || description == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	char *ndescription = NULL;
-	int desc_size;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_TAG_IMAGE_DESCRIPTION;
+	int sock_fd = pc->cb_info->fd;
+	char get_description[MMSVC_MSG_MAX_LENGTH] = {0,};
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_TAG_IMAGE_DESCRIPTION, &ndescription, &desc_size,
-					  NULL);
-	if (ret == MM_ERROR_NONE) {
-		if (ndescription != NULL) {
-			*description = strdup(ndescription);
-		} else {
-			*description = strdup("");
-		}
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get_string(get_description, pc->cb_info->recvMsg);
+		*description = strdup(get_description);
 	}
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_get_tag_orientation(camera_h camera, camera_attr_tag_orientation_e *orientation)
 {
-	if (camera == NULL || orientation == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || orientation == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_TAG_ORIENTATION;
+	int sock_fd = pc->cb_info->fd;
+	int get_orientation;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_TAG_ORIENTATION, orientation,
-					  NULL);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_orientation, pc->cb_info->recvMsg);
+		*orientation = (camera_attr_tag_orientation_e)get_orientation;
+		LOGW("success, orientation : %d", *orientation);
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_get_tag_software(camera_h camera, char **software)
 {
-	if (camera == NULL || software == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || software == NULL ){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	char *soft = NULL;
-	int soft_size;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_TAG_SOFTWARE;
+	int sock_fd = pc->cb_info->fd;
+	char get_software[MMSVC_MSG_MAX_LENGTH] = {0,};
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_TAG_SOFTWARE, &soft, &soft_size,
-					  NULL);
-	if (ret == MM_ERROR_NONE) {
-		if (soft != NULL) {
-			*software = strdup(soft);
-		} else {
-			*software = strdup("");
-		}
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get_string(get_software, pc->cb_info->recvMsg);
+		*software = strdup(get_software);
 	}
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_get_geotag(camera_h camera, double *latitude , double *longitude, double *altitude)
 {
-	if (camera == NULL || latitude == NULL || longitude == NULL || altitude == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || latitude == NULL || longitude == NULL || altitude == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_GEOTAG;
+	double get_geotag[3] = {0,};
+	int sock_fd = pc->cb_info->fd;
+	int valid = 0;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_TAG_LATITUDE, latitude,
-					  MMCAM_TAG_LONGITUDE, longitude,
-					  MMCAM_TAG_ALTITUDE, altitude,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get_array(get_geotag, pc->cb_info->recvMsg);
+		*latitude = get_geotag[0];
+		*longitude = get_geotag[1];
+		*altitude = get_geotag[2];
+	} else {
+		LOGE("Returned value is not valid : 0x%x", valid);
+		*latitude = 0;
+		*longitude = 0;
+		*altitude = 0;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_get_flash_mode(camera_h camera, camera_attr_flash_mode_e *mode)
+int camera_attr_get_flash_mode(camera_h camera,  camera_attr_flash_mode_e *mode)
 {
-	if (camera == NULL || mode == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || mode == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_FLASH_MODE;
+	int sock_fd = pc->cb_info->fd;
+	int get_mode;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_STROBE_MODE, mode,
-					  NULL);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_mode, pc->cb_info->recvMsg);
+		*mode = (camera_attr_flash_mode_e)get_mode;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_foreach_supported_af_mode(camera_h camera, camera_attr_supported_af_mode_cb foreach_cb, void *user_data)
+int camera_attr_foreach_supported_af_mode( camera_h camera, camera_attr_supported_af_mode_cb foreach_cb , void *user_data)
 {
-	if (camera == NULL || foreach_cb == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || foreach_cb == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	int i = 0;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo af_range;
-	MMCamAttrsInfo focus_mode;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_FOREACH_SUPPORTED_AF_MODE;
 
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_AF_SCAN_RANGE, &af_range);
-	ret |= mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_FOCUS_MODE, &focus_mode);
-	if (ret != MM_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	for (i = 0 ; i < af_range.int_array.count ; i++) {
-		if (!foreach_cb(af_range.int_array.array[i], user_data)) {
-			break;;
-		}
-	}
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_AF_MODE] = foreach_cb;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_AF_MODE] = user_data;
 
-	return CAMERA_ERROR_NONE;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_foreach_supported_exposure_mode(camera_h camera, camera_attr_supported_exposure_mode_cb foreach_cb, void *user_data)
+int camera_attr_foreach_supported_exposure_mode(camera_h camera, camera_attr_supported_exposure_mode_cb foreach_cb , void *user_data)
 {
-	if (camera == NULL || foreach_cb == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || foreach_cb == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int maptable[] = {CAMERA_ATTR_EXPOSURE_MODE_OFF,        /* MM_CAMCORDER_AUTO_EXPOSURE_OFF */
-			  CAMERA_ATTR_EXPOSURE_MODE_ALL,        /* MM_CAMCORDER_AUTO_EXPOSURE_ALL */
-			  CAMERA_ATTR_EXPOSURE_MODE_CENTER,     /* MM_CAMCORDER_AUTO_EXPOSURE_CENTER_1 */
-			  -1,                                   /* MM_CAMCORDER_AUTO_EXPOSURE_CENTER_2 */
-			  -1,                                   /* MM_CAMCORDER_AUTO_EXPOSURE_CENTER_3 */
-			  CAMERA_ATTR_EXPOSURE_MODE_SPOT,       /* MM_CAMCORDER_AUTO_EXPOSURE_SPOT_1 */
-			  -1,                                   /* MM_CAMCORDER_AUTO_EXPOSURE_SPOT_2 */
-			  CAMERA_ATTR_EXPOSURE_MODE_CUSTOM,     /* MM_CAMCORDER_AUTO_EXPOSURE_CUSTOM_1 */
-			  -1                                    /* MM_CAMCORDER_AUTO_EXPOSURE_CUSTOM_2 */
-			 };
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo info;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_FOREACH_SUPPORTED_EXPOSURE_MODE;
 
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_EXPOSURE_MODE, &info);
-	if (ret != MM_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	for (i = 0 ; i < info.int_array.count ; i++) {
-		if (info.int_array.array[i] >= MM_CAMCORDER_AUTO_EXPOSURE_OFF &&
-		    info.int_array.array[i] <= MM_CAMCORDER_AUTO_EXPOSURE_CUSTOM_2) {
-			if (maptable[info.int_array.array[i]] != -1) {
-				if (!foreach_cb(maptable[info.int_array.array[i]], user_data)) {
-					break;
-				}
-			}
-		} else {
-			LOGW("unknown value %d", info.int_array.array[i]);
-		}
-	}
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_EXPOSURE_MODE] = foreach_cb;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_EXPOSURE_MODE] = user_data;
 
-	return CAMERA_ERROR_NONE;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_foreach_supported_iso(camera_h camera, camera_attr_supported_iso_cb foreach_cb, void *user_data)
+int camera_attr_foreach_supported_iso( camera_h camera, camera_attr_supported_iso_cb foreach_cb , void *user_data)
 {
-	if (camera == NULL || foreach_cb == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || foreach_cb == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo info;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_FOREACH_SUPPORTED_ISO;
 
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_ISO, &info);
-	if (ret != MM_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	for (i = 0 ; i < info.int_array.count ; i++) {
-		if (!foreach_cb(info.int_array.array[i], user_data)) {
-			break;
-		}
-	}
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_ISO] = foreach_cb;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_ISO] = user_data;
 
-	return CAMERA_ERROR_NONE;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_foreach_supported_whitebalance(camera_h camera, camera_attr_supported_whitebalance_cb foreach_cb, void *user_data)
+int camera_attr_foreach_supported_whitebalance(camera_h camera, camera_attr_supported_whitebalance_cb foreach_cb , void *user_data)
 {
-	if (camera == NULL || foreach_cb == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || foreach_cb == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo info;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_FOREACH_SUPPORTED_WHITEBALANCE;
 
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_FILTER_WB, &info);
-	if (ret != MM_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	for (i = 0 ; i < info.int_array.count ; i++) {
-		if (!foreach_cb(info.int_array.array[i], user_data)) {
-			break;
-		}
-	}
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_WHITEBALANCE] = foreach_cb;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_WHITEBALANCE] = user_data;
 
-	return CAMERA_ERROR_NONE;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_foreach_supported_effect(camera_h camera, camera_attr_supported_effect_cb foreach_cb, void *user_data)
+int camera_attr_foreach_supported_effect(camera_h camera, camera_attr_supported_effect_cb foreach_cb , void *user_data)
 {
-	if (camera == NULL || foreach_cb == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || foreach_cb == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo info;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_FOREACH_SUPPORTED_EFFECT;
 
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_FILTER_COLOR_TONE, &info);
-	if (ret != MM_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	for (i = 0 ; i < info.int_array.count ; i++) {
-		if (!foreach_cb(info.int_array.array[i], user_data)) {
-			break;
-		}
-	}
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_EFFECT] = foreach_cb;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_EFFECT] = user_data;
 
-	return CAMERA_ERROR_NONE;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_foreach_supported_scene_mode(camera_h camera, camera_attr_supported_scene_mode_cb foreach_cb, void *user_data)
+int camera_attr_foreach_supported_scene_mode(camera_h camera, camera_attr_supported_scene_mode_cb foreach_cb , void *user_data)
 {
-	if (camera == NULL || foreach_cb == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || foreach_cb == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo info;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_FOREACH_SUPPORTED_SCENE_MODE;
 
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_FILTER_SCENE_MODE, &info);
-	if (ret != MM_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	for (i = 0 ; i < info.int_array.count ; i++) {
-		if (!foreach_cb(info.int_array.array[i], user_data)) {
-			break;
-		}
-	}
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_SCENE_MODE] = foreach_cb;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_SCENE_MODE] = user_data;
 
-	return CAMERA_ERROR_NONE;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_foreach_supported_flash_mode(camera_h camera, camera_attr_supported_flash_mode_cb foreach_cb, void *user_data)
+int camera_attr_foreach_supported_flash_mode(camera_h camera, camera_attr_supported_flash_mode_cb foreach_cb , void *user_data)
 {
-	if (camera == NULL || foreach_cb == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || foreach_cb == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo info;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_FOREACH_SUPPORTED_FLASH_MODE;
 
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_STROBE_MODE, &info);
-	if (ret != MM_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	for (i = 0 ; i < info.int_array.count ; i++) {
-		if (!foreach_cb(info.int_array.array[i], user_data)) {
-			break;
-		}
-	}
+	int sock_fd = pc->cb_info->fd;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FLASH_MODE] = foreach_cb;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FLASH_MODE] = user_data;
 
-	return CAMERA_ERROR_NONE;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_foreach_supported_fps(camera_h camera, camera_attr_supported_fps_cb foreach_cb, void *user_data)
+int camera_attr_foreach_supported_fps(camera_h camera, camera_attr_supported_fps_cb foreach_cb , void *user_data)
 {
-	if (camera == NULL || foreach_cb == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || foreach_cb == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo info;
-	int width = 0;
-	int height = 0;
-	int i = 0;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_FOREACH_SUPPORTED_FPS;
+	int sock_fd = pc->cb_info->fd;
+	LOGW("Enter, handle :%x", pc->remote_handle);
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FPS] = foreach_cb;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FPS] = user_data;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_WIDTH, &width,
-					  MMCAM_CAMERA_HEIGHT, &height,
-					  NULL);
-	if (ret != MM_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
-
-	ret = mm_camcorder_get_fps_list_by_resolution(handle->mm_handle, width, height, &info);
-	if (ret != MM_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
-
-	for (i = 0 ; i < info.int_array.count ; i++) {
-		if (!foreach_cb(info.int_array.array[i], user_data)) {
-			break;
-		}
-	}
-
-	return CAMERA_ERROR_NONE;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("Enter, handle :%x", pc->remote_handle);
+	return ret;
 }
-
 
 int camera_attr_foreach_supported_fps_by_resolution(camera_h camera, int width, int height, camera_attr_supported_fps_cb foreach_cb, void *user_data)
 {
-	if (camera == NULL || foreach_cb == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || foreach_cb == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo info;
-	int i = 0;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_FOREACH_SUPPORTED_FPS_BY_RESOLUTION;
+	int sock_fd = pc->cb_info->fd;
+	LOGW("Enter, handle :%x", pc->remote_handle);
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FPS_BY_RESOLUTION] = foreach_cb;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FPS_BY_RESOLUTION] = user_data;
 
-	ret = mm_camcorder_get_fps_list_by_resolution(handle->mm_handle, width, height, &info);
-	if (ret != MM_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
-
-	for (i = 0 ; i < info.int_array.count ; i++) {
-		if (!foreach_cb(info.int_array.array[i], user_data)) {
-			break;
-		}
-	}
-
-	return CAMERA_ERROR_NONE;
+	mmsvc_camera_msg_send2(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, width, INT, height);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
 
 int camera_attr_foreach_supported_stream_flip(camera_h camera, camera_attr_supported_stream_flip_cb foreach_cb, void *user_data)
 {
-	if (camera == NULL || foreach_cb == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || foreach_cb == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo info;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_FOREACH_SUPPORTED_STREAM_FLIP;
+	int sock_fd = pc->cb_info->fd;
+	LOGW("Enter, handle :%x", pc->remote_handle);
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_STREAM_FLIP] = foreach_cb;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_STREAM_FLIP] = user_data;
 
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_FLIP, &info);
-	if (ret != MM_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
-
-	for (i = 0 ; i < info.int_array.count ; i++) {
-		if (!foreach_cb(info.int_array.array[i], user_data)) {
-			break;
-		}
-	}
-
-	return CAMERA_ERROR_NONE;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_foreach_supported_stream_rotation(camera_h camera, camera_attr_supported_stream_rotation_cb foreach_cb, void *user_data)
 {
-	if (camera == NULL || foreach_cb == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || foreach_cb == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo info;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_FOREACH_SUPPORTED_STREAM_ROTATION;
+	int sock_fd = pc->cb_info->fd;
+	LOGW("Enter, handle :%x", pc->remote_handle);
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_STREAM_ROTATION] = foreach_cb;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_STREAM_ROTATION] = user_data;
 
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_ROTATION, &info);
-	if (ret != MM_ERROR_NONE) {
-		return __convert_camera_error_code(__func__, ret);
-	}
-
-	for (i = 0 ; i < info.int_array.count ; i++) {
-		if (!foreach_cb(info.int_array.array[i], user_data)) {
-			break;
-		}
-	}
-
-	return CAMERA_ERROR_NONE;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_set_stream_rotation(camera_h camera, camera_rotation_e rotation)
+int camera_attr_set_stream_rotation(camera_h camera , camera_rotation_e rotation)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (rotation < CAMERA_ROTATION_NONE || rotation > CAMERA_ROTATION_270) {
-		LOGE("INVALID_PARAMETER - %d", rotation);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_STREAM_ROTATION;
+	int sock_fd =  pc->cb_info->fd;
+	int set_rotation = (int)rotation;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_ROTATION, rotation,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_rotation);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_get_stream_rotation(camera_h camera, camera_rotation_e *rotation)
+int camera_attr_get_stream_rotation(camera_h camera , camera_rotation_e *rotation)
 {
-	if (camera == NULL || rotation == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || rotation == NULL ){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_STREAM_ROTATION;
+	int sock_fd = pc->cb_info->fd;
+	int get_rotation;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_ROTATION, rotation,
-					  NULL);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_rotation, pc->cb_info->recvMsg);
+		*rotation = (camera_rotation_e)get_rotation;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_set_stream_flip(camera_h camera, camera_flip_e flip)
+int camera_attr_set_stream_flip(camera_h camera , camera_flip_e flip)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (flip < CAMERA_FLIP_NONE || flip > CAMERA_FLIP_BOTH) {
-		LOGE("INVALID_PARAMETER - %d", flip);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_STREAM_FLIP;
+	int sock_fd =  pc->cb_info->fd;
+	int set_flip = (int)flip;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_FLIP, flip,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_flip);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_get_stream_flip(camera_h camera, camera_flip_e *flip)
+int camera_attr_get_stream_flip(camera_h camera , camera_flip_e *flip)
 {
-	if (camera == NULL || flip == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL || flip == NULL ){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_STREAM_FLIP;
+	int sock_fd = pc->cb_info->fd;
+	int get_flip;
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_FLIP, flip,
-					  NULL);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_flip, pc->cb_info->recvMsg);
+		*flip = (camera_flip_e)get_flip;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
-
-
-int _camera_set_use(camera_h camera, bool used)
-{
-	camera_s *handle = (camera_s *)camera;
-
-	if (handle == NULL) {
-		LOGE("handle is NULL");
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
-
-	handle->is_used_in_recorder = used;
-
-	return CAMERA_ERROR_NONE;
-}
-
-
-bool _camera_is_used(camera_h camera)
-{
-	camera_s *handle = (camera_s *)camera;
-
-	if (handle == NULL) {
-		LOGE("handle is NULL");
-		return false;
-	}
-
-	return handle->is_used_in_recorder;
-}
-
-
-int _camera_get_mm_handle(camera_h camera, MMHandleType *handle)
-{
-	if (camera == NULL || handle == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
-
-	camera_s *camera_handle = (camera_s*)camera;
-
-	*handle =  camera_handle->mm_handle;
-
-	return CAMERA_ERROR_NONE;
-}
-
-
-int _camera_set_relay_mm_message_callback(camera_h camera, MMMessageCallback callback, void *user_data)
-{
-	if( camera == NULL ){
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
-
-	camera_s *handle = (camera_s *)camera;
-	handle->relay_message_callback = callback;
-	handle->relay_user_data = user_data;
-
-	return CAMERA_ERROR_NONE;
-}
-
-
-int _camera_get_tbm_surface_format(int in_format, uint32_t *out_format)
-{
-	if (in_format <= MM_PIXEL_FORMAT_INVALID ||
-	    in_format >= MM_PIXEL_FORMAT_NUM ||
-	    out_format == NULL) {
-		LOGE("INVALID_PARAMETER : in_format %d, out_format ptr %p", in_format, out_format);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
-
-	switch (in_format) {
-	case MM_PIXEL_FORMAT_NV12:
-	case MM_PIXEL_FORMAT_NV12T:
-		*out_format = TBM_FORMAT_NV12;
-		break;
-	case MM_PIXEL_FORMAT_NV16:
-		*out_format = TBM_FORMAT_NV16;
-		break;
-	case MM_PIXEL_FORMAT_NV21:
-		*out_format = TBM_FORMAT_NV21;
-		break;
-	case MM_PIXEL_FORMAT_YUYV:
-		*out_format = TBM_FORMAT_YUYV;
-		break;
-	case MM_PIXEL_FORMAT_UYVY:
-	case MM_PIXEL_FORMAT_ITLV_JPEG_UYVY:
-		*out_format = TBM_FORMAT_UYVY;
-		break;
-	case MM_PIXEL_FORMAT_422P:
-		*out_format = TBM_FORMAT_YUV422;
-		break;
-	case MM_PIXEL_FORMAT_I420:
-		*out_format = TBM_FORMAT_YUV420;
-		break;
-	case MM_PIXEL_FORMAT_YV12:
-		*out_format = TBM_FORMAT_YVU420;
-		break;
-	case MM_PIXEL_FORMAT_RGB565:
-		*out_format = TBM_FORMAT_RGB565;
-		break;
-	case MM_PIXEL_FORMAT_RGB888:
-		*out_format = TBM_FORMAT_RGB888;
-		break;
-	case MM_PIXEL_FORMAT_RGBA:
-		*out_format = TBM_FORMAT_RGBA8888;
-		break;
-	case MM_PIXEL_FORMAT_ARGB:
-		*out_format = TBM_FORMAT_ARGB8888;
-		break;
-	default:
-		LOGE("invalid in_format %d", in_format);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
-
-	return CAMERA_ERROR_NONE;
-}
-
-
-int _camera_get_media_packet_mimetype(int in_format, media_format_mimetype_e *mimetype)
-{
-	if (in_format <= MM_PIXEL_FORMAT_INVALID ||
-	    in_format >= MM_PIXEL_FORMAT_NUM ||
-	    mimetype == NULL) {
-		LOGE("INVALID_PARAMETER : in_format %d, mimetype ptr %p", in_format, mimetype);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
-
-	switch (in_format) {
-	case MM_PIXEL_FORMAT_NV12:
-	case MM_PIXEL_FORMAT_NV12T:
-		*mimetype = MEDIA_FORMAT_NV12;
-		break;
-	case MM_PIXEL_FORMAT_NV16:
-		*mimetype = MEDIA_FORMAT_NV16;
-		break;
-	case MM_PIXEL_FORMAT_NV21:
-		*mimetype = MEDIA_FORMAT_NV21;
-		break;
-	case MM_PIXEL_FORMAT_YUYV:
-		*mimetype = MEDIA_FORMAT_YUYV;
-		break;
-	case MM_PIXEL_FORMAT_UYVY:
-	case MM_PIXEL_FORMAT_ITLV_JPEG_UYVY:
-		*mimetype = MEDIA_FORMAT_UYVY;
-		break;
-	case MM_PIXEL_FORMAT_422P:
-		*mimetype = MEDIA_FORMAT_422P;
-		break;
-	case MM_PIXEL_FORMAT_I420:
-		*mimetype = MEDIA_FORMAT_I420;
-		break;
-	case MM_PIXEL_FORMAT_YV12:
-		*mimetype = MEDIA_FORMAT_YV12;
-		break;
-	case MM_PIXEL_FORMAT_RGB565:
-		*mimetype = MEDIA_FORMAT_RGB565;
-		break;
-	case MM_PIXEL_FORMAT_RGB888:
-		*mimetype = MEDIA_FORMAT_RGB888;
-		break;
-	case MM_PIXEL_FORMAT_RGBA:
-		*mimetype = MEDIA_FORMAT_RGBA;
-		break;
-	case MM_PIXEL_FORMAT_ARGB:
-		*mimetype = MEDIA_FORMAT_ARGB;
-		break;
-	default:
-		LOGE("invalid in_format %d", in_format);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
-
-	return CAMERA_ERROR_NONE;
-}
-
-
-int _camera_media_packet_finalize(media_packet_h pkt, int error_code, void *user_data)
-{
-	int ret = 0;
-	void *internal_buffer = NULL;
-	tbm_surface_h tsurf = NULL;
-
-	if (pkt == NULL || user_data == NULL) {
-		LOGE("invalid parameter buffer %p, user_data %p", pkt, user_data);
-		return MEDIA_PACKET_FINALIZE;
-	}
-
-	ret = media_packet_get_extra(pkt, &internal_buffer);
-	if (ret != MEDIA_PACKET_ERROR_NONE) {
-		LOGE("media_packet_get_extra failed 0x%x", ret);
-		return MEDIA_PACKET_FINALIZE;
-	}
-
-	/*LOGD("pointer gst buffer %p, ret 0x%x", internal_buffer, ret);*/
-
-	if (internal_buffer) {
-		gst_buffer_unref((GstBuffer *)internal_buffer);
-		internal_buffer = NULL;
-	}
-
-	ret = media_packet_get_tbm_surface(pkt, &tsurf);
-	if (ret != MEDIA_PACKET_ERROR_NONE) {
-		LOGE("media_packet_get_tbm_surface failed 0x%x", ret);
-		return MEDIA_PACKET_FINALIZE;
-	}
-
-	if (tsurf) {
-		tbm_surface_destroy(tsurf);
-		tsurf = NULL;
-	}
-
-	return MEDIA_PACKET_FINALIZE;
-}
-
 
 int camera_attr_set_hdr_mode(camera_h camera, camera_attr_hdr_mode_e mode)
 {
-	if (camera == NULL) {
+	if( camera == NULL){
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (camera_attr_is_supported_hdr_capture(camera) == false) {
-		LOGE("NOT_SUPPORTED(0x%08x)", CAMERA_ERROR_NOT_SUPPORTED);
-		return CAMERA_ERROR_NOT_SUPPORTED;
-	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_HDR_MODE;
+	int sock_fd =  pc->cb_info->fd;
+	int set_mode = (int)mode;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_HDR_CAPTURE, mode,
-					  NULL);
-
-	if (ret == MM_ERROR_NONE) {
-		if (mode == CAMERA_ATTR_HDR_MODE_KEEP_ORIGINAL) {
-			handle->hdr_keep_mode = true;
-		} else {
-			handle->hdr_keep_mode = false;
-		}
-	}
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_mode);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_get_hdr_mode(camera_h camera, camera_attr_hdr_mode_e *mode)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x) - handle", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x) - handle",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-
-	if (camera_attr_is_supported_hdr_capture(camera) == false) {
-		LOGE("NOT_SUPPORTED(0x%08x)", CAMERA_ERROR_NOT_SUPPORTED);
+	if (mode == NULL) {
+		LOGE("CAMERA_ERROR_NOT_SUPPORTED(0x%08x) - mode",CAMERA_ERROR_NOT_SUPPORTED);
 		return CAMERA_ERROR_NOT_SUPPORTED;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_GET_HDR_MODE;
+	int sock_fd = pc->cb_info->fd;
+	int get_mode;
 
-	if (mode == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x) - mode", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_mode, pc->cb_info->recvMsg);
+		*mode = (camera_attr_hdr_mode_e)get_mode;
 	}
-
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_HDR_CAPTURE, mode,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 bool camera_attr_is_supported_hdr_capture(camera_h camera)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return false;
 	}
 
-	int ret = MM_ERROR_NONE;
-	int i = 0;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo hdr_info;
-
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_HDR_CAPTURE, &hdr_info);
-	set_last_result(__convert_camera_error_code(__func__, ret));
-	if (ret != MM_ERROR_NONE) {
-		LOGE("MMCAM_CAMERA_HDR_CAPTURE get attr info failed");
-		return false;
-	}
-
-	for (i = 0; i < hdr_info.int_array.count ; i++) {
-		if (hdr_info.int_array.array[i] >= MM_CAMCORDER_HDR_ON) {
-			LOGD("HDR capture supported");
-			return true;
-		}
-	}
-
-	LOGD("HDR capture NOT supported");
-
-	return false;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_IS_SUPPORTED_HDR_CAPTURE;
+	int sock_fd = pc->cb_info->fd;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return (bool)ret;
 }
 
 
-int camera_attr_set_hdr_capture_progress_cb(camera_h camera, camera_attr_hdr_progress_cb callback, void *user_data)
+int camera_attr_set_hdr_capture_progress_cb(camera_h camera, camera_attr_hdr_progress_cb callback, void* user_data)
 {
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x) - handle", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-
-	if (camera_attr_is_supported_hdr_capture(camera) == false) {
-		LOGE("NOT_SUPPORTED(0x%08x)", CAMERA_ERROR_NOT_SUPPORTED);
+	if (callback == NULL) {
+		LOGE("CAMERA_ERROR_NOT_SUPPORTED(0x%08x) - callback", CAMERA_ERROR_NOT_SUPPORTED);
 		return CAMERA_ERROR_NOT_SUPPORTED;
 	}
+	int ret = CAMERA_ERROR_NONE;
 
-	if (callback == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x) - callback", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_SET_HDR_CAPTURE_PROGRESS_CB;
+	int sock_fd = pc->cb_info->fd;
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	camera_s *handle = (camera_s *)camera;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_HDR_PROGRESS] = callback;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_HDR_PROGRESS] = user_data;
 
-	handle->user_cb[_CAMERA_EVENT_TYPE_HDR_PROGRESS] = (void *)callback;
-	handle->user_data[_CAMERA_EVENT_TYPE_HDR_PROGRESS] = (void *)user_data;
-
-	return CAMERA_ERROR_NONE;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_unset_hdr_capture_progress_cb(camera_h camera)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (camera_attr_is_supported_hdr_capture(camera) == false) {
-		LOGE("NOT_SUPPORTED(0x%08x)", CAMERA_ERROR_NOT_SUPPORTED);
-		return CAMERA_ERROR_NOT_SUPPORTED;
-	}
+	int ret = CAMERA_ERROR_NONE;
 
-	camera_s *handle = (camera_s *)camera;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_UNSET_HDR_CAPTURE_PROGRESS_CB;
+	int sock_fd = pc->cb_info->fd;
+	LOGW("Enter, handle :%x", pc->remote_handle);
 
-	handle->user_cb[_CAMERA_EVENT_TYPE_HDR_PROGRESS] = (void *)NULL;
-	handle->user_data[_CAMERA_EVENT_TYPE_HDR_PROGRESS] = (void *)NULL;
+	pc->cb_info->user_cb[MMSVC_CAMERA_EVENT_TYPE_HDR_PROGRESS] = (void *)NULL;
+	pc->cb_info->user_data[MMSVC_CAMERA_EVENT_TYPE_HDR_PROGRESS] = (void *)NULL;
 
-	return CAMERA_ERROR_NONE;
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_enable_anti_shake(camera_h camera, bool enable)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (camera_attr_is_supported_anti_shake(camera) == false) {
-		LOGE("NOT_SUPPORTED(0x%08x)", CAMERA_ERROR_NOT_SUPPORTED);
-		return CAMERA_ERROR_NOT_SUPPORTED;
-	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_ENABLE_ANTI_SHAKE;
+	int sock_fd =  pc->cb_info->fd;
+	int set_enable = (int)enable;
 
-	int ret = MM_ERROR_NONE;
-	int mode = MM_CAMCORDER_AHS_OFF;
-	camera_s *handle = (camera_s *)camera;
-
-	if (enable) {
-		mode = MM_CAMCORDER_AHS_ON;
-	}
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_ANTI_HANDSHAKE, mode,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_enable);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
-int camera_attr_is_enabled_anti_shake(camera_h camera, bool *enabled)
+int camera_attr_is_enabled_anti_shake(camera_h camera , bool *enabled)
 {
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x) - handle", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-
-	if (camera_attr_is_supported_anti_shake(camera) == false) {
-		LOGE("NOT_SUPPORTED(0x%08x)", CAMERA_ERROR_NOT_SUPPORTED);
-		return CAMERA_ERROR_NOT_SUPPORTED;
-	}
-
 	if (enabled == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x) - enabled", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
+		return CAMERA_ERROR_NOT_SUPPORTED;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_IS_ENABLED_ANTI_SHAKE;
+	int sock_fd = pc->cb_info->fd;
+	int get_enabled;
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_ANTI_HANDSHAKE, enabled,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_enabled, pc->cb_info->recvMsg);
+		*enabled = (bool)get_enabled;
+	}
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 bool camera_attr_is_supported_anti_shake(camera_h camera)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return false;
 	}
 
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo ash_info;
-
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_ANTI_HANDSHAKE, &ash_info);
-	set_last_result(__convert_camera_error_code(__func__, ret));
-	if (ret != MM_ERROR_NONE) {
-		LOGE("MMCAM_CAMERA_ANTI_HANDSHAKE get attr info failed");
-		return false;
-	}
-
-	for (i = 0 ; i < ash_info.int_array.count ; i++) {
-		if (ash_info.int_array.array[i] == MM_CAMCORDER_AHS_ON) {
-			return true;
-		}
-	}
-
-	return false;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_IS_SUPPORTED_ANTI_SHAKE;
+	int sock_fd = pc->cb_info->fd;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_enable_video_stabilization(camera_h camera, bool enable)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (camera_attr_is_supported_video_stabilization(camera) == false) {
-		LOGE("NOT_SUPPORTED(0x%08x)", CAMERA_ERROR_NOT_SUPPORTED);
-		return CAMERA_ERROR_NOT_SUPPORTED;
-	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_ENABLE_VIDEO_STABILIZATION;
+	int sock_fd =  pc->cb_info->fd;
+	int set_enable = (int)enable;
 
-	int ret = MM_ERROR_NONE;
-	int mode = MM_CAMCORDER_VIDEO_STABILIZATION_OFF;
-	camera_s *handle = (camera_s*)camera;
-
-	if (enable) {
-		mode = MM_CAMCORDER_VIDEO_STABILIZATION_ON;
-	}
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_VIDEO_STABILIZATION, mode,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_enable);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_is_enabled_video_stabilization(camera_h camera, bool *enabled)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x) - handle", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x) - handle",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-
-	if (camera_attr_is_supported_video_stabilization(camera) == false) {
-		LOGE("NOT_SUPPORTED(0x%08x)", CAMERA_ERROR_NOT_SUPPORTED);
+	if (enabled == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x) - enabled",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_NOT_SUPPORTED;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_IS_ENABLED_VIDEO_STABILIZATION;
+	int sock_fd = pc->cb_info->fd;
+	int get_enabled;
 
-	if (enabled == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x) - enabled", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_enabled, pc->cb_info->recvMsg);
+		*enabled = (bool)get_enabled;
 	}
-
-	int ret = MM_ERROR_NONE;
-	int mode = MM_CAMCORDER_VIDEO_STABILIZATION_OFF;
-	camera_s *handle = (camera_s *)camera;
-
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_VIDEO_STABILIZATION, &mode,
-					  NULL);
-	if (ret == MM_ERROR_NONE) {
-		*enabled = (mode == MM_CAMCORDER_VIDEO_STABILIZATION_ON);
-	}
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 bool camera_attr_is_supported_video_stabilization(camera_h camera)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return false;
 	}
 
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo vs_info;
-
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_VIDEO_STABILIZATION, &vs_info);
-	set_last_result(__convert_camera_error_code(__func__, ret));
-	if (ret != MM_ERROR_NONE) {
-		LOGE("MMCAM_CAMERA_VIDEO_STABILIZATION get attr info failed");
-		return false;
-	}
-
-	for (i = 0 ; i < vs_info.int_array.count ; i++) {
-		if (vs_info.int_array.array[i] == MM_CAMCORDER_VIDEO_STABILIZATION_ON) {
-			return true;
-		}
-	}
-
-	return false;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_IS_SUPPORTED_VIDEO_STABILIZATION;
+	int sock_fd = pc->cb_info->fd;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_enable_auto_contrast(camera_h camera, bool enable)
 {
-	if (camera == NULL) {
+	if( camera == NULL){
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (camera_attr_is_supported_auto_contrast(camera) == false) {
-		LOGE("NOT_SUPPORTED(0x%08x)", CAMERA_ERROR_NOT_SUPPORTED);
-		return CAMERA_ERROR_NOT_SUPPORTED;
-	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_ENABLE_AUTO_CONTRAST;
+	int sock_fd =  pc->cb_info->fd;
+	int set_enable = (int)enable;
 
-	int ret = MM_ERROR_NONE;
-	int mode = MM_CAMCORDER_WDR_OFF;
-	camera_s *handle = (camera_s *)camera;
-
-	if (enable) {
-		mode = MM_CAMCORDER_WDR_ON;
-	}
-
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_WDR, mode,
-					  NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_enable);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
@@ -4304,79 +3467,61 @@ int camera_attr_is_enabled_auto_contrast(camera_h camera, bool *enabled)
 		LOGE("INVALID_PARAMETER(0x%08x) - handle", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-
-	if (camera_attr_is_supported_auto_contrast(camera) == false) {
-		LOGE("NOT_SUPPORTED(0x%08x)", CAMERA_ERROR_NOT_SUPPORTED);
-		return CAMERA_ERROR_NOT_SUPPORTED;
-	}
-
 	if (enabled == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x) - enabled", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_IS_ENABLED_AUTO_CONTRAST;
+	int sock_fd = pc->cb_info->fd;
+	int get_enabled;
 
-	int ret = MM_ERROR_NONE;
-	int mode = MM_CAMCORDER_WDR_OFF;
-	camera_s *handle = (camera_s *)camera;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
 
-	ret = mm_camcorder_get_attributes(handle->mm_handle, NULL,
-					  MMCAM_CAMERA_WDR, &mode,
-					  NULL);
-
-	if (ret == MM_ERROR_NONE) {
-		*enabled = mode;
+	if (ret == CAMERA_ERROR_NONE) {
+		mmsvc_camera_msg_get(get_enabled, pc->cb_info->recvMsg);
+		*enabled = (bool)get_enabled;
 	}
-
-	return __convert_camera_error_code(__func__, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 bool camera_attr_is_supported_auto_contrast(camera_h camera)
 {
-	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+	if( camera == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return false;
 	}
 
-	int i = 0;
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
-	MMCamAttrsInfo info;
-
-	ret = mm_camcorder_get_attribute_info(handle->mm_handle, MMCAM_CAMERA_WDR, &info);
-	set_last_result(__convert_camera_error_code(__func__, ret));
-	if (ret != MM_ERROR_NONE) {
-		LOGE("MMCAM_CAMERA_WDR get attr info failed");
-		return false;
-	}
-
-	for (i = 0 ; i < info.int_array.count ; i++) {
-		if (info.int_array.array[i] == MM_CAMCORDER_WDR_ON) {
-			return true;
-		}
-	}
-
-	return false;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_IS_SUPPORTED_AUTO_CONTRAST;
+	int sock_fd = pc->cb_info->fd;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send(api, pc->remote_handle, sock_fd, pc->cb_info, ret);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }
 
 
 int camera_attr_disable_shutter_sound(camera_h camera, bool disable)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = MM_ERROR_NONE;
-	camera_s *handle = (camera_s *)camera;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	mmsvc_camera_api_e api = MMSVC_CAMERA_API_ATTR_DISABLE_SHUTTER_SOUND;
+	int sock_fd =  pc->cb_info->fd;
+	int set_disable = (int)disable;
 
-	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
-					  "capture-sound-enable", !disable,
-					  NULL);
-	if (ret != MM_ERROR_NONE) {
-		LOGE("CAMERA_ERROR_INVALID_OPERATION : not permitted disable shutter sound");
-		return CAMERA_ERROR_INVALID_OPERATION;
-	}
-
-	return CAMERA_ERROR_NONE;
+	LOGW("Enter, remote_handle : %x", pc->remote_handle);
+	mmsvc_camera_msg_send1(api, pc->remote_handle, sock_fd, pc->cb_info, ret, INT, set_disable);
+	LOGW("ret : 0x%x", ret);
+	return ret;
 }

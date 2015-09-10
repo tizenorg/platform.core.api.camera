@@ -2,39 +2,48 @@
 %bcond_with x
 
 Name:       capi-media-camera
-Summary:    A Camera library in Tizen C API
+Summary:    A Media Daemon Camera library in Tizen C API
 Version:    0.2.6
 Release:    0
 Group:      Multimedia/API
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
 BuildRequires:  cmake
-BuildRequires:  pkgconfig(gstreamer-1.0)
 BuildRequires:  pkgconfig(dlog)
-BuildRequires:  pkgconfig(mm-camcorder)
-BuildRequires:  pkgconfig(audio-session-mgr)
+BuildRequires:  pkgconfig(glib-2.0)
+BuildRequires:  pkgconfig(mused)
+BuildRequires:  pkgconfig(mm-common)
 BuildRequires:  pkgconfig(capi-base-common)
-BuildRequires:  pkgconfig(capi-media-tool)
-BuildRequires:  pkgconfig(libtbm)
-BuildRequires:  pkgconfig(evas)
-BuildRequires:  pkgconfig(ecore)
+BuildRequires:  pkgconfig(capi-media-sound-manager)
+BuildRequires:  pkgconfig(mmsvc-camera)
+BuildRequires:  pkgconfig(capi-media-recorder)
+BuildRequires:  pkgconfig(appcore-efl)
 BuildRequires:  pkgconfig(elementary)
-BuildRequires:  pkgconfig(vconf)
+BuildRequires:  pkgconfig(ecore)
+BuildRequires:  pkgconfig(evas)
+BuildRequires:  pkgconfig(capi-media-tool)
+%if %{with x}
+BuildRequires:  pkgconfig(ecore-x)
+%endif
+%if %{with wayland}
+BuildRequires:  pkgconfig(ecore-wayland)
+%endif
+BuildRequires:  pkgconfig(json)
+BuildRequires:  pkgconfig(libtbm)
+BuildRequires:  pkgconfig(eom)
+
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
 
 
 %description
-A Camera library in Tizen C API.
-
+A Media Camera Daemon library in Tizen Native API.
 
 %package devel
-Summary:  A Camera library in Tizen C API (Development)
+Summary:  A Media Camera Daemon library in Tizen Native API. (Development)
+Group:    Development/Multimedia
 Requires: %{name} = %{version}-%{release}
-Requires: pkgconfig(libtbm)
-Requires: pkgconfig(capi-media-tool)
-
-
+Requires:  pkgconfig(mm-common)
 %description devel
 A Camera library in Tizen C API.
 
@@ -44,46 +53,51 @@ Development related files.
 %prep
 %setup -q
 
-
 %build
 %if 0%{?sec_build_binary_debug_enable}
-export CFLAGS+=" -DTIZEN_DEBUG_ENABLE"
+export CFLAGS="$CFLAGS -DTIZEN_DEBUG_ENABLE"
+#export CFLAGS+=" -D_USE_X_DIRECT_"
+export CXXFLAGS="$CXXFLAGS -DTIZEN_DEBUG_ENABLE"
+export FFLAGS="$FFLAGS -DTIZEN_DEBUG_ENABLE"
 %endif
 MAJORVER=`echo %{version} | awk 'BEGIN {FS="."}{print $1}'`
-%cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix} -DFULLVER=%{version} -DMAJORVER=${MAJORVER} \
+cmake . -DCMAKE_INSTALL_PREFIX=/usr -DFULLVER=%{version} -DMAJORVER=${MAJORVER} \
 %if %{with wayland}
 	-DWAYLAND_SUPPORT=On \
 %else
 	-DWAYLAND_SUPPORT=Off \
 %endif
 %if %{with x}
-	-DX11_SUPPORT=On
+	-DX11_SUPPORT=On \
 %else
-	-DX11_SUPPORT=Off
+	-DX11_SUPPORT=Off \
 %endif
 
 make %{?jobs:-j%jobs}
 
-
 %install
 rm -rf %{buildroot}
+mkdir -p %{buildroot}/usr/share/license
+mkdir -p %{buildroot}/opt/usr/devel
+mkdir -p %{buildroot}/usr/bin
+cp LICENSE.APLv2 %{buildroot}/usr/share/license/%{name}
+#cp test/camera_museD_test %{buildroot}/usr/bin
+
 %make_install
-mkdir -p %{buildroot}%{_datadir}/license
-cp LICENSE.APLv2 %{buildroot}%{_datadir}/license/%{name}
 
-
-%post -p /sbin/ldconfig
-
+%post
+/sbin/ldconfig
 
 %postun -p /sbin/ldconfig
 
 %files
 %manifest capi-media-camera.manifest
-%{_libdir}/libcapi-media-camera.so.*
+%{_libdir}/libcapi-media-camera.so*
 %{_datadir}/license/%{name}
+#/opt/usr/devel/*
+#/usr/bin/camera_museD_test
+#%{_bindir}/multimedia_camera_test
 
 %files devel
-%{_includedir}/media/camera.h
-%{_includedir}/media/camera_internal.h
+%{_includedir}/media/*.h
 %{_libdir}/pkgconfig/*.pc
-%{_libdir}/libcapi-media-camera.so

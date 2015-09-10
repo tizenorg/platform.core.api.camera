@@ -23,8 +23,8 @@ SET(service "media")
 SET(submodule "camera")
 
 # for package file
-SET(dependents "dlog audio-session-mgr mm-camcorder capi-base-common capi-media-tool gstreamer-1.0 libtbm evas ecore elementary vconf")
-SET(pc_dependents "mm-camcorder capi-base-common capi-media-tool gstreamer-1.0 libtbm evas ecore elementary")
+SET(dependents "dlog mm-common capi-base-common capi-media-tool capi-media-sound-manager mm-camcorder ecore evas ecore-wayland elementary mused")
+SET(pc_dependents "dlog libtbm capi-media-sound-manager")
 
 SET(fw_name "${project_prefix}-${service}-${submodule}")
 
@@ -43,7 +43,7 @@ FOREACH(flag ${${fw_name}_CFLAGS})
     SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
 ENDFOREACH(flag)
 
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EXTRA_CFLAGS} -fPIC -Wall -Wextra -Wno-array-bounds -Wno-empty-body -Wno-ignored-qualifiers -Wno-unused-parameter -Wshadow -Wwrite-strings -Wswitch-default -Wno-unused-but-set-parameter -Wno-unused-but-set-variable")
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EXTRA_CFLAGS} -fPIC -Wall -Werror -Wno-error=deprecated-declarations")
 SET(CMAKE_C_FLAGS_DEBUG "-O0 -g")
 
 IF("${ARCH}" STREQUAL "arm")
@@ -60,10 +60,11 @@ ENDIF(X11_SUPPORT)
 ADD_DEFINITIONS("-DPREFIX=\"${CMAKE_INSTALL_PREFIX}\"")
 ADD_DEFINITIONS("-DTIZEN_DEBUG")
 
-SET(CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed -Wl,--rpath=${LIB_INSTALL_DIR}")
+SET(CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed -Wl,--rpath=/usr/lib")
 
-aux_source_directory(src SOURCES)
-ADD_LIBRARY(${fw_name} SHARED ${SOURCES})
+
+aux_source_directory(src CLI_SOURCES)
+ADD_LIBRARY(${fw_name} SHARED ${CLI_SOURCES})
 
 SET_TARGET_PROPERTIES(${fw_name}
      PROPERTIES
@@ -73,9 +74,9 @@ SET_TARGET_PROPERTIES(${fw_name}
 )
 
 
-TARGET_LINK_LIBRARIES(${fw_name} ${${fw_name}_LDFLAGS})
+TARGET_LINK_LIBRARIES(${fw_name} mused-camera ${${fw_name}_LDFLAGS})
 
-INSTALL(TARGETS ${fw_name} DESTINATION ${LIB_INSTALL_DIR})
+INSTALL(TARGETS ${fw_name} DESTINATION lib)
 INSTALL(
         DIRECTORY ${INC_DIR}/ DESTINATION include/${service}
         FILES_MATCHING
@@ -92,9 +93,7 @@ CONFIGURE_FILE(
     ${CMAKE_CURRENT_SOURCE_DIR}/${fw_name}.pc
     @ONLY
 )
-INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${fw_name}.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
-
-#ADD_SUBDIRECTORY(test)
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${fw_name}.pc DESTINATION lib/pkgconfig)
 
 IF(UNIX)
 
