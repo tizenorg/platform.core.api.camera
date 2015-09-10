@@ -2,48 +2,56 @@
 %bcond_with x
 
 Name:       capi-media-camera
-Summary:    A Camera library in Tizen C API
+Summary:    A Camera library in Tizen Native API.
 Version:    0.2.6
 Release:    0
 Group:      Multimedia/API
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
 BuildRequires:  cmake
-BuildRequires:  pkgconfig(gstreamer-1.0)
 BuildRequires:  pkgconfig(dlog)
-BuildRequires:  pkgconfig(mm-camcorder)
-BuildRequires:  pkgconfig(audio-session-mgr)
+BuildRequires:  pkgconfig(glib-2.0)
+BuildRequires:  pkgconfig(mused)
+BuildRequires:  pkgconfig(mm-common)
 BuildRequires:  pkgconfig(capi-base-common)
-BuildRequires:  pkgconfig(capi-media-tool)
-BuildRequires:  pkgconfig(libtbm)
-BuildRequires:  pkgconfig(evas)
-BuildRequires:  pkgconfig(ecore)
+BuildRequires:  pkgconfig(capi-media-sound-manager)
+BuildRequires:  pkgconfig(mmsvc-camera)
+BuildRequires:  pkgconfig(capi-media-recorder)
+BuildRequires:  pkgconfig(appcore-efl)
 BuildRequires:  pkgconfig(elementary)
-BuildRequires:  pkgconfig(vconf)
+BuildRequires:  pkgconfig(ecore)
+BuildRequires:  pkgconfig(evas)
+BuildRequires:  pkgconfig(capi-media-tool)
+%if %{with x}
+BuildRequires:  pkgconfig(ecore-x)
+%endif
+%if %{with wayland}
+BuildRequires:  pkgconfig(ecore-wayland)
+%endif
+BuildRequires:  pkgconfig(json)
+BuildRequires:  pkgconfig(libtbm)
+BuildRequires:  pkgconfig(eom)
+
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
 
-
 %description
-A Camera library in Tizen C API.
-
+A Camera library in Tizen Native API.
 
 %package devel
-Summary:  A Camera library in Tizen C API (Development)
+Summary:  A Media Camera Daemon library in Tizen Native API. (Development)
+Group:    Development/Multimedia
 Requires: %{name} = %{version}-%{release}
 Requires: pkgconfig(libtbm)
 Requires: pkgconfig(capi-media-tool)
-
 
 %description devel
 A Camera library in Tizen C API.
 
 Development related files.
 
-
 %prep
 %setup -q
-
 
 %build
 %if 0%{?sec_build_binary_debug_enable}
@@ -64,16 +72,15 @@ MAJORVER=`echo %{version} | awk 'BEGIN {FS="."}{print $1}'`
 
 make %{?jobs:-j%jobs}
 
-
 %install
 rm -rf %{buildroot}
+
 %make_install
 mkdir -p %{buildroot}%{_datadir}/license
 cp LICENSE.APLv2 %{buildroot}%{_datadir}/license/%{name}
 
 
 %post -p /sbin/ldconfig
-
 
 %postun -p /sbin/ldconfig
 
@@ -84,6 +91,5 @@ cp LICENSE.APLv2 %{buildroot}%{_datadir}/license/%{name}
 
 %files devel
 %{_includedir}/media/camera.h
-%{_includedir}/media/camera_internal.h
 %{_libdir}/pkgconfig/*.pc
 %{_libdir}/libcapi-media-camera.so
