@@ -178,14 +178,24 @@ int camera_get_video_caps(camera_h camera, char **caps)
 
 int camera_set_shm_socket_path_for_mused(camera_h camera, char *socket_path)
 {
-	int ret;
+	int ret = MM_ERROR_NONE;
 	camera_s *handle = (camera_s *)camera;
 
-	LOGE("var : %s", socket_path);
-	mm_camcorder_set_attributes(handle->mm_handle, NULL,
-				    MMCAM_DISPLAY_SHM_SOCKET_PATH, socket_path, strlen(socket_path),
-				    NULL);
+	if (camera == NULL) {
+		LOGE("NULL handle");
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
 
+	if (socket_path == NULL) {
+		LOGE("NULL pointer for socket_path");
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	LOGD("var : %s", socket_path);
+
+	ret = mm_camcorder_set_attributes(handle->mm_handle, NULL,
+					  MMCAM_DISPLAY_SHM_SOCKET_PATH, socket_path, strlen(socket_path),
+					  NULL);
 	if (ret != MM_ERROR_NONE) {
 		LOGE("error set shm socket path attribute 0x%x", ret);
 		return __convert_camera_error_code(__func__, ret);

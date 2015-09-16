@@ -803,6 +803,7 @@ int camera_create(camera_device_e device, camera_h* camera)
 					  MMCAM_DISPLAY_SURFACE, MM_DISPLAY_SURFACE_NULL,
 					  MMCAM_DISPLAY_ROTATION, rotation,
 					  MMCAM_CAPTURE_COUNT, 1,
+					  MMCAM_PID_FOR_SOUND_FOCUS, getpid(),
 					  NULL);
 
 	handle->display_type = CAMERA_DISPLAY_TYPE_NONE;
