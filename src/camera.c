@@ -486,7 +486,7 @@ int camera_create(camera_device_e device, camera_h* camera)
 		intptr_t handle = 0;
 
 		mmsvc_camera_msg_get_pointer(handle, pc->cb_info->recvMsg);
-		if (handle == NULL) {
+		if (handle == 0) {
 			LOGE("Receiving Handle Failed!!");
 			ret = CAMERA_ERROR_INVALID_OPERATION;
 			goto ErrorExit;
