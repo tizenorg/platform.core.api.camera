@@ -73,7 +73,7 @@ SET_TARGET_PROPERTIES(${fw_name}
 )
 
 
-TARGET_LINK_LIBRARIES(${fw_name} mused-camera ${${fw_name}_LDFLAGS})
+TARGET_LINK_LIBRARIES(${fw_name} muse-camera ${${fw_name}_LDFLAGS})
 
 INSTALL(TARGETS ${fw_name} DESTINATION ${LIB_INSTALL_DIR})
 INSTALL(
