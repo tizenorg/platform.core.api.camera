@@ -2,26 +2,38 @@
 %bcond_with x
 
 Name:       capi-media-camera
-Summary:    A Camera library in Tizen C API
-Version:    0.2.7
+Summary:    A Camera library in Tizen Native API.
+Version:    0.2.8
 Release:    0
 Group:      Multimedia/API
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
 BuildRequires:  cmake
-BuildRequires:  pkgconfig(gstreamer-1.0)
 BuildRequires:  pkgconfig(dlog)
-BuildRequires:  pkgconfig(mm-camcorder)
-BuildRequires:  pkgconfig(audio-session-mgr)
+BuildRequires:  pkgconfig(glib-2.0)
+BuildRequires:  pkgconfig(mused)
+BuildRequires:  pkgconfig(mm-common)
 BuildRequires:  pkgconfig(capi-base-common)
-BuildRequires:  pkgconfig(capi-media-tool)
-BuildRequires:  pkgconfig(libtbm)
-BuildRequires:  pkgconfig(evas)
-BuildRequires:  pkgconfig(ecore)
+BuildRequires:  pkgconfig(mmsvc-camera)
+BuildRequires:  pkgconfig(appcore-efl)
 BuildRequires:  pkgconfig(elementary)
-BuildRequires:  pkgconfig(vconf)
+BuildRequires:  pkgconfig(ecore)
+BuildRequires:  pkgconfig(evas)
+BuildRequires:  pkgconfig(capi-media-tool)
+BuildRequires:  pkgconfig(mm-camcorder)
+%if %{with x}
+BuildRequires:  pkgconfig(ecore-x)
+%endif
+%if %{with wayland}
+BuildRequires:  pkgconfig(ecore-wayland)
+%endif
+BuildRequires:  pkgconfig(json)
+BuildRequires:  pkgconfig(libtbm)
+BuildRequires:  pkgconfig(eom)
+
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
+
 
 
 %description
@@ -84,6 +96,5 @@ cp LICENSE.APLv2 %{buildroot}%{_datadir}/license/%{name}
 
 %files devel
 %{_includedir}/media/camera.h
-%{_includedir}/media/camera_internal.h
 %{_libdir}/pkgconfig/*.pc
 %{_libdir}/libcapi-media-camera.so
