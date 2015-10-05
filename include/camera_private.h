@@ -21,6 +21,8 @@
 #ifndef __TIZEN_MULTIMEDIA_CAMERA_PRIVATE_H__
 #define	__TIZEN_MULTIMEDIA_CAMERA_PRIVATE_H__
 #include <camera.h>
+#include <muse_core.h>
+#include <muse_camera.h>
 #include <mm_camcorder.h>
 
 #ifdef __cplusplus
@@ -28,6 +30,8 @@ extern "C" {
 #endif
 
 #define MAX_DETECTED_FACE 20
+
+#define CAMERA_PARSE_STRING_SIZE 200
 
 typedef enum {
 	_CAMERA_EVENT_TYPE_STATE_CHANGE,
@@ -49,11 +53,37 @@ typedef struct _camera_cb_data {
 	void *handle;
 } camera_cb_data;
 
+typedef struct _callback_cb_info {
+	GThread *thread;
+	gint running;
+	gint fd;
+	gint id;
+	gpointer user_cb[MUSE_CAMERA_EVENT_TYPE_NUM];
+	gpointer user_cb_completed[MUSE_CAMERA_EVENT_TYPE_NUM];
+	gpointer user_data[MUSE_CAMERA_EVENT_TYPE_NUM];
+	gchar recvMsg[MUSE_CAMERA_MSG_MAX_LENGTH];
+	gchar recvApiMsg[MUSE_CAMERA_MSG_MAX_LENGTH];
+	gchar recvEventMsg[MUSE_CAMERA_MSG_MAX_LENGTH];
+	GCond *pCond;
+	GMutex *pMutex;
+	gint *activating;
+} callback_cb_info_s;
+
+typedef struct _camera_cli_s{
+	intptr_t remote_handle;
+	MMHandleType client_handle;
+	intptr_t cli_display_handle;
+	callback_cb_info_s *cb_info;
+#ifdef HAVE_WAYLAND
+	MMCamWaylandInfo *wl_info;
+#endif /* #ifdef HAVE_WAYLAND */
+}camera_cli_s;
+
 typedef struct _camera_s{
 	MMHandleType mm_handle;
 
-	void* user_cb[_CAMERA_EVENT_TYPE_NUM];
-	void* user_data[_CAMERA_EVENT_TYPE_NUM];
+	void* user_cb[MUSE_CAMERA_EVENT_TYPE_NUM];
+	void* user_data[MUSE_CAMERA_EVENT_TYPE_NUM];
 	void* display_handle;
 #ifdef HAVE_WAYLAND
 	MMCamWaylandInfo *wl_info;
@@ -83,6 +113,12 @@ typedef struct _camera_s{
 	GList *cb_data_list;
 	GMutex idle_cb_lock;
 } camera_s;
+
+typedef enum {
+	MUSE_CAMERA_CLIENT_SYNC_CB_HANDLER,
+	MUSE_CAMERA_CLIENT_USER_CALLBACK,
+	MUSE_CAMERA_CLIENT_MAX
+} muse_cli_camera_api_e;
 
 int _camera_get_mm_handle(camera_h camera , MMHandleType *handle);
 int _camera_set_relay_mm_message_callback(camera_h camera, MMMessageCallback callback, void *user_data);
