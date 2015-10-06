@@ -1,37 +1,22 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-SET(Services 
-        "application"
-        "base"
-        "content"
-        "location"
-        "media"
-        "messaging"
-        "network"
-        "social"
-        "telephony"
-        "system"
-   )
-
 # project
 SET(project_prefix "capi")
 SET(prefix "/usr")
-SET(version "0.0.1")
 SET(maintainer "Jeongmo Yang<jm80.yang>, Hyuntae Kim<ht1211.kim@samsung.com>, Seokhoon Lee<andy.shlee@samsung.com>, Taeyoung Chung <ty83.chung@samsung.com>, Sejong Park<sejong123.park@samsung.com")
 SET(description "A Camera library in Tizen Native API")
 SET(service "media")
 SET(submodule "camera")
 
 # for package file
-SET(dependents "libtbm dlog mm-common capi-base-common capi-media-tool mm-camcorder ecore elementary mused")
-SET(pc_dependents "mm-camcorder capi-base-common capi-media-tool gstreamer-1.0 libtbm evas ecore elementary")
+SET(dependents "libtbm dlog mm-common capi-base-common capi-media-tool mm-camcorder ecore elementary mmsvc-camera")
+SET(pc_dependents "capi-base-common capi-media-tool libtbm evas ecore elementary")
 SET(fw_name "${project_prefix}-${service}-${submodule}")
 
 PROJECT(${fw_name})
 
 SET(CMAKE_INSTALL_PREFIX ${prefix})
 SET(PREFIX ${CMAKE_INSTALL_PREFIX})
-SET(VERSION ${version})
 
 SET(INC_DIR include)
 INCLUDE_DIRECTORIES(${INC_DIR})
@@ -71,8 +56,7 @@ SET_TARGET_PROPERTIES(${fw_name}
      CLEAN_DIRECT_OUTPUT 1
 )
 
-
-TARGET_LINK_LIBRARIES(${fw_name} muse-camera ${${fw_name}_LDFLAGS})
+TARGET_LINK_LIBRARIES(${fw_name} ${${fw_name}_LDFLAGS})
 
 INSTALL(TARGETS ${fw_name} DESTINATION ${LIB_INSTALL_DIR})
 INSTALL(
@@ -99,10 +83,10 @@ IF(UNIX)
 
 ADD_CUSTOM_TARGET (distclean @echo cleaning for source distribution)
 ADD_CUSTOM_COMMAND(
-        DEPENDS clean 
+        DEPENDS clean
         COMMENT "distribution clean"
         COMMAND find
-        ARGS    . 
+        ARGS    .
         -not -name config.cmake -and \(
         -name tester.c -or
         -name Testing -or
