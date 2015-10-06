@@ -29,10 +29,10 @@
 //#include <glib.h>
 #include <dlog.h>
 #include <Elementary.h>
-#include <mm_camcorder_client.h>
 #include <Evas.h>
 #ifdef HAVE_WAYLAND
 #include <Ecore_Wayland.h>
+#include <mm_camcorder_client.h>
 #else
 #include <Ecore.h>
 #endif
@@ -556,6 +556,7 @@ int camera_start_preview(camera_h camera)
 
 	muse_camera_msg_send_longtime(api, sock_fd, pc->cb_info, ret);
 	LOGD("Enter,  ret :0x%x", ret);
+#ifdef HAVE_WAYLAND
 	if(ret == CAMERA_ERROR_NONE) {
 		muse_camera_msg_get_string(caps, pc->cb_info->recvMsg);
 		LOGD("caps : %s", caps);
@@ -568,6 +569,7 @@ int camera_start_preview(camera_h camera)
 			LOGD("display handle is NULL");
 		}
 	}
+#endif
 	LOGD("ret : 0x%x", ret);
 	return ret;
 }
@@ -592,6 +594,7 @@ int camera_stop_preview(camera_h camera)
 	LOGD("Enter");
 	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
 
+#ifdef HAVE_WAYLAND
 	if(ret == CAMERA_ERROR_NONE) {
 		if (pc->cli_display_handle != 0) {
 			LOGD("Unrealize client");
@@ -603,6 +606,7 @@ int camera_stop_preview(camera_h camera)
 			LOGD("Client did not realized : Display handle is NULL");
 		}
 	}
+#endif
 	LOGD("ret : 0x%x", ret);
 	return ret;
 }
@@ -1054,7 +1058,7 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 	muse_camera_msg_send2(api, sock_fd, pc->cb_info, ret,
 							    INT, display_type,
 							    INT, display_surface);
-
+#ifdef HAVE_WAYLAND
 	if (ret == CAMERA_ERROR_NONE && type == CAMERA_DISPLAY_TYPE_OVERLAY && !strcmp(object_type, "elm_win")) {
 		if (mm_camcorder_client_create(&(pc->client_handle))) {
 			LOGE("camera client create Failed");
@@ -1075,6 +1079,7 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 			LOGD("ret : 0x%x", ret);
 		}
 	}
+#endif
 	LOGD("ret : 0x%x", ret);
 	return ret;
 }

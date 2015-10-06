@@ -3,7 +3,7 @@
 
 Name:       capi-media-camera
 Summary:    A Camera library in Tizen Native API.
-Version:    0.2.8
+Version:    0.2.9
 Release:    0
 Group:      Multimedia/API
 License:    Apache-2.0
