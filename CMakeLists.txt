@@ -17,15 +17,14 @@ SET(Services
 SET(project_prefix "capi")
 SET(prefix "/usr")
 SET(version "0.0.1")
-SET(maintainer "Seungkeun Lee <sngn.lee@samsung.com>, Kangho Hur<kagho.hur@samsung.com>")
+SET(maintainer "Jeongmo Yang<jm80.yang>, Hyuntae Kim<ht1211.kim@samsung.com>, Seokhoon Lee<andy.shlee@samsung.com>, Taeyoung Chung <ty83.chung@samsung.com>, Sejong Park<sejong123.park@samsung.com")
 SET(description "A Camera library in Tizen Native API")
 SET(service "media")
 SET(submodule "camera")
 
 # for package file
-SET(dependents "dlog mm-common capi-base-common capi-media-tool mm-camcorder ecore-wayland elementary mused")
-SET(pc_dependents "dlog libtbm capi-base-common capi-media-tool")
-
+SET(dependents "libtbm dlog mm-common capi-base-common capi-media-tool mm-camcorder ecore elementary mused")
+SET(pc_dependents "mm-camcorder capi-base-common capi-media-tool gstreamer-1.0 libtbm evas ecore elementary")
 SET(fw_name "${project_prefix}-${service}-${submodule}")
 
 PROJECT(${fw_name})
