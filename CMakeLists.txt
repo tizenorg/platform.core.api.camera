@@ -23,7 +23,7 @@ SET(service "media")
 SET(submodule "camera")
 
 # for package file
-SET(dependents "libtbm dlog mm-common capi-base-common capi-media-tool mm-camcorder ecore elementary mused")
+SET(dependents "libtbm dlog mm-common capi-base-common capi-media-tool mm-camcorder ecore elementary mused mmsvc-camera")
 SET(pc_dependents "mm-camcorder capi-base-common capi-media-tool gstreamer-1.0 libtbm evas ecore elementary")
 SET(fw_name "${project_prefix}-${service}-${submodule}")
 
@@ -72,7 +72,7 @@ SET_TARGET_PROPERTIES(${fw_name}
 )
 
 
-TARGET_LINK_LIBRARIES(${fw_name} muse-camera ${${fw_name}_LDFLAGS})
+TARGET_LINK_LIBRARIES(${fw_name} ${${fw_name}_LDFLAGS})
 
 INSTALL(TARGETS ${fw_name} DESTINATION ${LIB_INSTALL_DIR})
 INSTALL(
