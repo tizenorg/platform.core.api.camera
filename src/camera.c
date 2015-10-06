@@ -29,10 +29,10 @@
 //#include <glib.h>
 #include <dlog.h>
 #include <Elementary.h>
-#include <mm_camcorder_client.h>
 #include <Evas.h>
 #ifdef HAVE_WAYLAND
 #include <Ecore_Wayland.h>
+#include <mm_camcorder_client.h>
 #else
 #include <Ecore.h>
 #endif
