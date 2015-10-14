@@ -2,9 +2,9 @@
 %bcond_with x
 
 Name:       capi-media-camera
-Summary:    A Camera library in Tizen Native API.
-Version:    0.2.9
-Release:    1
+Summary:    A Camera API
+Version:    0.2.10
+Release:    0
 Group:      Multimedia/API
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
@@ -37,20 +37,18 @@ Requires(postun): /sbin/ldconfig
 
 
 %description
-A Camera library in Tizen C API.
+A Camera library in Tizen Native API.
 
 
 %package devel
-Summary:  A Camera library in Tizen C API (Development)
+Summary:  A Camera API (Development)
 Requires: %{name} = %{version}-%{release}
 Requires: pkgconfig(libtbm)
 Requires: pkgconfig(capi-media-tool)
 
 
 %description devel
-A Camera library in Tizen C API.
-
-Development related files.
+Development related files for a Camera library in Tizen Native API.
 
 
 %prep

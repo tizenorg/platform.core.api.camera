@@ -238,7 +238,7 @@ typedef struct
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @see	recorder_create_videorecorder()
  */
-typedef struct camera_s *camera_h;
+typedef struct camera_cli_s *camera_h;
 
 /**
  * @brief The Camera display handle.
