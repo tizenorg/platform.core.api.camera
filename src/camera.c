@@ -216,65 +216,74 @@ static void _client_user_callback(callback_cb_info_s * cb_info, muse_camera_even
 			camera_image_data_s *rPostview = NULL;
 			camera_image_data_s *rThumbnail = NULL;
 			unsigned char *buf_pos = NULL;
-			muse_camera_transport_info_s transport_info;
-			int tKey = 0;
+			tbm_bo bo;
+			tbm_bo_handle bo_handle;
+			int tbm_key = 0;
 			int is_postview = 0;
 			int is_thumbnail = 0;
 
-			LOGD("camera capture callback came in.");
-			muse_camera_msg_get(tKey, recvMsg);
+			muse_camera_msg_get(tbm_key, recvMsg);
 			muse_camera_msg_get(is_postview, recvMsg);
 			muse_camera_msg_get(is_thumbnail, recvMsg);
 
-			if (tKey != 0) {
-				transport_info.tbm_key = tKey;
-				LOGD("Read key_info INFO : %d", transport_info.tbm_key);
+			LOGD("camera capture callback came in. key %d, postview %d, thumbnail %d",
+			     tbm_key, is_postview, is_thumbnail);
 
-				if (muse_camera_ipc_init_tbm(&transport_info) == FALSE) {
-					LOGE("camera_init_tbm ERROR!!");
-					break;
-				}
-
-				if(muse_camera_ipc_import_tbm(&transport_info) == FALSE) {
-					LOGE("camera_import_tbm ERROR!!");
-					muse_camera_unref_tbm(&transport_info);
-					break;
-				} else {
-					if (transport_info.bo_handle.ptr != NULL) {
-
-						buf_pos = (unsigned char *)transport_info.bo_handle.ptr;
-						rImage = (camera_image_data_s *)buf_pos;
-						LOGE(" !! rImage->size : %d", rImage->size);
-						rImage->data = buf_pos + sizeof(camera_image_data_s);
-						buf_pos += sizeof(camera_image_data_s) + rImage->size;
-						if (is_postview) {
-							rPostview = (camera_image_data_s *)buf_pos;
-							LOGE(" !! rPostview->size : %d", rPostview->size);
-							rPostview->data = buf_pos + sizeof(camera_image_data_s);
-							buf_pos += sizeof(camera_image_data_s) + rPostview->size;
-						}
-						if (is_thumbnail) {
-							rThumbnail = (camera_image_data_s *)buf_pos;
-							rThumbnail->data = buf_pos + sizeof(camera_image_data_s);
-							buf_pos += sizeof(camera_image_data_s) + rThumbnail->size;
-						}
-					}
-				}
-			} else {
-				LOGE("Get KEY INFO sock msg ERROR!!");
+			if (tbm_key <= 0) {
+				LOGE("invalid key %d", tbm_key);
 				break;
 			}
 
+			/* import tbm bo and get virtual address */
+			bo = tbm_bo_import(cb_info->bufmgr, tbm_key);
+			if (bo == NULL) {
+				LOGE("bo import failed - bufmgr %p, key %d", cb_info->bufmgr, tbm_key);
+				break;
+			}
+
+			bo_handle = tbm_bo_map(bo, TBM_DEVICE_CPU, TBM_OPTION_READ);
+			if (bo_handle.ptr == NULL) {
+				LOGE("bo map failed %p", bo);
+				tbm_bo_unref(bo);
+				bo = NULL;
+				break;
+			}
+
+			buf_pos = (unsigned char *)bo_handle.ptr;
+			rImage = (camera_image_data_s *)buf_pos;
+			rImage->data = buf_pos + sizeof(camera_image_data_s);
+			buf_pos += sizeof(camera_image_data_s) + rImage->size;
+
+			if (is_postview) {
+				rPostview = (camera_image_data_s *)buf_pos;
+				LOGD("rPostview->size : %d", rPostview->size);
+				rPostview->data = buf_pos + sizeof(camera_image_data_s);
+				buf_pos += sizeof(camera_image_data_s) + rPostview->size;
+			}
+
+			if (is_thumbnail) {
+				rThumbnail = (camera_image_data_s *)buf_pos;
+				LOGD("rThumbnail->size : %d", rThumbnail->size);
+				rThumbnail->data = buf_pos + sizeof(camera_image_data_s);
+				buf_pos += sizeof(camera_image_data_s) + rThumbnail->size;
+			}
+
 			LOGD("read image info height: %d, width : %d, size : %d", rImage->height, rImage->width, rImage->size);
+
 			((camera_capturing_cb)cb_info->user_cb[event])(rImage, rPostview, rThumbnail, cb_info->user_data[event]);
-			muse_camera_unref_tbm(&transport_info);
+
+			/* unmap and unref tbm bo */
+			tbm_bo_unmap(bo);
+			tbm_bo_unref(bo);
+			bo = NULL;
+
 			break;
 		}
 		case MUSE_CAMERA_EVENT_TYPE_VIDEO_FRAME_RENDER_ERROR:
 			break;
 
 		default:
-			LOGE("Unknonw event");
+			LOGE("Unknonw event : %d", event);
 			break;
 	}
 }
@@ -326,6 +335,7 @@ static void *client_cb_handler(gpointer data)
 				if(api < MUSE_CAMERA_API_MAX){
 					LOGD("Set Condition");
 					g_mutex_lock(&(cb_info->pMutex[api]));
+
 					/* The api msgs should be distinguished from the event msg. */
 					memset(cb_info->recvApiMsg, 0, strlen(cb_info->recvApiMsg));
 					strcpy(cb_info->recvApiMsg, &(parseStr[i][0]));
@@ -333,18 +343,34 @@ static void *client_cb_handler(gpointer data)
 					cb_info->activating[api] = 1;
 					g_cond_signal(&(cb_info->pCond[api]));
 					g_mutex_unlock(&(cb_info->pMutex[api]));
-					//msleep(100);
-					if(api == MUSE_CAMERA_API_DESTROY) {
-						g_atomic_int_set(&cb_info->running, 0);
-						LOGD("close client cb handler");
-					}
 
+					if (api == MUSE_CAMERA_API_CREATE) {
+						if (muse_camera_msg_get(ret, cb_info->recvApiMsg)) {
+							if (ret != CAMERA_ERROR_NONE) {
+								g_atomic_int_set(&cb_info->running, 0);
+								LOGE("camera create error. close client cb handler");
+							}
+						} else {
+							LOGE("failed to get api return");
+						}
+					} else if (api == MUSE_CAMERA_API_DESTROY) {
+						if (muse_camera_msg_get(ret, cb_info->recvApiMsg)) {
+							if (ret == CAMERA_ERROR_NONE) {
+								g_atomic_int_set(&cb_info->running, 0);
+								LOGD("camera destroy done. close client cb handler");
+							}
+						} else {
+							LOGE("failed to get api return");
+						}
+					}
 				} else if(api == MUSE_CAMERA_CB_EVENT) {
 					int event;
 					if (muse_camera_msg_get(event, &(parseStr[i][0]))) {
 						LOGD("go callback : %d", event);
 						_client_user_callback(cb_info, event);
 					}
+				} else {
+					LOGW("unknown api : %d", api);
 				}
 			}else{
 				LOGE("Get Msg Failed");
@@ -429,6 +455,11 @@ static void client_callback_destroy(callback_cb_info_s * cb_info)
 	g_thread_join(cb_info->thread);
 	g_thread_unref(cb_info->thread);
 
+	if (cb_info->bufmgr) {
+		tbm_bufmgr_deinit(cb_info->bufmgr);
+		cb_info->bufmgr = NULL;
+	}
+
 	if (cb_info->pCond) {
 		g_free(cb_info->pCond);
 	}
@@ -443,19 +474,26 @@ static void client_callback_destroy(callback_cb_info_s * cb_info)
 
 int camera_create(camera_device_e device, camera_h* camera)
 {
+	int sock_fd = -1;
+	char *sndMsg;
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = NULL;
+	tbm_bufmgr bufmgr = NULL;
+
+	muse_camera_api_e api = MUSE_CAMERA_API_CREATE;
+	muse_core_api_module_e muse_module = MUSE_CAMERA;
+	int device_type = (int)device;
+
 	if (camera == NULL){
 		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int sock_fd = -1;
-	char *sndMsg;
-	int ret = CAMERA_ERROR_NONE;
-	camera_cli_s *pc = NULL;
-
-	muse_camera_api_e api = MUSE_CAMERA_API_CREATE;
-	muse_core_api_module_e muse_module = MUSE_CAMERA;
-	int device_type = (int)device;
+	bufmgr = tbm_bufmgr_init(-1);
+	if (bufmgr == NULL) {
+		LOGE("get tbm bufmgr failed");
+		return CAMERA_ERROR_INVALID_OPERATION;
+	}
 
 	sock_fd = muse_core_client_new();
 
@@ -463,19 +501,21 @@ int camera_create(camera_device_e device, camera_h* camera)
 									MUSE_TYPE_INT, "module", muse_module,
 									MUSE_TYPE_INT, PARAM_DEVICE_TYPE, (int)device_type,
 									0);
+
 	muse_core_ipc_send_msg(sock_fd, sndMsg);
 	muse_core_msg_json_factory_free(sndMsg);
 
 	pc = g_new0(camera_cli_s, 1);
 	if (pc == NULL) {
-		return CAMERA_ERROR_OUT_OF_MEMORY;
+		ret = CAMERA_ERROR_OUT_OF_MEMORY;
+		goto ErrorExit;
 	}
 
 	pc->cb_info = client_callback_new(sock_fd);
+
 	LOGD("cb info : %d", pc->cb_info->fd);
 
 	ret = client_wait_for_cb_return(api, pc->cb_info, CALLBACK_TIME_OUT);
-	LOGD("ret value : 0x%x", ret);
 	if (ret == CAMERA_ERROR_NONE) {
 		intptr_t handle = 0;
 		muse_camera_msg_get_pointer(handle, pc->cb_info->recvMsg);
@@ -485,17 +525,31 @@ int camera_create(camera_device_e device, camera_h* camera)
 			goto ErrorExit;
 		} else {
 			pc->remote_handle = handle;
+			pc->cb_info->bufmgr = bufmgr;
 		}
+
 		LOGD("camera create 0x%x", pc->remote_handle);
+
 		*camera = (camera_h) pc;
-	} else
+	} else {
 		goto ErrorExit;
+	}
 
 	return ret;
 
 ErrorExit:
-	g_free(pc);
-	LOGD("ret value : 0x%x", ret);
+	tbm_bufmgr_deinit(bufmgr);
+	bufmgr = NULL;
+
+	if (pc) {
+		client_callback_destroy(pc->cb_info);
+		pc->cb_info = NULL;
+		g_free(pc);
+		pc = NULL;
+	}
+
+	LOGE("camera create error : 0x%x", ret);
+
 	return ret;
 }
 
@@ -513,23 +567,21 @@ ErrorExit:
 	LOGD("ENTER");
 
 	if (pc == NULL) {
-		LOGD("pc is already nul!!");
+		LOGE("pc is already nul!!");
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	} else if (pc->cb_info == NULL) {
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
 	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
-	if(ret == CAMERA_ERROR_NONE) {
-		LOGD("destroy client");
-
+	if (ret == CAMERA_ERROR_NONE) {
+		client_callback_destroy(pc->cb_info);
+		g_free(pc);
+		pc = NULL;
+	} else {
+		LOGE("camera destroy error : 0x%x", ret);
 	}
-	client_callback_destroy(pc->cb_info);
 
-	g_free(pc);
-	pc = NULL;
-
-	LOGD("ret : 0x%x", ret);
 	return ret;
 }
 
@@ -959,7 +1011,6 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 	int display_surface;
 	void *set_display_handle = NULL;
 	int set_surface = MM_DISPLAY_SURFACE_X;
-	camera_s *handle = NULL;
 	Evas_Object *obj = NULL;
 	const char *object_type = NULL;
 	char socket_path[MUSE_CAMERA_MSG_MAX_LENGTH] = {0,};
@@ -985,9 +1036,6 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 	sock_fd = pc->cb_info->fd;
 
 	LOGD("Enter, remote_handle : %x display : 0x%x", pc->remote_handle, display);
-
-	handle = (camera_s *)camera;
-	handle->display_type = type;
 
 	if (type == CAMERA_DISPLAY_TYPE_NONE) {
 		set_display_handle = 0;
@@ -1020,7 +1068,6 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 							      &wl_info->window_width, &wl_info->window_height);
 
 				/* set wayland info */
-				handle->wl_info = (void *)wl_info;
 				pc->wl_info = wl_info;
 				set_surface = MM_DISPLAY_SURFACE_X;
 				set_display_handle = (void *)wl_info;

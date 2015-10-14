@@ -67,9 +67,10 @@ typedef struct _callback_cb_info {
 	GCond *pCond;
 	GMutex *pMutex;
 	gint *activating;
+	tbm_bufmgr bufmgr;
 } callback_cb_info_s;
 
-typedef struct _camera_cli_s{
+typedef struct _camera_cli_s {
 	intptr_t remote_handle;
 	MMHandleType client_handle;
 	intptr_t cli_display_handle;
@@ -77,42 +78,7 @@ typedef struct _camera_cli_s{
 #ifdef HAVE_WAYLAND
 	MMCamWaylandInfo *wl_info;
 #endif /* #ifdef HAVE_WAYLAND */
-}camera_cli_s;
-
-typedef struct _camera_s{
-	MMHandleType mm_handle;
-
-	void* user_cb[MUSE_CAMERA_EVENT_TYPE_NUM];
-	void* user_data[MUSE_CAMERA_EVENT_TYPE_NUM];
-	void* display_handle;
-#ifdef HAVE_WAYLAND
-	MMCamWaylandInfo *wl_info;
-#endif /* #ifdef HAVE_WAYLAND */
-	camera_display_type_e display_type;
-	unsigned int state;
-
-	MMMessageCallback relay_message_callback;
-	void* relay_user_data;
-	int capture_count;
-	int capture_width;
-	int capture_height;
-	bool is_continuous_shot_break;
-	bool is_capture_completed;
-	int current_capture_count;
-	int current_capture_complete_count;
-	bool capture_resolution_modified;
-	camera_detected_face_s faceinfo[MAX_DETECTED_FACE];
-	int num_of_faces;
-	bool hdr_keep_mode;
-	bool focus_area_valid;
-	bool is_used_in_recorder;
-	bool on_continuous_focusing;
-	int cached_focus_mode;
-	media_format_h pkt_fmt;
-
-	GList *cb_data_list;
-	GMutex idle_cb_lock;
-} camera_s;
+} camera_cli_s;
 
 typedef enum {
 	MUSE_CAMERA_CLIENT_SYNC_CB_HANDLER,
@@ -125,7 +91,6 @@ int _camera_set_relay_mm_message_callback(camera_h camera, MMMessageCallback cal
 int __camera_start_continuous_focusing(camera_h camera);
 int _camera_set_use(camera_h camera, bool used);
 bool _camera_is_used(camera_h camera);
-void _camera_remove_cb_message(camera_s *handle);
 int _camera_get_tbm_surface_format(int in_format, uint32_t *out_format);
 int _camera_get_media_packet_mimetype(int in_format, media_format_mimetype_e *mimetype);
 int _camera_media_packet_finalize(media_packet_h pkt, int error_code, void *user_data);
