@@ -41,55 +41,51 @@ extern "C" {
  * @brief Enumeration for the error codes of Camera.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
-    CAMERA_ERROR_NONE                   = TIZEN_ERROR_NONE,                     /**< Successful */
-    CAMERA_ERROR_INVALID_PARAMETER      = TIZEN_ERROR_INVALID_PARAMETER,        /**< Invalid parameter */
-    CAMERA_ERROR_INVALID_STATE          = CAMERA_ERROR_CLASS | 0x02,            /**< Invalid state */
-    CAMERA_ERROR_OUT_OF_MEMORY          = TIZEN_ERROR_OUT_OF_MEMORY,            /**< Out of memory */
-    CAMERA_ERROR_DEVICE                 = CAMERA_ERROR_CLASS | 0x04,            /**< Device error */
-    CAMERA_ERROR_INVALID_OPERATION      = TIZEN_ERROR_INVALID_OPERATION,        /**< Internal error */
-    CAMERA_ERROR_SOUND_POLICY           = CAMERA_ERROR_CLASS | 0x06,            /**< Blocked by Audio Session Manager (Deprecated since 3.0) */
-    CAMERA_ERROR_SECURITY_RESTRICTED    = CAMERA_ERROR_CLASS | 0x07,            /**< Restricted by security system policy */
-    CAMERA_ERROR_DEVICE_BUSY            = CAMERA_ERROR_CLASS | 0x08,            /**< The device is using another application or working on some operation */
-    CAMERA_ERROR_DEVICE_NOT_FOUND       = CAMERA_ERROR_CLASS | 0x09,            /**< No camera device */
-    CAMERA_ERROR_SOUND_POLICY_BY_CALL   = CAMERA_ERROR_CLASS | 0x0a,            /**< Blocked by Audio Session Manager - CALL (Deprecated since 3.0) */
-    CAMERA_ERROR_SOUND_POLICY_BY_ALARM  = CAMERA_ERROR_CLASS | 0x0b,            /**< Blocked by Audio Session Manager - ALARM (Deprecated since 3.0) */
-    CAMERA_ERROR_ESD                    = CAMERA_ERROR_CLASS | 0x0c,            /**< ESD situation */
-    CAMERA_ERROR_PERMISSION_DENIED      = TIZEN_ERROR_PERMISSION_DENIED,        /**< The access to the resources can not be granted*/
-    CAMERA_ERROR_NOT_SUPPORTED          = TIZEN_ERROR_NOT_SUPPORTED,            /**< The feature is not supported */
-    CAMERA_ERROR_RESOURCE_CONFLICT      = CAMERA_ERROR_CLASS | 0x0d,            /**< Blocked by resource conflict (Since 3.0) */
+typedef enum {
+	CAMERA_ERROR_NONE                   = TIZEN_ERROR_NONE,                     /**< Successful */
+	CAMERA_ERROR_INVALID_PARAMETER      = TIZEN_ERROR_INVALID_PARAMETER,        /**< Invalid parameter */
+	CAMERA_ERROR_INVALID_STATE          = CAMERA_ERROR_CLASS | 0x02,            /**< Invalid state */
+	CAMERA_ERROR_OUT_OF_MEMORY          = TIZEN_ERROR_OUT_OF_MEMORY,            /**< Out of memory */
+	CAMERA_ERROR_DEVICE                 = CAMERA_ERROR_CLASS | 0x04,            /**< Device error */
+	CAMERA_ERROR_INVALID_OPERATION      = TIZEN_ERROR_INVALID_OPERATION,        /**< Internal error */
+	CAMERA_ERROR_SOUND_POLICY           = CAMERA_ERROR_CLASS | 0x06,            /**< Blocked by Audio Session Manager (Deprecated since 3.0) */
+	CAMERA_ERROR_SECURITY_RESTRICTED    = CAMERA_ERROR_CLASS | 0x07,            /**< Restricted by security system policy */
+	CAMERA_ERROR_DEVICE_BUSY            = CAMERA_ERROR_CLASS | 0x08,            /**< The device is using another application or working on some operation */
+	CAMERA_ERROR_DEVICE_NOT_FOUND       = CAMERA_ERROR_CLASS | 0x09,            /**< No camera device */
+	CAMERA_ERROR_SOUND_POLICY_BY_CALL   = CAMERA_ERROR_CLASS | 0x0a,            /**< Blocked by Audio Session Manager - CALL (Deprecated since 3.0) */
+	CAMERA_ERROR_SOUND_POLICY_BY_ALARM  = CAMERA_ERROR_CLASS | 0x0b,            /**< Blocked by Audio Session Manager - ALARM (Deprecated since 3.0) */
+	CAMERA_ERROR_ESD                    = CAMERA_ERROR_CLASS | 0x0c,            /**< ESD situation */
+	CAMERA_ERROR_PERMISSION_DENIED      = TIZEN_ERROR_PERMISSION_DENIED,        /**< The access to the resources can not be granted*/
+	CAMERA_ERROR_NOT_SUPPORTED          = TIZEN_ERROR_NOT_SUPPORTED,            /**< The feature is not supported */
+	CAMERA_ERROR_RESOURCE_CONFLICT      = CAMERA_ERROR_CLASS | 0x0d,            /**< Blocked by resource conflict (Since 3.0) */
 } camera_error_e;
 
 /**
  * @brief Enumeration for the camera state.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
-    CAMERA_STATE_NONE,       /**< Before creating */
-    CAMERA_STATE_CREATED,    /**< Created, but not initialized yet */
-    CAMERA_STATE_PREVIEW,    /**< Preview */
-    CAMERA_STATE_CAPTURING,  /**< While capturing */
-    CAMERA_STATE_CAPTURED    /**< After capturing */
+typedef enum {
+	CAMERA_STATE_NONE,       /**< Before creating */
+	CAMERA_STATE_CREATED,    /**< Created, but not initialized yet */
+	CAMERA_STATE_PREVIEW,    /**< Preview */
+	CAMERA_STATE_CAPTURING,  /**< While capturing */
+	CAMERA_STATE_CAPTURED    /**< After capturing */
 } camera_state_e;
 
 /**
  * @brief Enumeration for the camera device.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
-    CAMERA_DEVICE_CAMERA0 = 0, /**< Primary camera */
-    CAMERA_DEVICE_CAMERA1      /**< Secondary camera */
+typedef enum {
+	CAMERA_DEVICE_CAMERA0 = 0, /**< Primary camera */
+	CAMERA_DEVICE_CAMERA1      /**< Secondary camera */
 } camera_device_e;
 
 /**
  * @brief Enumeration for the camera pixel format.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
+typedef enum {
 	CAMERA_PIXEL_FORMAT_INVALID = -1,   /**< Invalid pixel format */
 	CAMERA_PIXEL_FORMAT_NV12,           /**< NV12 pixel format */
 	CAMERA_PIXEL_FORMAT_NV12T,          /**< NV12 Tiled pixel format */
@@ -111,8 +107,7 @@ typedef enum
  * @brief Enumeration for the camera display type.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
+typedef enum {
 	CAMERA_DISPLAY_TYPE_OVERLAY = 0,	/**< Overlay surface display */
 	CAMERA_DISPLAY_TYPE_EVAS,		/**< Evas object surface display */
 	CAMERA_DISPLAY_TYPE_NONE		/**< This disposes off buffers */
@@ -122,8 +117,7 @@ typedef enum
  * @brief Enumeration for the camera policy.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
+typedef enum {
 	CAMERA_POLICY_NONE = 0,         /**< None */
 	CAMERA_POLICY_SOUND,            /**< Sound policy (Deprecated since 3.0) */
 	CAMERA_POLICY_SOUND_BY_CALL,    /**< Sound policy by CALL (Deprecated since 3.0) */
@@ -136,8 +130,7 @@ typedef enum
  * @brief Enumeration for the camera rotation type.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
+typedef enum {
 	CAMERA_ROTATION_NONE,	/**< No rotation */
 	CAMERA_ROTATION_90,		/**< 90 degree rotation */
 	CAMERA_ROTATION_180,	/**< 180 degree rotation */
@@ -149,8 +142,7 @@ typedef enum
  * @brief Enumeration for the camera flip type.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
+typedef enum {
 	CAMERA_FLIP_NONE,	/**< No Flip */
 	CAMERA_FLIP_HORIZONTAL,	/**< Horizontal flip */
 	CAMERA_FLIP_VERTICAL,	/**< Vertical flip */
@@ -161,20 +153,18 @@ typedef enum
  * @brief Enumeration for the camera focus state.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
-    CAMERA_FOCUS_STATE_RELEASED = 0, /**< Focus released */
-    CAMERA_FOCUS_STATE_ONGOING,      /**< Focus in progress */
-    CAMERA_FOCUS_STATE_FOCUSED,      /**< Focus succeeded */
-    CAMERA_FOCUS_STATE_FAILED,       /**< Focus failed */
+typedef enum {
+	CAMERA_FOCUS_STATE_RELEASED = 0, /**< Focus released */
+	CAMERA_FOCUS_STATE_ONGOING,      /**< Focus in progress */
+	CAMERA_FOCUS_STATE_FOCUSED,      /**< Focus succeeded */
+	CAMERA_FOCUS_STATE_FAILED,       /**< Focus failed */
 } camera_focus_state_e;
 
 /**
  * @brief The structure type of the image data.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
- typedef struct
-{
+typedef struct {
 	unsigned char *data;		/**< The image buffer */
 	unsigned int size;		/**< The size of the buffer */
 	int width;			/**< The width of the image */
@@ -188,8 +178,7 @@ typedef enum
  * @brief The structure type for face detection.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef struct
-{
+typedef struct {
 	int id;		/**< The ID of each face */
 	int score;	/**< The confidence level for the detection of the face */
 	int x;		/**< The x coordinates of the face */
@@ -202,8 +191,7 @@ typedef struct
  * @brief The structure type to preview stream data.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef struct
-{
+typedef struct {
 	camera_pixel_format_e format;	/**< The format of the frame pixel */
 	int width;			/**< The width of the frame */
 	int height;			/**< The height of the frame */
@@ -269,8 +257,7 @@ typedef void *camera_display_h;
  * @brief Enumeration for the camera display mode.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
+typedef enum {
 	CAMERA_DISPLAY_MODE_LETTER_BOX = 0,    /**< Letter box */
 	CAMERA_DISPLAY_MODE_ORIGIN_SIZE,       /**< Origin size */
 	CAMERA_DISPLAY_MODE_FULL,	       /**< Full screen */
@@ -290,57 +277,55 @@ typedef enum
  * @brief Enumeration for the color tone, which provides the impression of looking through a tinted glass.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
-    CAMERA_ATTR_EFFECT_NONE = 0,              /**< None */
-    CAMERA_ATTR_EFFECT_MONO,                  /**< Mono */
-    CAMERA_ATTR_EFFECT_SEPIA,                 /**< Sepia */
-    CAMERA_ATTR_EFFECT_NEGATIVE,              /**< Negative */
-    CAMERA_ATTR_EFFECT_BLUE,                  /**< Blue */
-    CAMERA_ATTR_EFFECT_GREEN,                 /**< Green */
-    CAMERA_ATTR_EFFECT_AQUA,                  /**< Aqua */
-    CAMERA_ATTR_EFFECT_VIOLET,                /**< Violet */
-    CAMERA_ATTR_EFFECT_ORANGE,                /**< Orange */
-    CAMERA_ATTR_EFFECT_GRAY,                  /**< Gray */
-    CAMERA_ATTR_EFFECT_RED,                   /**< Red */
-    CAMERA_ATTR_EFFECT_ANTIQUE,               /**< Antique */
-    CAMERA_ATTR_EFFECT_WARM,                  /**< Warm */
-    CAMERA_ATTR_EFFECT_PINK,                  /**< Pink */
-    CAMERA_ATTR_EFFECT_YELLOW,                /**< Yellow */
-    CAMERA_ATTR_EFFECT_PURPLE,                /**< Purple */
-    CAMERA_ATTR_EFFECT_EMBOSS,                /**< Emboss */
-    CAMERA_ATTR_EFFECT_OUTLINE,               /**< Outline */
-    CAMERA_ATTR_EFFECT_SOLARIZATION,          /**< Solarization */
-    CAMERA_ATTR_EFFECT_SKETCH,                /**< Sketch */
-    CAMERA_ATTR_EFFECT_WASHED,                /**< Washed */
-    CAMERA_ATTR_EFFECT_VINTAGE_WARM,          /**< Vintage warm  */
-    CAMERA_ATTR_EFFECT_VINTAGE_COLD,          /**< Vintage cold */
-    CAMERA_ATTR_EFFECT_POSTERIZATION,         /**< Posterization */
-    CAMERA_ATTR_EFFECT_CARTOON,               /**< Cartoon */
-    CAMERA_ATTR_EFFECT_SELECTIVE_RED,         /**< Selective color - Red */
-    CAMERA_ATTR_EFFECT_SELECTIVE_GREEN,       /**< Selective color - Green */
-    CAMERA_ATTR_EFFECT_SELECTIVE_BLUE,        /**< Selective color - Blue */
-    CAMERA_ATTR_EFFECT_SELECTIVE_YELLOW,      /**< Selective color - Yellow */
-    CAMERA_ATTR_EFFECT_SELECTIVE_RED_YELLOW,  /**< Selective color - Red and Yellow */
-    CAMERA_ATTR_EFFECT_OTHER_GRAPHICS,        /**< Other Graphic effects */
+typedef enum {
+	CAMERA_ATTR_EFFECT_NONE = 0,              /**< None */
+	CAMERA_ATTR_EFFECT_MONO,                  /**< Mono */
+	CAMERA_ATTR_EFFECT_SEPIA,                 /**< Sepia */
+	CAMERA_ATTR_EFFECT_NEGATIVE,              /**< Negative */
+	CAMERA_ATTR_EFFECT_BLUE,                  /**< Blue */
+	CAMERA_ATTR_EFFECT_GREEN,                 /**< Green */
+	CAMERA_ATTR_EFFECT_AQUA,                  /**< Aqua */
+	CAMERA_ATTR_EFFECT_VIOLET,                /**< Violet */
+	CAMERA_ATTR_EFFECT_ORANGE,                /**< Orange */
+	CAMERA_ATTR_EFFECT_GRAY,                  /**< Gray */
+	CAMERA_ATTR_EFFECT_RED,                   /**< Red */
+	CAMERA_ATTR_EFFECT_ANTIQUE,               /**< Antique */
+	CAMERA_ATTR_EFFECT_WARM,                  /**< Warm */
+	CAMERA_ATTR_EFFECT_PINK,                  /**< Pink */
+	CAMERA_ATTR_EFFECT_YELLOW,                /**< Yellow */
+	CAMERA_ATTR_EFFECT_PURPLE,                /**< Purple */
+	CAMERA_ATTR_EFFECT_EMBOSS,                /**< Emboss */
+	CAMERA_ATTR_EFFECT_OUTLINE,               /**< Outline */
+	CAMERA_ATTR_EFFECT_SOLARIZATION,          /**< Solarization */
+	CAMERA_ATTR_EFFECT_SKETCH,                /**< Sketch */
+	CAMERA_ATTR_EFFECT_WASHED,                /**< Washed */
+	CAMERA_ATTR_EFFECT_VINTAGE_WARM,          /**< Vintage warm  */
+	CAMERA_ATTR_EFFECT_VINTAGE_COLD,          /**< Vintage cold */
+	CAMERA_ATTR_EFFECT_POSTERIZATION,         /**< Posterization */
+	CAMERA_ATTR_EFFECT_CARTOON,               /**< Cartoon */
+	CAMERA_ATTR_EFFECT_SELECTIVE_RED,         /**< Selective color - Red */
+	CAMERA_ATTR_EFFECT_SELECTIVE_GREEN,       /**< Selective color - Green */
+	CAMERA_ATTR_EFFECT_SELECTIVE_BLUE,        /**< Selective color - Blue */
+	CAMERA_ATTR_EFFECT_SELECTIVE_YELLOW,      /**< Selective color - Yellow */
+	CAMERA_ATTR_EFFECT_SELECTIVE_RED_YELLOW,  /**< Selective color - Red and Yellow */
+	CAMERA_ATTR_EFFECT_OTHER_GRAPHICS,        /**< Other Graphic effects */
 } camera_attr_effect_mode_e;
 
 /**
  * @brief Enumeration for the white balance levels of the camera.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
-    CAMERA_ATTR_WHITE_BALANCE_NONE = 0,     /**< None */
-    CAMERA_ATTR_WHITE_BALANCE_AUTOMATIC,    /**< Automatic */
-    CAMERA_ATTR_WHITE_BALANCE_DAYLIGHT,     /**< Daylight */
-    CAMERA_ATTR_WHITE_BALANCE_CLOUDY,       /**< Cloudy */
-    CAMERA_ATTR_WHITE_BALANCE_FLUORESCENT,  /**< Fluorescent */
-    CAMERA_ATTR_WHITE_BALANCE_INCANDESCENT, /**< Incandescent */
-    CAMERA_ATTR_WHITE_BALANCE_SHADE,        /**< Shade */
-    CAMERA_ATTR_WHITE_BALANCE_HORIZON,      /**< Horizon */
-    CAMERA_ATTR_WHITE_BALANCE_FLASH,        /**< Flash */
-    CAMERA_ATTR_WHITE_BALANCE_CUSTOM,       /**< Custom */
+typedef enum {
+	CAMERA_ATTR_WHITE_BALANCE_NONE = 0,     /**< None */
+	CAMERA_ATTR_WHITE_BALANCE_AUTOMATIC,    /**< Automatic */
+	CAMERA_ATTR_WHITE_BALANCE_DAYLIGHT,     /**< Daylight */
+	CAMERA_ATTR_WHITE_BALANCE_CLOUDY,       /**< Cloudy */
+	CAMERA_ATTR_WHITE_BALANCE_FLUORESCENT,  /**< Fluorescent */
+	CAMERA_ATTR_WHITE_BALANCE_INCANDESCENT, /**< Incandescent */
+	CAMERA_ATTR_WHITE_BALANCE_SHADE,        /**< Shade */
+	CAMERA_ATTR_WHITE_BALANCE_HORIZON,      /**< Horizon */
+	CAMERA_ATTR_WHITE_BALANCE_FLASH,        /**< Flash */
+	CAMERA_ATTR_WHITE_BALANCE_CUSTOM,       /**< Custom */
 } camera_attr_whitebalance_e;
 
 /**
@@ -348,124 +333,116 @@ typedef enum
  * @details The mode of operation can be in daylight, night, or back-light.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
-    CAMERA_ATTR_SCENE_MODE_NORMAL = 0,     /**< Normal */
-    CAMERA_ATTR_SCENE_MODE_PORTRAIT,       /**< Portrait */
-    CAMERA_ATTR_SCENE_MODE_LANDSCAPE,      /**< Landscape */
-    CAMERA_ATTR_SCENE_MODE_SPORTS,         /**< Sports */
-    CAMERA_ATTR_SCENE_MODE_PARTY_N_INDOOR, /**< Party & indoor */
-    CAMERA_ATTR_SCENE_MODE_BEACH_N_INDOOR, /**< Beach & indoor */
-    CAMERA_ATTR_SCENE_MODE_SUNSET,         /**< Sunset */
-    CAMERA_ATTR_SCENE_MODE_DUSK_N_DAWN,    /**< Dusk & dawn */
-    CAMERA_ATTR_SCENE_MODE_FALL_COLOR,     /**< Fall */
-    CAMERA_ATTR_SCENE_MODE_NIGHT_SCENE,    /**< Night scene */
-    CAMERA_ATTR_SCENE_MODE_FIREWORK,       /**< Firework */
-    CAMERA_ATTR_SCENE_MODE_TEXT,           /**< Text */
-    CAMERA_ATTR_SCENE_MODE_SHOW_WINDOW,    /**< Show window */
-    CAMERA_ATTR_SCENE_MODE_CANDLE_LIGHT,   /**< Candle light */
-    CAMERA_ATTR_SCENE_MODE_BACKLIGHT,      /**< Backlight */
-    CAMERA_ATTR_SCENE_MODE_AQUA,           /**< Aqua */
+typedef enum {
+	CAMERA_ATTR_SCENE_MODE_NORMAL = 0,     /**< Normal */
+	CAMERA_ATTR_SCENE_MODE_PORTRAIT,       /**< Portrait */
+	CAMERA_ATTR_SCENE_MODE_LANDSCAPE,      /**< Landscape */
+	CAMERA_ATTR_SCENE_MODE_SPORTS,         /**< Sports */
+	CAMERA_ATTR_SCENE_MODE_PARTY_N_INDOOR, /**< Party & indoor */
+	CAMERA_ATTR_SCENE_MODE_BEACH_N_INDOOR, /**< Beach & indoor */
+	CAMERA_ATTR_SCENE_MODE_SUNSET,         /**< Sunset */
+	CAMERA_ATTR_SCENE_MODE_DUSK_N_DAWN,    /**< Dusk & dawn */
+	CAMERA_ATTR_SCENE_MODE_FALL_COLOR,     /**< Fall */
+	CAMERA_ATTR_SCENE_MODE_NIGHT_SCENE,    /**< Night scene */
+	CAMERA_ATTR_SCENE_MODE_FIREWORK,       /**< Firework */
+	CAMERA_ATTR_SCENE_MODE_TEXT,           /**< Text */
+	CAMERA_ATTR_SCENE_MODE_SHOW_WINDOW,    /**< Show window */
+	CAMERA_ATTR_SCENE_MODE_CANDLE_LIGHT,   /**< Candle light */
+	CAMERA_ATTR_SCENE_MODE_BACKLIGHT,      /**< Backlight */
+	CAMERA_ATTR_SCENE_MODE_AQUA,           /**< Aqua */
 } camera_attr_scene_mode_e;
 
 /**
  * @brief Enumeration for the auto focus mode.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
-    CAMERA_ATTR_AF_NONE = 0,    /**< auto-focus is not set */
-    CAMERA_ATTR_AF_NORMAL,      /**< auto-focus in the normal mode  */
-    CAMERA_ATTR_AF_MACRO,       /**< auto-focus in the macro mode(close distance)  */
-    CAMERA_ATTR_AF_FULL,        /**< auto-focus in the full mode(all range scan, limited by device spec) */
+typedef enum {
+	CAMERA_ATTR_AF_NONE = 0,    /**< auto-focus is not set */
+	CAMERA_ATTR_AF_NORMAL,      /**< auto-focus in the normal mode  */
+	CAMERA_ATTR_AF_MACRO,       /**< auto-focus in the macro mode(close distance)  */
+	CAMERA_ATTR_AF_FULL,        /**< auto-focus in the full mode(all range scan, limited by device spec) */
 } camera_attr_af_mode_e;
 
 /**
  * @brief Enumeration for the ISO levels of the camera.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
-    CAMERA_ATTR_ISO_AUTO = 0, /**< ISO auto mode */
-    CAMERA_ATTR_ISO_50,       /**< ISO 50 */
-    CAMERA_ATTR_ISO_100,      /**< ISO 100 */
-    CAMERA_ATTR_ISO_200,      /**< ISO 200 */
-    CAMERA_ATTR_ISO_400,      /**< ISO 400 */
-    CAMERA_ATTR_ISO_800,      /**< ISO 800 */
-    CAMERA_ATTR_ISO_1600,     /**< ISO 1600 */
-    CAMERA_ATTR_ISO_3200,     /**< ISO 3200 */
+typedef enum {
+	CAMERA_ATTR_ISO_AUTO = 0, /**< ISO auto mode */
+	CAMERA_ATTR_ISO_50,       /**< ISO 50 */
+	CAMERA_ATTR_ISO_100,      /**< ISO 100 */
+	CAMERA_ATTR_ISO_200,      /**< ISO 200 */
+	CAMERA_ATTR_ISO_400,      /**< ISO 400 */
+	CAMERA_ATTR_ISO_800,      /**< ISO 800 */
+	CAMERA_ATTR_ISO_1600,     /**< ISO 1600 */
+	CAMERA_ATTR_ISO_3200,     /**< ISO 3200 */
 } camera_attr_iso_e;
 
 /**
  * @brief Enumeration for the camera exposure modes.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
-    CAMERA_ATTR_EXPOSURE_MODE_OFF = 0,   /**< Off */
-    CAMERA_ATTR_EXPOSURE_MODE_ALL,       /**< All mode */
-    CAMERA_ATTR_EXPOSURE_MODE_CENTER,    /**< Center mode */
-    CAMERA_ATTR_EXPOSURE_MODE_SPOT,      /**< Spot mode */
-    CAMERA_ATTR_EXPOSURE_MODE_CUSTOM,    /**< Custom mode */
+typedef enum {
+	CAMERA_ATTR_EXPOSURE_MODE_OFF = 0,   /**< Off */
+	CAMERA_ATTR_EXPOSURE_MODE_ALL,       /**< All mode */
+	CAMERA_ATTR_EXPOSURE_MODE_CENTER,    /**< Center mode */
+	CAMERA_ATTR_EXPOSURE_MODE_SPOT,      /**< Spot mode */
+	CAMERA_ATTR_EXPOSURE_MODE_CUSTOM,    /**< Custom mode */
 } camera_attr_exposure_mode_e;
 
 /**
  * @brief Enumeration for the orientation values of tag.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
-    CAMERA_ATTR_TAG_ORIENTATION_TOP_LEFT = 1,      /**< Row #0 is at the top, Column #0 is to the left */
-    CAMERA_ATTR_TAG_ORIENTATION_TOP_RIGHT = 2,     /**< Row #0 is at the top, Column #0 is to the right (flipped) */
-    CAMERA_ATTR_TAG_ORIENTATION_BOTTOM_RIGHT = 3,  /**< Row #0 is at the bottom, Column #0 is to the right */
-    CAMERA_ATTR_TAG_ORIENTATION_BOTTOM_LEFT = 4,   /**< Row #0 is at the bottom, Column #0 is to the left (flipped) */
-    CAMERA_ATTR_TAG_ORIENTATION_LEFT_TOP = 5,      /**< Row #0 is to the left, Column #0 is at the top (flipped) */
-    CAMERA_ATTR_TAG_ORIENTATION_RIGHT_TOP = 6,     /**< Row #0 is to the right, Column #0 is at the top */
-    CAMERA_ATTR_TAG_ORIENTATION_RIGHT_BOTTOM = 7,  /**< Row #0 is to the right, Column #0 is at the bottom (flipped) */
-    CAMERA_ATTR_TAG_ORIENTATION_LEFT_BOTTOM = 8,   /**< Row #0 is to the left, Column #0 is at the bottom */
+typedef enum {
+	CAMERA_ATTR_TAG_ORIENTATION_TOP_LEFT = 1,      /**< Row #0 is at the top, Column #0 is to the left */
+	CAMERA_ATTR_TAG_ORIENTATION_TOP_RIGHT = 2,     /**< Row #0 is at the top, Column #0 is to the right (flipped) */
+	CAMERA_ATTR_TAG_ORIENTATION_BOTTOM_RIGHT = 3,  /**< Row #0 is at the bottom, Column #0 is to the right */
+	CAMERA_ATTR_TAG_ORIENTATION_BOTTOM_LEFT = 4,   /**< Row #0 is at the bottom, Column #0 is to the left (flipped) */
+	CAMERA_ATTR_TAG_ORIENTATION_LEFT_TOP = 5,      /**< Row #0 is to the left, Column #0 is at the top (flipped) */
+	CAMERA_ATTR_TAG_ORIENTATION_RIGHT_TOP = 6,     /**< Row #0 is to the right, Column #0 is at the top */
+	CAMERA_ATTR_TAG_ORIENTATION_RIGHT_BOTTOM = 7,  /**< Row #0 is to the right, Column #0 is at the bottom (flipped) */
+	CAMERA_ATTR_TAG_ORIENTATION_LEFT_BOTTOM = 8,   /**< Row #0 is to the left, Column #0 is at the bottom */
 } camera_attr_tag_orientation_e;
 
 /**
  * @brief Enumeration for the flash mode.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
-    CAMERA_ATTR_FLASH_MODE_OFF = 0,          /**< Always off */
-    CAMERA_ATTR_FLASH_MODE_ON,               /**< Always splashes */
-    CAMERA_ATTR_FLASH_MODE_AUTO,             /**< Depending on intensity of light, strobe starts to flash */
-    CAMERA_ATTR_FLASH_MODE_REDEYE_REDUCTION, /**< Red eye reduction. Multiple flash before capturing */
-    CAMERA_ATTR_FLASH_MODE_SLOW_SYNC,        /**< Slow sync curtain synchronization */
-    CAMERA_ATTR_FLASH_MODE_FRONT_CURTAIN,    /**< Front curtain synchronization */
-    CAMERA_ATTR_FLASH_MODE_REAR_CURTAIN,     /**< Rear curtain synchronization */
-    CAMERA_ATTR_FLASH_MODE_PERMANENT,        /**< Keep turned on until turning off */
+typedef enum {
+	CAMERA_ATTR_FLASH_MODE_OFF = 0,          /**< Always off */
+	CAMERA_ATTR_FLASH_MODE_ON,               /**< Always splashes */
+	CAMERA_ATTR_FLASH_MODE_AUTO,             /**< Depending on intensity of light, strobe starts to flash */
+	CAMERA_ATTR_FLASH_MODE_REDEYE_REDUCTION, /**< Red eye reduction. Multiple flash before capturing */
+	CAMERA_ATTR_FLASH_MODE_SLOW_SYNC,        /**< Slow sync curtain synchronization */
+	CAMERA_ATTR_FLASH_MODE_FRONT_CURTAIN,    /**< Front curtain synchronization */
+	CAMERA_ATTR_FLASH_MODE_REAR_CURTAIN,     /**< Rear curtain synchronization */
+	CAMERA_ATTR_FLASH_MODE_PERMANENT,        /**< Keep turned on until turning off */
 } camera_attr_flash_mode_e;
 
 /**
  * @brief Enumeration to preview FPS.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
-    CAMERA_ATTR_FPS_AUTO = 0, /**< AUTO FPS */
-    CAMERA_ATTR_FPS_7 = 7,    /**< 7 FPS */
-    CAMERA_ATTR_FPS_8 = 8,    /**< 8 FPS */
-    CAMERA_ATTR_FPS_15 = 15,  /**< 15 FPS */
-    CAMERA_ATTR_FPS_20 = 20,  /**< 20 FPS */
-    CAMERA_ATTR_FPS_24 = 24,  /**< 24 FPS */
-    CAMERA_ATTR_FPS_25 = 25,  /**< 25 FPS */
-    CAMERA_ATTR_FPS_30 = 30,  /**< 30 FPS */
-    CAMERA_ATTR_FPS_60 = 60,  /**< 60 FPS */
-    CAMERA_ATTR_FPS_90 = 90,  /**< 90 FPS */
-    CAMERA_ATTR_FPS_120 = 120 /**< 120 FPS */
+typedef enum {
+	CAMERA_ATTR_FPS_AUTO = 0, /**< AUTO FPS */
+	CAMERA_ATTR_FPS_7 = 7,    /**< 7 FPS */
+	CAMERA_ATTR_FPS_8 = 8,    /**< 8 FPS */
+	CAMERA_ATTR_FPS_15 = 15,  /**< 15 FPS */
+	CAMERA_ATTR_FPS_20 = 20,  /**< 20 FPS */
+	CAMERA_ATTR_FPS_24 = 24,  /**< 24 FPS */
+	CAMERA_ATTR_FPS_25 = 25,  /**< 25 FPS */
+	CAMERA_ATTR_FPS_30 = 30,  /**< 30 FPS */
+	CAMERA_ATTR_FPS_60 = 60,  /**< 60 FPS */
+	CAMERA_ATTR_FPS_90 = 90,  /**< 90 FPS */
+	CAMERA_ATTR_FPS_120 = 120 /**< 120 FPS */
 } camera_attr_fps_e;
 
 /**
  * @brief Enumeration for the theater mode.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
+typedef enum {
 	CAMERA_ATTR_THEATER_MODE_DISABLE = 0, /**< Disable theater mode - External display shows same image as device display */
 	CAMERA_ATTR_THEATER_MODE_ENABLE = 2,  /**< Enable theater mode - Preview image is displayed on external display with full screen mode, but preview image is not shown on device display */
 	CAMERA_ATTR_THEATER_MODE_CLONE = 1    /**< Clone mode - Preview image is displayed on external display with full screen mode. Also preview image is shown by the UI on device display */
@@ -475,8 +452,7 @@ typedef enum
  * @brief Enumeration for HDR capture mode.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
-typedef enum
-{
+typedef enum {
 	CAMERA_ATTR_HDR_MODE_DISABLE = 0,  /**< Disable HDR capture */
 	CAMERA_ATTR_HDR_MODE_ENABLE,       /**< Enable HDR capture */
 	CAMERA_ATTR_HDR_MODE_KEEP_ORIGINAL /**< Enable HDR capture and keep original image data */
@@ -504,8 +480,7 @@ typedef enum
  *      will invoke this callback if you register this callback using camera_set_state_changed_cb().
  * @see	camera_set_state_changed_cb()
  */
-typedef void (*camera_state_changed_cb)(camera_state_e previous, camera_state_e current,
-        bool by_policy, void *user_data);
+typedef void (*camera_state_changed_cb)(camera_state_e previous, camera_state_e current, bool by_policy, void *user_data);
 
 /**
  * @brief Called when the camera is interrupted by policy.
@@ -676,8 +651,7 @@ typedef bool (*camera_supported_capture_resolution_cb)(int width, int height, vo
  * @pre	camera_foreach_supported_capture_format() will invoke this callback.
  * @see	camera_foreach_supported_capture_format()
  */
-typedef bool (*camera_supported_capture_format_cb)(camera_pixel_format_e format,
-        void *user_data);
+typedef bool (*camera_supported_capture_format_cb)(camera_pixel_format_e format, void *user_data);
 
 /**
  * @brief Called once for the pixel format of each supported preview format.
@@ -688,8 +662,7 @@ typedef bool (*camera_supported_capture_format_cb)(camera_pixel_format_e format,
  * @pre	camera_foreach_supported_preview_format() will invoke this callback.
  * @see	camera_foreach_supported_preview_format()
  */
-typedef bool (*camera_supported_preview_format_cb)(camera_pixel_format_e format,
-        void *user_data);
+typedef bool (*camera_supported_preview_format_cb)(camera_pixel_format_e format, void *user_data);
 
 /**
  * @}
@@ -1115,7 +1088,7 @@ int camera_stop_face_detection(camera_h camera);
  * @exception #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
  *
  */
- bool camera_is_supported_continuous_capture(camera_h camera);
+bool camera_is_supported_continuous_capture(camera_h camera);
 
 /**
  * @brief Retrieves all supported camera preview resolutions by invoking the callback function once for each supported camera preview resolution.
@@ -1135,8 +1108,7 @@ int camera_stop_face_detection(camera_h camera);
  * @see	camera_get_preview_resolution()
  * @see	camera_supported_preview_resolution_cb()
  */
-int camera_foreach_supported_preview_resolution(camera_h camera,
-        camera_supported_preview_resolution_cb callback, void *user_data);
+int camera_foreach_supported_preview_resolution(camera_h camera, camera_supported_preview_resolution_cb callback, void *user_data);
 
 /**
  * @}
@@ -1354,8 +1326,7 @@ int camera_get_capture_resolution(camera_h camera, int *width, int *height);
  * @see camera_get_capture_resolution()
  * @see	camera_supported_capture_resolution_cb()
  */
-int camera_foreach_supported_capture_resolution(camera_h camera,
-        camera_supported_capture_resolution_cb callback, void *user_data);
+int camera_foreach_supported_capture_resolution(camera_h camera, camera_supported_capture_resolution_cb callback, void *user_data);
 
 /**
  * @}
@@ -1428,8 +1399,7 @@ int camera_get_capture_format(camera_h camera, camera_pixel_format_e *format);
  * @see	camera_get_capture_format()
  * @see	camera_supported_capture_format_cb()
  */
-int camera_foreach_supported_capture_format(camera_h camera,
-        camera_supported_capture_format_cb callback, void *user_data);
+int camera_foreach_supported_capture_format(camera_h camera, camera_supported_capture_format_cb callback, void *user_data);
 
 /**
  * @}
@@ -1499,8 +1469,7 @@ int camera_get_preview_format(camera_h camera, camera_pixel_format_e *format);
  * @see	camera_get_preview_format()
  * @see	camera_supported_preview_format_cb()
  */
-int camera_foreach_supported_preview_format(camera_h camera,
-        camera_supported_preview_format_cb callback, void *user_data);
+int camera_foreach_supported_preview_format(camera_h camera, camera_supported_preview_format_cb callback, void *user_data);
 
 /**
  * @ingroup CAPI_MEDIA_CAMERA_CAPABILITY_MODULE
@@ -1665,8 +1634,7 @@ int camera_unset_media_packet_preview_cb(camera_h camera);
  * @see camera_unset_state_changed_cb()
  * @see	camera_state_changed_cb()
  */
-int camera_set_state_changed_cb(camera_h camera, camera_state_changed_cb callback,
-        void *user_data);
+int camera_set_state_changed_cb(camera_h camera, camera_state_changed_cb callback, void *user_data);
 
 /**
  * @brief Unregisters the callback function.
@@ -1728,8 +1696,7 @@ int camera_unset_interrupted_cb(camera_h camera);
  * @see	camera_unset_focus_changed_cb()
  * @see	camera_focus_changed_cb()
  */
-int camera_set_focus_changed_cb(camera_h camera, camera_focus_changed_cb callback,
-        void *user_data);
+int camera_set_focus_changed_cb(camera_h camera, camera_focus_changed_cb callback, void *user_data);
 
 /**
  * @brief Unregisters the callback function.
@@ -1811,8 +1778,7 @@ typedef bool (*camera_attr_supported_af_mode_cb)(camera_attr_af_mode_e mode, voi
  * @see	camera_attr_foreach_supported_exposure_mode()
  * @see	#camera_attr_exposure_mode_e
  */
-typedef bool (*camera_attr_supported_exposure_mode_cb)(camera_attr_exposure_mode_e mode,
-        void *user_data);
+typedef bool (*camera_attr_supported_exposure_mode_cb)(camera_attr_exposure_mode_e mode, void *user_data);
 
 /**
  * @brief Called to get each supported ISO mode.
@@ -1835,8 +1801,7 @@ typedef bool (*camera_attr_supported_iso_cb)(camera_attr_iso_e iso, void *user_d
  * @see	camera_attr_foreach_supported_whitebalance()
  * @see	#camera_attr_whitebalance_e
  */
-typedef bool (*camera_attr_supported_whitebalance_cb)(camera_attr_whitebalance_e wb,
-        void *user_data);
+typedef bool (*camera_attr_supported_whitebalance_cb)(camera_attr_whitebalance_e wb, void *user_data);
 
 /**
  * @brief Called to get each supported effect mode.
@@ -1847,8 +1812,7 @@ typedef bool (*camera_attr_supported_whitebalance_cb)(camera_attr_whitebalance_e
  * @pre	camera_attr_foreach_supported_effect() will invoke this callback.
  * @see	camera_attr_foreach_supported_effect()
  */
-typedef bool (*camera_attr_supported_effect_cb)(camera_attr_effect_mode_e effect,
-        void *user_data);
+typedef bool (*camera_attr_supported_effect_cb)(camera_attr_effect_mode_e effect, void *user_data);
 
 /**
  * @brief Called to get each supported scene mode.
@@ -1860,8 +1824,7 @@ typedef bool (*camera_attr_supported_effect_cb)(camera_attr_effect_mode_e effect
  * @see	camera_attr_foreach_supported_scene_mode()
  * @see	#camera_attr_scene_mode_e
  */
-typedef bool (*camera_attr_supported_scene_mode_cb)(camera_attr_scene_mode_e mode,
-        void *user_data);
+typedef bool (*camera_attr_supported_scene_mode_cb)(camera_attr_scene_mode_e mode, void *user_data);
 
 /**
  * @brief Called to get each supported flash mode.
@@ -1872,8 +1835,7 @@ typedef bool (*camera_attr_supported_scene_mode_cb)(camera_attr_scene_mode_e mod
  * @pre	camera_attr_foreach_supported_flash_mode() will invoke this callback.
  * @see	camera_attr_foreach_supported_flash_mode()
  */
-typedef bool (*camera_attr_supported_flash_mode_cb)(camera_attr_flash_mode_e mode,
-        void *user_data);
+typedef bool (*camera_attr_supported_flash_mode_cb)(camera_attr_flash_mode_e mode, void *user_data);
 
 /**
  * @brief Called to get each supported FPS mode.
@@ -1986,8 +1948,7 @@ int camera_attr_get_preview_fps(camera_h camera, camera_attr_fps_e *fps);
  * @see	camera_attr_get_preview_fps()
  * @see	camera_attr_supported_fps_cb()
  */
-int camera_attr_foreach_supported_fps(camera_h camera, camera_attr_supported_fps_cb callback,
-        void *user_data);
+int camera_attr_foreach_supported_fps(camera_h camera, camera_attr_supported_fps_cb callback, void *user_data);
 
 /**
  * @brief Retrieves all supported FPS modes by invoking the callback function once for each supported FPS mode.
@@ -2009,8 +1970,7 @@ int camera_attr_foreach_supported_fps(camera_h camera, camera_attr_supported_fps
  * @see	camera_attr_get_preview_fps()
  * @see	camera_attr_supported_fps_cb()
  */
-int camera_attr_foreach_supported_fps_by_resolution(camera_h camera,  int width, int height,
-	camera_attr_supported_fps_cb callback ,void *user_data);
+int camera_attr_foreach_supported_fps_by_resolution(camera_h camera, int width, int height, camera_attr_supported_fps_cb callback, void *user_data);
 
 /**
  * @}
@@ -2206,8 +2166,7 @@ int camera_attr_clear_af_area(camera_h camera);
  * @see camera_attr_get_af_mode()
  * @see	camera_attr_supported_af_mode_cb()
  */
-int camera_attr_foreach_supported_af_mode(camera_h camera,
-        camera_attr_supported_af_mode_cb callback, void *user_data);
+int camera_attr_foreach_supported_af_mode(camera_h camera, camera_attr_supported_af_mode_cb callback, void *user_data);
 
 /**
  * @}
@@ -2275,8 +2234,7 @@ int camera_attr_get_exposure_mode(camera_h camera, camera_attr_exposure_mode_e *
  * @see camera_attr_get_exposure_mode()
  * @see	camera_attr_supported_exposure_mode_cb()
  */
-int camera_attr_foreach_supported_exposure_mode(camera_h camera,
-        camera_attr_supported_exposure_mode_cb callback, void *user_data);
+int camera_attr_foreach_supported_exposure_mode(camera_h camera, camera_attr_supported_exposure_mode_cb callback, void *user_data);
 
 /**
  * @}
@@ -2390,8 +2348,7 @@ int camera_attr_get_iso(camera_h camera, camera_attr_iso_e *iso);
  * @see camera_attr_get_iso()
  * @see	camera_attr_supported_iso_cb()
  */
-int camera_attr_foreach_supported_iso(camera_h camera, camera_attr_supported_iso_cb callback,
-        void *user_data);
+int camera_attr_foreach_supported_iso(camera_h camera, camera_attr_supported_iso_cb callback, void *user_data);
 
 /**
  * @}
@@ -2459,8 +2416,7 @@ int camera_attr_get_theater_mode(camera_h camera, camera_attr_theater_mode_e *mo
  * @see camera_attr_get_theater_mode()
  * @see	camera_attr_supported_theater_mode_cb()
  */
-int camera_attr_foreach_supported_theater_mode(camera_h camera,
-        camera_attr_supported_theater_mode_cb callback, void *user_data);
+int camera_attr_foreach_supported_theater_mode(camera_h camera, camera_attr_supported_theater_mode_cb callback, void *user_data);
 
 /**
  * @}
@@ -2627,8 +2583,7 @@ int camera_attr_get_whitebalance(camera_h camera, camera_attr_whitebalance_e *wh
  * @see camera_attr_get_whitebalance()
  * @see	camera_attr_supported_whitebalance_cb()
  */
-int camera_attr_foreach_supported_whitebalance(camera_h camera,
-        camera_attr_supported_whitebalance_cb callback, void *user_data);
+int camera_attr_foreach_supported_whitebalance(camera_h camera, camera_attr_supported_whitebalance_cb callback, void *user_data);
 
 /**
  * @}
@@ -2697,8 +2652,7 @@ int camera_attr_get_effect(camera_h camera, camera_attr_effect_mode_e *effect);
  * @see camera_attr_get_effect()
  * @see	camera_attr_supported_effect_cb()
  */
-int camera_attr_foreach_supported_effect(camera_h camera,
-        camera_attr_supported_effect_cb callback, void *user_data);
+int camera_attr_foreach_supported_effect(camera_h camera, camera_attr_supported_effect_cb callback, void *user_data);
 
 /**
  * @}
@@ -2766,8 +2720,7 @@ int camera_attr_get_scene_mode(camera_h camera, camera_attr_scene_mode_e *mode);
  * @see camera_attr_get_scene_mode()
  * @see camera_attr_supported_scene_mode_cb()
  */
-int camera_attr_foreach_supported_scene_mode(camera_h camera,
-        camera_attr_supported_scene_mode_cb callback, void *user_data);
+int camera_attr_foreach_supported_scene_mode(camera_h camera, camera_attr_supported_scene_mode_cb callback, void *user_data);
 
 /**
  * @}
@@ -2946,7 +2899,7 @@ int camera_attr_remove_geotag(camera_h camera);
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
  * @remarks Since 2.4, while setting the flash mode, if the flash was preempted by other APIs,\n
-            then this function returns #CAMERA_ERROR_DEVICE_BUSY error.
+ *          then this function returns #CAMERA_ERROR_DEVICE_BUSY error.
  * @param[in] camera The handle to the camera
  * @param[in] mode The flash mode
  * @return @c 0 on success, otherwise a negative error value
@@ -3000,8 +2953,7 @@ int camera_attr_get_flash_mode(camera_h camera, camera_attr_flash_mode_e *mode);
  * @see camera_attr_get_flash_mode()
  * @see	camera_attr_supported_flash_mode_cb()
  */
-int camera_attr_foreach_supported_flash_mode(camera_h camera,
-        camera_attr_supported_flash_mode_cb callback, void *user_data);
+int camera_attr_foreach_supported_flash_mode(camera_h camera, camera_attr_supported_flash_mode_cb callback, void *user_data);
 
 /**
  * @}
@@ -3081,8 +3033,7 @@ int camera_attr_get_stream_rotation(camera_h camera , camera_rotation_e *rotatio
  * @see camera_attr_get_stream_rotation()
  * @see camera_attr_supported_stream_rotation_cb()
  */
-int camera_attr_foreach_supported_stream_rotation(camera_h camera,
-        camera_attr_supported_stream_rotation_cb callback, void *user_data);
+int camera_attr_foreach_supported_stream_rotation(camera_h camera, camera_attr_supported_stream_rotation_cb callback, void *user_data);
 
 /**
  * @}
@@ -3148,8 +3099,7 @@ int camera_attr_get_stream_flip(camera_h camera , camera_flip_e *flip);
  * @see camera_attr_get_stream_flip()
  * @see camera_attr_supported_stream_flip_cb()
  */
-int camera_attr_foreach_supported_stream_flip(camera_h camera,
-        camera_attr_supported_stream_flip_cb callback, void *user_data);
+int camera_attr_foreach_supported_stream_flip(camera_h camera, camera_attr_supported_stream_flip_cb callback, void *user_data);
 
 /**
  * @}
@@ -3454,4 +3404,3 @@ int camera_attr_disable_shutter_sound(camera_h camera, bool disable);
 #endif
 
 #endif /* __TIZEN_MULTIMEDIA_CAMERA_H__ */
-
