@@ -43,6 +43,44 @@
 #define LOG_TAG "TIZEN_N_CAMERA_CLIENT"
 
 
+static int client_wait_for_cb_return(muse_camera_api_e api, callback_cb_info_s *cb_info, int time_out)
+{
+	int ret = CAMERA_ERROR_NONE;
+	gint64 end_time;
+
+	LOGD("Enter api : %d", api);
+	g_mutex_lock(&(cb_info->pMutex[api]));
+
+	if (cb_info->activating[api] == 0) {
+		end_time = g_get_monotonic_time() + time_out * G_TIME_SPAN_SECOND;
+		if (g_cond_wait_until(&(cb_info->pCond[api]), &(cb_info->pMutex[api]), end_time)) {
+			LOGD("cb_info->recvApiMsg : %s", cb_info->recvApiMsg);
+			if (!muse_camera_msg_get(ret, cb_info->recvApiMsg)) {
+				LOGE("Get cb msg failed.");
+				ret = CAMERA_ERROR_INVALID_OPERATION;
+			} else {
+				LOGD("Wait passed, ret : 0x%x", ret);
+			}
+			if (cb_info->activating[api])
+				cb_info->activating[api] = 0;
+		} else {
+			LOGD("api %d was TIMED OUT!", api);
+			ret = CAMERA_ERROR_INVALID_OPERATION;
+		}
+	} else {
+		LOGE("condition is already checked for the api : %d.", api);
+		if (!muse_camera_msg_get(ret, cb_info->recvApiMsg)) {
+			LOGE("Get cb msg failed.");
+			ret = CAMERA_ERROR_INVALID_OPERATION;
+		} else {
+			LOGD("Already checked condition, Wait passed, ret : 0x%x", ret);
+		}
+	}
+	g_mutex_unlock(&(cb_info->pMutex[api]));
+	LOGD("ret : 0x%x", ret);
+	return ret;
+}
+
 static void _client_user_callback(callback_cb_info_s * cb_info, muse_camera_event_e event )
 {
 	char *recvMsg = cb_info->recvMsg;
@@ -212,6 +250,7 @@ static void _client_user_callback(callback_cb_info_s * cb_info, muse_camera_even
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_CAPTURE:
 		{
+			int ret = CAMERA_ERROR_NONE;
 			camera_image_data_s *rImage = NULL;
 			camera_image_data_s *rPostview = NULL;
 			camera_image_data_s *rThumbnail = NULL;
@@ -270,7 +309,16 @@ static void _client_user_callback(callback_cb_info_s * cb_info, muse_camera_even
 
 			LOGD("read image info height: %d, width : %d, size : %d", rImage->height, rImage->width, rImage->size);
 
-			((camera_capturing_cb)cb_info->user_cb[event])(rImage, rPostview, rThumbnail, cb_info->user_data[event]);
+			if (cb_info->user_cb[event]) {
+				((camera_capturing_cb)cb_info->user_cb[event])(rImage, rPostview, rThumbnail, cb_info->user_data[event]);
+			} else {
+				LOGW("capture cb is NULL");
+			}
+
+			/* return buffer */
+			muse_camera_msg_send1(MUSE_CAMERA_API_RETURN_BUFFER, cb_info->fd, cb_info, ret, INT, tbm_key);
+
+			LOGD("return buffer result : 0x%x", ret);
 
 			/* unmap and unref tbm bo */
 			tbm_bo_unmap(bo);
@@ -406,44 +454,6 @@ static callback_cb_info_s *client_callback_new(gint sockfd)
 			     (gpointer) cb_info);
 
 	return cb_info;
-}
-
-static int client_wait_for_cb_return(muse_camera_api_e api, callback_cb_info_s *cb_info, int time_out)
-{
-	int ret = CAMERA_ERROR_NONE;
-	gint64 end_time;
-
-	LOGD("Enter api : %d", api);
-	g_mutex_lock(&(cb_info->pMutex[api]));
-
-	if (cb_info->activating[api] == 0) {
-		end_time = g_get_monotonic_time() + time_out * G_TIME_SPAN_SECOND;
-		if (g_cond_wait_until(&(cb_info->pCond[api]), &(cb_info->pMutex[api]), end_time)) {
-			LOGD("cb_info->recvApiMsg : %s", cb_info->recvApiMsg);
-			if (!muse_camera_msg_get(ret, cb_info->recvApiMsg)) {
-				LOGE("Get cb msg failed.");
-				ret = CAMERA_ERROR_INVALID_OPERATION;
-			} else {
-				LOGD("Wait passed, ret : 0x%x", ret);
-			}
-			if (cb_info->activating[api])
-				cb_info->activating[api] = 0;
-		} else {
-			LOGD("api %d was TIMED OUT!", api);
-			ret = CAMERA_ERROR_INVALID_OPERATION;
-		}
-	} else {
-		LOGE("condition is already checked for the api : %d.", api);
-		if (!muse_camera_msg_get(ret, cb_info->recvApiMsg)) {
-			LOGE("Get cb msg failed.");
-			ret = CAMERA_ERROR_INVALID_OPERATION;
-		} else {
-			LOGD("Already checked condition, Wait passed, ret : 0x%x", ret);
-		}
-	}
-	g_mutex_unlock(&(cb_info->pMutex[api]));
-	LOGD("ret : 0x%x", ret);
-	return ret;
 }
 
 static void client_callback_destroy(callback_cb_info_s * cb_info)
