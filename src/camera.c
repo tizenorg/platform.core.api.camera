@@ -138,9 +138,74 @@ static void _client_user_callback(callback_cb_info_s * cb_info, muse_camera_even
 			((camera_capture_completed_cb)cb_info->user_cb[event])(cb_info->user_data[event]);
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_PREVIEW:
-			((camera_preview_cb)cb_info->user_cb[event])(NULL,
-													cb_info->user_data[event]);
+		{
+			tbm_bo bo;
+			tbm_bo_handle bo_handle;
+			int tbm_key = 0;
+			unsigned char *buf_pos = NULL;
+			camera_preview_data_s *frame = NULL;
+			muse_camera_msg_get(tbm_key, recvMsg);
+
+			if (tbm_key <= 0) {
+				LOGE("invalid key %d", tbm_key);
+				break;
+			}
+
+			/* import tbm bo and get virtual address */
+			bo = tbm_bo_import(cb_info->bufmgr, tbm_key);
+			if (bo == NULL) {
+				LOGE("bo import failed - bufmgr %p, key %d", cb_info->bufmgr, tbm_key);
+				break;
+			}
+
+			bo_handle = tbm_bo_map(bo, TBM_DEVICE_CPU, TBM_OPTION_READ);
+			if (bo_handle.ptr == NULL) {
+				LOGE("bo map failed %p", bo);
+				tbm_bo_unref(bo);
+				bo = NULL;
+				break;
+			}
+			buf_pos = (unsigned char *)bo_handle.ptr;
+
+			frame = (camera_preview_data_s *)buf_pos;
+
+			buf_pos += sizeof(camera_preview_data_s);
+
+			switch (frame->num_of_planes) {
+				case 1:
+					frame->data.single_plane.yuv = buf_pos;
+				case 2:
+					frame->data.double_plane.y = buf_pos;
+					buf_pos += frame->data.double_plane.y_size;
+					frame->data.double_plane.uv = buf_pos;
+				case 3:
+					frame->data.triple_plane.y = buf_pos;
+					buf_pos += frame->data.triple_plane.y_size;
+					frame->data.triple_plane.u = buf_pos;
+					buf_pos += frame->data.triple_plane.u_size;
+					frame->data.triple_plane.v = buf_pos;
+				default:
+					break;
+			}
+			if (cb_info->user_cb[event]) {	
+				((camera_preview_cb)cb_info->user_cb[event])(frame,
+														cb_info->user_data[event]);
+			} else {
+				LOGW("preview cb is NULL");
+			}
+
+			/* return buffer */
+			muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER, cb_info->fd, cb_info, INT, tbm_key);
+
+			LOGD("return buffer Done");
+
+			/* unmap and unref tbm bo */
+			tbm_bo_unmap(bo);
+			tbm_bo_unref(bo);
+			bo = NULL;
+
 			break;
+		}
 		case MUSE_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW:
 			((camera_media_packet_preview_cb)cb_info->user_cb[event])(NULL,
 															cb_info->user_data[event]);
@@ -537,9 +602,7 @@ int camera_create(camera_device_e device, camera_h* camera)
 			pc->remote_handle = handle;
 			pc->cb_info->bufmgr = bufmgr;
 		}
-
 		LOGD("camera create 0x%x", pc->remote_handle);
-
 		*camera = (camera_h) pc;
 	} else {
 		goto ErrorExit;
