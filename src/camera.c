@@ -81,10 +81,17 @@ static int client_wait_for_cb_return(muse_camera_api_e api, callback_cb_info_s *
 	return ret;
 }
 
-static void _client_user_callback(callback_cb_info_s * cb_info, muse_camera_event_e event )
+static void _client_user_callback(callback_cb_info_s *cb_info, char *recvMsg, muse_camera_event_e event)
 {
-	char *recvMsg = cb_info->recvMsg;
-	int param, param1, param2;
+	int param = 0;
+	int param1 = 0;
+	int param2 = 0;
+
+	if (recvMsg == NULL) {
+		LOGE("NULL message for event %d", event);
+		return;
+	}
+
 	LOGD("get event %d", event);
 
 	switch (event) {
@@ -318,7 +325,6 @@ static void _client_user_callback(callback_cb_info_s * cb_info, muse_camera_even
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_CAPTURE:
 		{
-			int ret = CAMERA_ERROR_NONE;
 			camera_image_data_s *rImage = NULL;
 			camera_image_data_s *rPostview = NULL;
 			camera_image_data_s *rThumbnail = NULL;
@@ -384,9 +390,12 @@ static void _client_user_callback(callback_cb_info_s * cb_info, muse_camera_even
 			}
 
 			/* return buffer */
-			muse_camera_msg_send1(MUSE_CAMERA_API_RETURN_BUFFER, cb_info->fd, cb_info, ret, INT, tbm_key);
+			muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
+												cb_info->fd,
+												cb_info,
+												INT, tbm_key);
 
-			LOGD("return buffer result : 0x%x", ret);
+			LOGD("return buffer done");
 
 			/* unmap and unref tbm bo */
 			tbm_bo_unmap(bo);
@@ -402,6 +411,68 @@ static void _client_user_callback(callback_cb_info_s * cb_info, muse_camera_even
 			LOGE("Unknonw event : %d", event);
 			break;
 	}
+
+	return;
+}
+
+static void *_event_handler(gpointer data)
+{
+	event_info_s *e_info = NULL;
+	callback_cb_info_s *cb_info = (callback_cb_info_s *)data;
+
+	if (cb_info == NULL) {
+		LOGE("cb_info NULL");
+		return NULL;
+	}
+
+	LOGD("start");
+
+	g_mutex_lock(&cb_info->event_mutex);
+
+	while (g_atomic_int_get(&cb_info->event_thread_running)) {
+		if (g_queue_is_empty(cb_info->event_queue)) {
+			LOGD("signal wait...");
+			g_cond_wait(&cb_info->event_cond, &cb_info->event_mutex);
+			LOGD("signal received");
+
+			if (g_atomic_int_get(&cb_info->event_thread_running) == 0) {
+				LOGD("stop event thread");
+				break;
+			}
+		}
+
+		e_info = (event_info_s *)g_queue_pop_head(cb_info->event_queue);
+
+		g_mutex_unlock(&cb_info->event_mutex);
+
+		if (e_info) {
+			_client_user_callback(cb_info, e_info->recvMsg, e_info->event);
+			free(e_info);
+			e_info = NULL;
+		} else {
+			LOGW("NULL event info");
+		}
+
+		g_mutex_lock(&cb_info->event_mutex);
+	}
+
+	/* remove remained event */
+	while (!g_queue_is_empty(cb_info->event_queue)) {
+		e_info = (event_info_s *)g_queue_pop_head(cb_info->event_queue);
+		if (e_info) {
+			LOGD("remove event info %p", e_info);
+			free(e_info);
+			e_info = NULL;
+		} else {
+			LOGW("NULL event info");
+		}
+	}
+
+	g_mutex_unlock(&cb_info->event_mutex);
+
+	LOGD("return");
+
+	return NULL;
 }
 
 static void *client_cb_handler(gpointer data)
@@ -412,11 +483,20 @@ static void *client_cb_handler(gpointer data)
 	int i = 0;
 	int str_pos = 0;
 	int prev_pos = 0;
-	callback_cb_info_s *cb_info = data;
-	char *recvMsg = cb_info->recvMsg;
+	callback_cb_info_s *cb_info = (callback_cb_info_s *)data;
+	char *recvMsg = NULL;
 	char parseStr[CAMERA_PARSE_STRING_SIZE][MUSE_CAMERA_MSG_MAX_LENGTH] = {{0,0},};
 
-	while (g_atomic_int_get(&cb_info->running)) {
+	if (cb_info == NULL) {
+		LOGE("cb_info NULL");
+		return NULL;
+	}
+
+	LOGD("start");
+
+	recvMsg = cb_info->recvMsg;
+
+	while (g_atomic_int_get(&cb_info->rcv_thread_running)) {
 		ret = muse_core_ipc_recv_msg(cb_info->fd, recvMsg);
 		if (ret <= 0)
 			break;
@@ -463,7 +543,7 @@ static void *client_cb_handler(gpointer data)
 					if (api == MUSE_CAMERA_API_CREATE) {
 						if (muse_camera_msg_get(ret, cb_info->recvApiMsg)) {
 							if (ret != CAMERA_ERROR_NONE) {
-								g_atomic_int_set(&cb_info->running, 0);
+								g_atomic_int_set(&cb_info->rcv_thread_running, 0);
 								LOGE("camera create error. close client cb handler");
 							}
 						} else {
@@ -472,7 +552,7 @@ static void *client_cb_handler(gpointer data)
 					} else if (api == MUSE_CAMERA_API_DESTROY) {
 						if (muse_camera_msg_get(ret, cb_info->recvApiMsg)) {
 							if (ret == CAMERA_ERROR_NONE) {
-								g_atomic_int_set(&cb_info->running, 0);
+								g_atomic_int_set(&cb_info->rcv_thread_running, 0);
 								LOGD("camera destroy done. close client cb handler");
 							}
 						} else {
@@ -482,8 +562,20 @@ static void *client_cb_handler(gpointer data)
 				} else if(api == MUSE_CAMERA_CB_EVENT) {
 					int event;
 					if (muse_camera_msg_get(event, &(parseStr[i][0]))) {
-						LOGD("go callback : %d", event);
-						_client_user_callback(cb_info, event);
+						event_info_s *e_info = (event_info_s *)malloc(sizeof(event_info_s));
+						if (e_info) {
+							LOGD("add event to queue : %d", event);
+							g_mutex_lock(&cb_info->event_mutex);
+
+							e_info->event = event;
+							memcpy(e_info->recvMsg, recvMsg, sizeof(e_info->recvMsg));
+							g_queue_push_tail(cb_info->event_queue, (gpointer)e_info);
+
+							g_cond_signal(&cb_info->event_cond);
+							g_mutex_unlock(&cb_info->event_mutex);
+						} else {
+							LOGE("e_info alloc failed");
+						}
 					}
 				} else {
 					LOGW("unknown api : %d", api);
@@ -494,6 +586,7 @@ static void *client_cb_handler(gpointer data)
 		}
 
 	}
+
 	LOGD("client cb exit");
 
 	return NULL;
@@ -512,14 +605,18 @@ static callback_cb_info_s *client_callback_new(gint sockfd)
 	camera_mutex = g_new0(GMutex, MUSE_CAMERA_API_MAX);
 	camera_activ = g_new0(gint, MUSE_CAMERA_API_MAX);
 
-	g_atomic_int_set(&cb_info->running, 1);
+	g_atomic_int_set(&cb_info->rcv_thread_running, 1);
 	cb_info->fd = sockfd;
 	cb_info->pCond = camera_cond;
 	cb_info->pMutex = camera_mutex;
 	cb_info->activating = camera_activ;
-	cb_info->thread =
-		g_thread_new("callback_thread", client_cb_handler,
-			     (gpointer) cb_info);
+	cb_info->msg_rcv_thread = g_thread_new("msg_rcv_thread", client_cb_handler, (gpointer)cb_info);
+
+	g_atomic_int_set(&cb_info->event_thread_running, 1);
+	g_mutex_init(&cb_info->event_mutex);
+	g_cond_init(&cb_info->event_cond);
+	cb_info->event_queue = g_queue_new();
+	cb_info->event_thread = g_thread_new("event_thread", _event_handler, (gpointer)cb_info);
 
 	return cb_info;
 }
@@ -528,10 +625,29 @@ static void client_callback_destroy(callback_cb_info_s * cb_info)
 {
 	g_return_if_fail(cb_info != NULL);
 
-	LOGI("%p Callback destroyed", cb_info->thread);
+	LOGI("MSG receive thread[%p]destroy", cb_info->msg_rcv_thread);
 
-	g_thread_join(cb_info->thread);
-	g_thread_unref(cb_info->thread);
+	g_thread_join(cb_info->msg_rcv_thread);
+	g_thread_unref(cb_info->msg_rcv_thread);
+	cb_info->msg_rcv_thread = NULL;
+
+	LOGD("msg thread removed");
+
+	g_mutex_lock(&cb_info->event_mutex);
+	g_atomic_int_set(&cb_info->event_thread_running, 1);
+	g_cond_signal(&cb_info->event_cond);
+	g_mutex_unlock(&cb_info->event_mutex);
+
+	g_thread_join(cb_info->event_thread);
+	g_thread_unref(cb_info->event_thread);
+	cb_info->event_thread = NULL;
+
+	g_queue_free(cb_info->event_queue);
+	cb_info->event_queue = NULL;
+	g_mutex_clear(&cb_info->event_mutex);
+	g_cond_clear(&cb_info->event_cond);
+
+	LOGD("event thread removed");
 
 	if (cb_info->bufmgr) {
 		tbm_bufmgr_deinit(cb_info->bufmgr);
@@ -547,7 +663,10 @@ static void client_callback_destroy(callback_cb_info_s * cb_info)
 	if (cb_info->activating) {
 		g_free(cb_info->activating);
 	}
+
 	g_free(cb_info);
+
+	return;
 }
 
 int camera_create(camera_device_e device, camera_h* camera)
