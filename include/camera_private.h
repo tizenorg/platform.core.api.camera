@@ -54,8 +54,10 @@ typedef struct _camera_cb_data {
 } camera_cb_data;
 
 typedef struct _callback_cb_info {
-	GThread *thread;
-	gint running;
+	GThread *msg_rcv_thread;
+	GThread *event_thread;
+	gint rcv_thread_running;
+	gint event_thread_running;
 	gint fd;
 	gint id;
 	gpointer user_cb[MUSE_CAMERA_EVENT_TYPE_NUM];
@@ -66,9 +68,17 @@ typedef struct _callback_cb_info {
 	gchar recvEventMsg[MUSE_CAMERA_MSG_MAX_LENGTH];
 	GCond *pCond;
 	GMutex *pMutex;
+	GCond event_cond;
+	GMutex event_mutex;
 	gint *activating;
 	tbm_bufmgr bufmgr;
+	GQueue *event_queue;
 } callback_cb_info_s;
+
+typedef struct _event_info_s {
+	gchar recvMsg[MUSE_CAMERA_MSG_MAX_LENGTH];
+	muse_camera_event_e event;
+} event_info_s;
 
 typedef struct _camera_cli_s {
 	intptr_t remote_handle;
