@@ -94,32 +94,6 @@ static void _client_user_callback(callback_cb_info_s *cb_info, char *recvMsg, mu
 
 	LOGD("get event %d", event);
 
-	switch (event) {
-		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_PREVIEW_RESOLUTION:
-		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_CAPTURE_RESOLUTION:
-			muse_camera_msg_get(param1, recvMsg);
-			muse_camera_msg_get(param2, recvMsg);
-			break;
-		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_THEATER_MODE:
-		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_CAPTURE_FORMAT:
-		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_PREVIEW_FORMAT:
-		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_AF_MODE:
-		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_EXPOSURE_MODE:
-		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_ISO:
-		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_WHITEBALANCE:
-		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_EFFECT:
-		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_SCENE_MODE:
-		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FLASH_MODE:
-		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FPS:
-		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FPS_BY_RESOLUTION:
-		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_STREAM_FLIP:
-		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_STREAM_ROTATION:
-			muse_camera_msg_get(param, recvMsg);
-			break;
-		default:
-			break;
-	}
-
 	switch(event) {
 		case MUSE_CAMERA_EVENT_TYPE_STATE_CHANGE:
 		{
@@ -260,66 +234,84 @@ static void _client_user_callback(callback_cb_info_s *cb_info, char *recvMsg, mu
 			break;
 		}
 		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_PREVIEW_RESOLUTION:
+			muse_camera_msg_get(param1, recvMsg);
+			muse_camera_msg_get(param2, recvMsg);
 			((camera_supported_preview_resolution_cb)cb_info->user_cb[event])(param1, param2,
 																	cb_info->user_data[event]);
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_CAPTURE_RESOLUTION:
+			muse_camera_msg_get(param1, recvMsg);
+			muse_camera_msg_get(param2, recvMsg);
 			((camera_supported_capture_resolution_cb)cb_info->user_cb[event])(param1, param2,
 																	cb_info->user_data[event]);
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_CAPTURE_FORMAT:
+			muse_camera_msg_get(param, recvMsg);
 			((camera_supported_capture_format_cb)cb_info->user_cb[event])((camera_pixel_format_e)param,
 																	cb_info->user_data[event]);
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_PREVIEW_FORMAT:
+			muse_camera_msg_get(param, recvMsg);
 			((camera_supported_preview_format_cb)cb_info->user_cb[event])((camera_pixel_format_e)param,
 																	cb_info->user_data[event]);
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_AF_MODE:
+			muse_camera_msg_get(param, recvMsg);
 			((camera_attr_supported_af_mode_cb)cb_info->user_cb[event])((camera_attr_af_mode_e)param,
 																	cb_info->user_data[event]);
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_EXPOSURE_MODE:
+			muse_camera_msg_get(param, recvMsg);
 			((camera_attr_supported_exposure_mode_cb)cb_info->user_cb[event])((camera_attr_exposure_mode_e)param,
 																	cb_info->user_data[event]);
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_ISO:
+			muse_camera_msg_get(param, recvMsg);
 			((camera_attr_supported_iso_cb)cb_info->user_cb[event])((camera_attr_iso_e)param,
 															cb_info->user_data[event]);
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_WHITEBALANCE:
+			muse_camera_msg_get(param, recvMsg);
 			((camera_attr_supported_whitebalance_cb)cb_info->user_cb[event])((camera_attr_whitebalance_e)param,
 																		cb_info->user_data[event]);
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_EFFECT:
+			muse_camera_msg_get(param, recvMsg);
 			((camera_attr_supported_effect_cb)cb_info->user_cb[event])((camera_attr_effect_mode_e)param,
 																cb_info->user_data[event]);
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_SCENE_MODE:
+			muse_camera_msg_get(param, recvMsg);
 			((camera_attr_supported_scene_mode_cb)cb_info->user_cb[event])((camera_attr_scene_mode_e)param,
 																	cb_info->user_data[event]);
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FLASH_MODE:
+			muse_camera_msg_get(param, recvMsg);
 			((camera_attr_supported_flash_mode_cb)cb_info->user_cb[event])((camera_attr_flash_mode_e)param,
 																	cb_info->user_data[event]);
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FPS:
+			muse_camera_msg_get(param, recvMsg);
 			((camera_attr_supported_fps_cb)cb_info->user_cb[event])((camera_attr_fps_e)param,
 															cb_info->user_data[event]);
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FPS_BY_RESOLUTION:
+			muse_camera_msg_get(param, recvMsg);
 			((camera_attr_supported_fps_cb)cb_info->user_cb[event])((camera_attr_fps_e)param,
 															cb_info->user_data[event]);
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_STREAM_FLIP:
+			muse_camera_msg_get(param, recvMsg);
 			((camera_attr_supported_stream_flip_cb)cb_info->user_cb[event])((camera_flip_e)param,
 																	cb_info->user_data[event]);
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_STREAM_ROTATION:
+			muse_camera_msg_get(param, recvMsg);
 			((camera_attr_supported_stream_rotation_cb)cb_info->user_cb[event])((camera_rotation_e)param,
 																	cb_info->user_data[event]);
 			break;
 		case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_THEATER_MODE:
+			muse_camera_msg_get(param, recvMsg);
 			((camera_attr_supported_theater_mode_cb)cb_info->user_cb[event])((camera_attr_theater_mode_e)param,
 																	cb_info->user_data[event]);
 			break;
@@ -446,7 +438,7 @@ static void *_event_handler(gpointer data)
 		g_mutex_unlock(&cb_info->event_mutex);
 
 		if (e_info) {
-			_client_user_callback(cb_info, e_info->recvMsg, e_info->event);
+			_client_user_callback(e_info->cb_info, e_info->recvMsg, e_info->event);
 			free(e_info);
 			e_info = NULL;
 		} else {
@@ -475,17 +467,33 @@ static void *_event_handler(gpointer data)
 	return NULL;
 }
 
+static bool _camera_idle_event_callback(void *data)
+{
+	event_info_s *e_info = (event_info_s *)data;
+
+	if (e_info == NULL) {
+		LOGE("event info is NULL");
+		return false;
+	}
+
+	_client_user_callback(e_info->cb_info, e_info->recvMsg, e_info->event);
+	free(e_info);
+	e_info = NULL;
+
+	return false;
+}
+
 static void *client_cb_handler(gpointer data)
 {
-	int ret;
-	int api;
+	int ret = 0;
+	int api = 0;
 	int num_token = 0;
 	int i = 0;
 	int str_pos = 0;
 	int prev_pos = 0;
 	callback_cb_info_s *cb_info = (callback_cb_info_s *)data;
 	char *recvMsg = NULL;
-	char parseStr[CAMERA_PARSE_STRING_SIZE][MUSE_CAMERA_MSG_MAX_LENGTH] = {{0,0},};
+	char **parseStr = NULL;
 
 	if (cb_info == NULL) {
 		LOGE("cb_info NULL");
@@ -493,6 +501,20 @@ static void *client_cb_handler(gpointer data)
 	}
 
 	LOGD("start");
+
+	parseStr = (char **)malloc(sizeof(char *) * CAMERA_PARSE_STRING_SIZE);
+	if (parseStr == NULL) {
+		LOGE("parseStr malloc failed");
+		return NULL;
+	}
+
+	for (i = 0 ; i < CAMERA_PARSE_STRING_SIZE ; i++) {
+		parseStr[i] = (char *)malloc(sizeof(char) * MUSE_CAMERA_MSG_MAX_LENGTH);
+		if (parseStr[i] == NULL) {
+			LOGE("parseStr[%d] malloc failed", i);
+			goto CB_HANDLER_EXIT;
+		}
+	}
 
 	recvMsg = cb_info->recvMsg;
 
@@ -505,20 +527,21 @@ static void *client_cb_handler(gpointer data)
 		str_pos = 0;
 		prev_pos = 0;
 		num_token = 0;
-		memset(parseStr, 0, CAMERA_PARSE_STRING_SIZE * MUSE_CAMERA_MSG_MAX_LENGTH);
 
 		LOGD("recvMSg : %s, length : %d", recvMsg, ret);
 
 		/* Need to split the combined entering msgs.
- 		    This module supports up to 200 combined msgs. */
+		    This module supports up to 200 combined msgs. */
 		for (str_pos = 0; str_pos < ret; str_pos++) {
 			if(recvMsg[str_pos] == '}') {
-				strncpy(&(parseStr[num_token][0]), recvMsg + prev_pos, str_pos - prev_pos + 1);
-				LOGD("splitted msg : %s, Index : %d", &(parseStr[num_token][0]), num_token);
+				memset(parseStr[num_token], 0x0, sizeof(char) * MUSE_CAMERA_MSG_MAX_LENGTH);
+				strncpy(parseStr[num_token], recvMsg + prev_pos, str_pos - prev_pos + 1);
+				LOGD("splitted msg : [%s], Index : %d", parseStr[num_token], num_token);
 				prev_pos = str_pos+1;
 				num_token++;
 			}
 		}
+
 		LOGD("num_token : %d", num_token);
 
 		/* Re-construct to the useful single msg. */
@@ -527,15 +550,15 @@ static void *client_cb_handler(gpointer data)
 			if (i >= CAMERA_PARSE_STRING_SIZE)
 				break;
 
-			if (muse_camera_msg_get(api, &(parseStr[i][0]))) {
+			if (muse_camera_msg_get(api, parseStr[i])) {
 				if(api < MUSE_CAMERA_API_MAX){
-					LOGD("Set Condition");
+					LOGD("Set Condition - api %d", api);
 					g_mutex_lock(&(cb_info->pMutex[api]));
 
 					/* The api msgs should be distinguished from the event msg. */
 					memset(cb_info->recvApiMsg, 0, strlen(cb_info->recvApiMsg));
-					strcpy(cb_info->recvApiMsg, &(parseStr[i][0]));
-					LOGD("cb_info->recvApiMsg : %s", cb_info->recvApiMsg);
+					strcpy(cb_info->recvApiMsg, parseStr[i]);
+					LOGD("cb_info->recvApiMsg : [%s]", cb_info->recvApiMsg);
 					cb_info->activating[api] = 1;
 					g_cond_signal(&(cb_info->pCond[api]));
 					g_mutex_unlock(&(cb_info->pMutex[api]));
@@ -544,7 +567,7 @@ static void *client_cb_handler(gpointer data)
 						if (muse_camera_msg_get(ret, cb_info->recvApiMsg)) {
 							if (ret != CAMERA_ERROR_NONE) {
 								g_atomic_int_set(&cb_info->rcv_thread_running, 0);
-								LOGE("camera create error. close client cb handler");
+								LOGE("camera create error 0x%x. close client cb handler", ret);
 							}
 						} else {
 							LOGE("failed to get api return");
@@ -560,45 +583,38 @@ static void *client_cb_handler(gpointer data)
 						}
 					}
 				} else if(api == MUSE_CAMERA_CB_EVENT) {
-					int event;
-					if (muse_camera_msg_get(event, &(parseStr[i][0]))) {
+					int event = -1;
+					int class = -1;
+
+					if (muse_camera_msg_get(event, parseStr[i]) &&
+					    muse_camera_msg_get(class, parseStr[i])) {
 						event_info_s *e_info = NULL;
 
-						switch (event) {
-						case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_PREVIEW_RESOLUTION:
-						case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_CAPTURE_RESOLUTION:
-						case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_THEATER_MODE:
-						case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_CAPTURE_FORMAT:
-						case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_PREVIEW_FORMAT:
-						case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_AF_MODE:
-						case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_EXPOSURE_MODE:
-						case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_ISO:
-						case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_WHITEBALANCE:
-						case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_EFFECT:
-						case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_SCENE_MODE:
-						case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FLASH_MODE:
-						case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FPS:
-						case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FPS_BY_RESOLUTION:
-						case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_STREAM_FLIP:
-						case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_STREAM_ROTATION:
-							_client_user_callback(cb_info, recvMsg, event);
-							break;
-						default:
+						if (class == MUSE_CAMERA_EVENT_CLASS_NORMAL ||
+						    class == MUSE_CAMERA_EVENT_CLASS_IDLE) {
 							e_info = (event_info_s *)malloc(sizeof(event_info_s));
 							if (e_info) {
-								LOGD("add event to queue : %d", event);
-								g_mutex_lock(&cb_info->event_mutex);
-
 								e_info->event = event;
+								e_info->cb_info = cb_info;
 								memcpy(e_info->recvMsg, recvMsg, sizeof(e_info->recvMsg));
-								g_queue_push_tail(cb_info->event_queue, (gpointer)e_info);
 
-								g_cond_signal(&cb_info->event_cond);
-								g_mutex_unlock(&cb_info->event_mutex);
+								if (class == MUSE_CAMERA_EVENT_CLASS_NORMAL) {
+									LOGD("add event to EVENT QUEUE : %d", event);
+									g_mutex_lock(&cb_info->event_mutex);
+									g_queue_push_tail(cb_info->event_queue, (gpointer)e_info);
+									g_cond_signal(&cb_info->event_cond);
+									g_mutex_unlock(&cb_info->event_mutex);
+								} else {
+									LOGD("add event to IDLE : %d", event);
+									g_idle_add_full(G_PRIORITY_DEFAULT, (GSourceFunc)_camera_idle_event_callback, (gpointer)e_info, NULL);
+								}
 							} else {
 								LOGE("e_info alloc failed");
 							}
-							break;
+						} else if (class == MUSE_CAMERA_EVENT_CLASS_IMMEDIATE) {
+							_client_user_callback(cb_info, recvMsg, event);
+						} else {
+							LOGE("unknown class %d", class);
 						}
 					}
 				} else {
@@ -612,6 +628,19 @@ static void *client_cb_handler(gpointer data)
 	}
 
 	LOGD("client cb exit");
+
+CB_HANDLER_EXIT:
+	if (parseStr) {
+		for (i = 0 ; i < CAMERA_PARSE_STRING_SIZE ; i++) {
+			if (parseStr[i]) {
+				free(parseStr[i]);
+				parseStr[i] = NULL;
+			}
+		}
+
+		free(parseStr);
+		parseStr = NULL;
+	}
 
 	return NULL;
 }
@@ -698,6 +727,7 @@ int camera_create(camera_device_e device, camera_h* camera)
 	int sock_fd = -1;
 	char *sndMsg;
 	int ret = CAMERA_ERROR_NONE;
+	int pid = 0;
 	camera_cli_s *pc = NULL;
 	tbm_bufmgr bufmgr = NULL;
 
@@ -717,11 +747,19 @@ int camera_create(camera_device_e device, camera_h* camera)
 	}
 
 	sock_fd = muse_core_client_new();
+	if (sock_fd < 0) {
+		LOGE("muse_core_client_new failed - returned fd %d", sock_fd);
+		ret = CAMERA_ERROR_INVALID_OPERATION;
+		goto ErrorExit;
+	}
+
+	pid = getpid();
 
 	sndMsg = muse_core_msg_json_factory_new(api,
-									MUSE_TYPE_INT, "module", muse_module,
-									MUSE_TYPE_INT, PARAM_DEVICE_TYPE, (int)device_type,
-									0);
+	                                        MUSE_TYPE_INT, "module", muse_module,
+	                                        MUSE_TYPE_INT, PARAM_DEVICE_TYPE, device_type,
+	                                        MUSE_TYPE_INT, "pid", pid,
+	                                        0);
 
 	muse_core_ipc_send_msg(sock_fd, sndMsg);
 	muse_core_msg_json_factory_free(sndMsg);
@@ -744,10 +782,11 @@ int camera_create(camera_device_e device, camera_h* camera)
 			LOGE("Receiving Handle Failed!!");
 			ret = CAMERA_ERROR_INVALID_OPERATION;
 			goto ErrorExit;
-		} else {
-			pc->remote_handle = handle;
-			pc->cb_info->bufmgr = bufmgr;
 		}
+
+		pc->remote_handle = handle;
+		pc->cb_info->bufmgr = bufmgr;
+
 		LOGD("camera create 0x%x", pc->remote_handle);
 		*camera = (camera_h) pc;
 	} else {

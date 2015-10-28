@@ -31,7 +31,7 @@ extern "C" {
 
 #define MAX_DETECTED_FACE 20
 
-#define CAMERA_PARSE_STRING_SIZE 200
+#define CAMERA_PARSE_STRING_SIZE 20
 
 typedef enum {
 	_CAMERA_EVENT_TYPE_STATE_CHANGE,
@@ -76,6 +76,7 @@ typedef struct _callback_cb_info {
 } callback_cb_info_s;
 
 typedef struct _event_info_s {
+	callback_cb_info_s *cb_info;
 	gchar recvMsg[MUSE_CAMERA_MSG_MAX_LENGTH];
 	muse_camera_event_e event;
 } event_info_s;
