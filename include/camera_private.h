@@ -70,16 +70,26 @@ typedef struct _callback_cb_info {
 	GMutex *pMutex;
 	GCond event_cond;
 	GMutex event_mutex;
+	GList *idle_event_list;
+	GCond idle_event_cond;
+	GMutex idle_event_mutex;
 	gint *activating;
 	tbm_bufmgr bufmgr;
 	GQueue *event_queue;
 } callback_cb_info_s;
 
-typedef struct _event_info_s {
+typedef struct _camera_event_s {
 	callback_cb_info_s *cb_info;
 	gchar recvMsg[MUSE_CAMERA_MSG_MAX_LENGTH];
 	muse_camera_event_e event;
-} event_info_s;
+} camera_event_s;
+
+typedef struct _camera_idle_event_s {
+	callback_cb_info_s *cb_info;
+	gchar recvMsg[MUSE_CAMERA_MSG_MAX_LENGTH];
+	muse_camera_event_e event;
+	GMutex event_mutex;
+} camera_idle_event_s;
 
 typedef struct _camera_cli_s {
 	intptr_t remote_handle;

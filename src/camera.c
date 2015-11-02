@@ -89,7 +89,7 @@ static void _release_imported_bo(tbm_bo *bo)
 	return;
 }
 
-static int client_wait_for_cb_return(muse_camera_api_e api, callback_cb_info_s *cb_info, int time_out)
+static int _client_wait_for_cb_return(muse_camera_api_e api, callback_cb_info_s *cb_info, int time_out)
 {
 	int ret = CAMERA_ERROR_NONE;
 	gint64 end_time;
@@ -527,7 +527,7 @@ static void _client_user_callback(callback_cb_info_s *cb_info, char *recvMsg, mu
 
 static void *_event_handler(gpointer data)
 {
-	event_info_s *e_info = NULL;
+	camera_event_s *cam_event = NULL;
 	callback_cb_info_s *cb_info = (callback_cb_info_s *)data;
 
 	if (cb_info == NULL) {
@@ -551,14 +551,14 @@ static void *_event_handler(gpointer data)
 			}
 		}
 
-		e_info = (event_info_s *)g_queue_pop_head(cb_info->event_queue);
+		cam_event = (camera_event_s *)g_queue_pop_head(cb_info->event_queue);
 
 		g_mutex_unlock(&cb_info->event_mutex);
 
-		if (e_info) {
-			_client_user_callback(e_info->cb_info, e_info->recvMsg, e_info->event);
-			free(e_info);
-			e_info = NULL;
+		if (cam_event) {
+			_client_user_callback(cam_event->cb_info, cam_event->recvMsg, cam_event->event);
+			free(cam_event);
+			cam_event = NULL;
 		} else {
 			LOGW("NULL event info");
 		}
@@ -568,11 +568,11 @@ static void *_event_handler(gpointer data)
 
 	/* remove remained event */
 	while (!g_queue_is_empty(cb_info->event_queue)) {
-		e_info = (event_info_s *)g_queue_pop_head(cb_info->event_queue);
-		if (e_info) {
-			LOGD("remove event info %p", e_info);
-			free(e_info);
-			e_info = NULL;
+		cam_event = (camera_event_s *)g_queue_pop_head(cb_info->event_queue);
+		if (cam_event) {
+			LOGD("remove event info %p", cam_event);
+			free(cam_event);
+			cam_event = NULL;
 		} else {
 			LOGW("NULL event info");
 		}
@@ -587,21 +587,119 @@ static void *_event_handler(gpointer data)
 
 static bool _camera_idle_event_callback(void *data)
 {
-	event_info_s *e_info = (event_info_s *)data;
+	callback_cb_info_s *cb_info = NULL;
+	camera_idle_event_s *cam_idle_event = (camera_idle_event_s *)data;
 
-	if (e_info == NULL) {
-		LOGE("event info is NULL");
+	if (cam_idle_event == NULL) {
+		LOGE("cam_idle_event is NULL");
 		return false;
 	}
 
-	_client_user_callback(e_info->cb_info, e_info->recvMsg, e_info->event);
-	free(e_info);
-	e_info = NULL;
+	/* lock event */
+	g_mutex_lock(&cam_idle_event->event_mutex);
+
+	cb_info = cam_idle_event->cb_info;
+	if (cb_info == NULL) {
+		LOGW("cb_info is NULL. event %d", cam_idle_event->event);
+		goto IDLE_EVENT_CALLBACK_DONE;
+	}
+
+	/* remove event from list */
+	g_mutex_lock(&cb_info->idle_event_mutex);
+	if (cb_info->idle_event_list) {
+		cb_info->idle_event_list = g_list_remove(cb_info->idle_event_list, (gpointer)cam_idle_event);
+	}
+	g_mutex_unlock(&cb_info->idle_event_mutex);
+
+	/* user callback */
+	_client_user_callback(cam_idle_event->cb_info, cam_idle_event->recvMsg, cam_idle_event->event);
+
+	/* send signal for waiting thread */
+	g_cond_signal(&cb_info->idle_event_cond);
+
+IDLE_EVENT_CALLBACK_DONE:
+	/* unlock and release event */
+	g_mutex_unlock(&cam_idle_event->event_mutex);
+	g_mutex_clear(&cam_idle_event->event_mutex);
+
+	free(cam_idle_event);
+	cam_idle_event = NULL;
 
 	return false;
 }
 
-static void *client_cb_handler(gpointer data)
+static void _camera_remove_idle_event_all(callback_cb_info_s *cb_info)
+{
+	camera_idle_event_s *cam_idle_event = NULL;
+	gboolean ret = TRUE;
+	GList *list = NULL;
+	gint64 end_time = 0;
+
+	if (cb_info == NULL) {
+		LOGE("cb_info is NULL");
+		return;
+	}
+
+	g_mutex_lock(&cb_info->idle_event_mutex);
+
+	if (cb_info->idle_event_list) {
+		LOGD("No idle event is remained.");
+	} else {
+		list = cb_info->idle_event_list;
+
+		while (list) {
+			cam_idle_event = list->data;
+			list = g_list_next(list);
+
+			if (!cam_idle_event) {
+				LOGW("Fail to remove idle event. The event is NULL");
+			} else {
+				if (g_mutex_trylock(&cam_idle_event->event_mutex)) {
+					ret = g_idle_remove_by_data(cam_idle_event);
+
+					LOGD("remove idle event [%p], ret[%d]", cam_idle_event, ret);
+
+					if (ret == FALSE) {
+						cam_idle_event->cb_info = NULL;
+						LOGW("idle callback for event %p will be called later", cam_idle_event);
+					}
+
+					cb_info->idle_event_list = g_list_remove(cb_info->idle_event_list, (gpointer)cam_idle_event);
+
+					g_mutex_unlock(&cam_idle_event->event_mutex);
+
+					if (ret == TRUE) {
+						g_mutex_clear(&cam_idle_event->event_mutex);
+
+						free(cam_idle_event);
+						cam_idle_event = NULL;
+
+						LOGD("remove idle event done");
+					}
+				} else {
+					LOGW("event lock failed. it's being called...");
+
+					end_time = g_get_monotonic_time () + G_TIME_SPAN_MILLISECOND * 100;
+
+					if (g_cond_wait_until(&cb_info->idle_event_cond, &cb_info->idle_event_mutex, end_time)) {
+						LOGW("signal received");
+					} else {
+						LOGW("timeout");
+					}
+				}
+			}
+		}
+
+		g_list_free(cb_info->idle_event_list);
+		cb_info->idle_event_list = NULL;
+	}
+
+	g_mutex_unlock(&cb_info->idle_event_mutex);
+
+	return;
+}
+
+static void *_client_cb_handler(gpointer data)
 {
 	int ret = 0;
 	int api = 0;
@@ -703,37 +801,60 @@ static void *client_cb_handler(gpointer data)
 				} else if(api == MUSE_CAMERA_CB_EVENT) {
 					int event = -1;
 					int class = -1;
+					camera_event_s *cam_event = NULL;
+					camera_idle_event_s *cam_idle_event = NULL;
 
-					if (muse_camera_msg_get(event, parseStr[i]) &&
-					    muse_camera_msg_get(class, parseStr[i])) {
-						event_info_s *e_info = NULL;
+					if (!muse_camera_msg_get(event, parseStr[i]) ||
+					    !muse_camera_msg_get(class, parseStr[i])) {
+						LOGE("failed to get event %d, class %d", event, class);
+						continue;
+					}
 
-						if (class == MUSE_CAMERA_EVENT_CLASS_NORMAL ||
-						    class == MUSE_CAMERA_EVENT_CLASS_IDLE) {
-							e_info = (event_info_s *)malloc(sizeof(event_info_s));
-							if (e_info) {
-								e_info->event = event;
-								e_info->cb_info = cb_info;
-								memcpy(e_info->recvMsg, recvMsg, sizeof(e_info->recvMsg));
+					switch (class) {
+					case MUSE_CAMERA_EVENT_CLASS_NORMAL:
+						cam_event = (camera_event_s *)malloc(sizeof(camera_event_s));
+						if (cam_event) {
+							cam_event->event = event;
+							cam_event->cb_info = cb_info;
+							memcpy(cam_event->recvMsg, recvMsg, sizeof(cam_event->recvMsg));
 
-								if (class == MUSE_CAMERA_EVENT_CLASS_NORMAL) {
-									LOGD("add event to EVENT QUEUE : %d", event);
-									g_mutex_lock(&cb_info->event_mutex);
-									g_queue_push_tail(cb_info->event_queue, (gpointer)e_info);
-									g_cond_signal(&cb_info->event_cond);
-									g_mutex_unlock(&cb_info->event_mutex);
-								} else {
-									LOGD("add event to IDLE : %d", event);
-									g_idle_add_full(G_PRIORITY_DEFAULT, (GSourceFunc)_camera_idle_event_callback, (gpointer)e_info, NULL);
-								}
-							} else {
-								LOGE("e_info alloc failed");
-							}
-						} else if (class == MUSE_CAMERA_EVENT_CLASS_IMMEDIATE) {
-							_client_user_callback(cb_info, recvMsg, event);
+							LOGD("add event to EVENT QUEUE : %d", event);
+							g_mutex_lock(&cb_info->event_mutex);
+							g_queue_push_tail(cb_info->event_queue, (gpointer)cam_event);
+							g_cond_signal(&cb_info->event_cond);
+							g_mutex_unlock(&cb_info->event_mutex);
 						} else {
-							LOGE("unknown class %d", class);
+							LOGE("cam_event alloc failed");
 						}
+						break;
+					case MUSE_CAMERA_EVENT_CLASS_IMMEDIATE:
+						_client_user_callback(cb_info, recvMsg, event);
+						break;
+					case MUSE_CAMERA_EVENT_CLASS_IDLE:
+						cam_idle_event = (camera_idle_event_s *)malloc(sizeof(camera_idle_event_s));
+						if (cam_idle_event) {
+							cam_idle_event->event = event;
+							cam_idle_event->cb_info = cb_info;
+							g_mutex_init(&cam_idle_event->event_mutex);
+							memcpy(cam_idle_event->recvMsg, recvMsg, sizeof(cam_idle_event->recvMsg));
+
+							LOGD("add event to IDLE : %d", event);
+
+							g_mutex_lock(&cb_info->idle_event_mutex);
+							cb_info->idle_event_list = g_list_append(cb_info->idle_event_list, (gpointer)cam_idle_event);
+							g_mutex_unlock(&cb_info->idle_event_mutex);
+
+							g_idle_add_full(G_PRIORITY_DEFAULT,
+							                (GSourceFunc)_camera_idle_event_callback,
+							                (gpointer)cam_idle_event,
+							                NULL);
+						} else {
+							LOGE("cam_idle_event alloc failed");
+						}
+						break;
+					default:
+						LOGE("unknown class %d", class);
+						break;
 					}
 				} else {
 					LOGW("unknown api : %d", api);
@@ -763,7 +884,7 @@ CB_HANDLER_EXIT:
 	return NULL;
 }
 
-static callback_cb_info_s *client_callback_new(gint sockfd)
+static callback_cb_info_s *_client_callback_new(gint sockfd)
 {
 	callback_cb_info_s *cb_info;
 	GCond *camera_cond;
@@ -781,18 +902,20 @@ static callback_cb_info_s *client_callback_new(gint sockfd)
 	cb_info->pCond = camera_cond;
 	cb_info->pMutex = camera_mutex;
 	cb_info->activating = camera_activ;
-	cb_info->msg_rcv_thread = g_thread_new("msg_rcv_thread", client_cb_handler, (gpointer)cb_info);
+	cb_info->msg_rcv_thread = g_thread_new("msg_rcv_thread", _client_cb_handler, (gpointer)cb_info);
 
 	g_atomic_int_set(&cb_info->event_thread_running, 1);
 	g_mutex_init(&cb_info->event_mutex);
 	g_cond_init(&cb_info->event_cond);
+	g_mutex_init(&cb_info->idle_event_mutex);
+	g_cond_init(&cb_info->idle_event_cond);
 	cb_info->event_queue = g_queue_new();
 	cb_info->event_thread = g_thread_new("event_thread", _event_handler, (gpointer)cb_info);
 
 	return cb_info;
 }
 
-static void client_callback_destroy(callback_cb_info_s * cb_info)
+static void _client_callback_destroy(callback_cb_info_s * cb_info)
 {
 	g_return_if_fail(cb_info != NULL);
 
@@ -817,6 +940,8 @@ static void client_callback_destroy(callback_cb_info_s * cb_info)
 	cb_info->event_queue = NULL;
 	g_mutex_clear(&cb_info->event_mutex);
 	g_cond_clear(&cb_info->event_cond);
+	g_mutex_clear(&cb_info->idle_event_mutex);
+	g_cond_clear(&cb_info->idle_event_cond);
 
 	LOGD("event thread removed");
 
@@ -888,11 +1013,11 @@ int camera_create(camera_device_e device, camera_h* camera)
 		goto ErrorExit;
 	}
 
-	pc->cb_info = client_callback_new(sock_fd);
+	pc->cb_info = _client_callback_new(sock_fd);
 
 	LOGD("cb info : %d", pc->cb_info->fd);
 
-	ret = client_wait_for_cb_return(api, pc->cb_info, CALLBACK_TIME_OUT);
+	ret = _client_wait_for_cb_return(api, pc->cb_info, CALLBACK_TIME_OUT);
 	if (ret == CAMERA_ERROR_NONE) {
 		intptr_t handle = 0;
 		muse_camera_msg_get_pointer(handle, pc->cb_info->recvMsg);
@@ -918,7 +1043,7 @@ ErrorExit:
 	bufmgr = NULL;
 
 	if (pc) {
-		client_callback_destroy(pc->cb_info);
+		_client_callback_destroy(pc->cb_info);
 		pc->cb_info = NULL;
 		g_free(pc);
 		pc = NULL;
@@ -951,7 +1076,8 @@ ErrorExit:
 
 	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
 	if (ret == CAMERA_ERROR_NONE) {
-		client_callback_destroy(pc->cb_info);
+		_camera_remove_idle_event_all(pc->cb_info);
+		_client_callback_destroy(pc->cb_info);
 		g_free(pc);
 		pc = NULL;
 	} else {
@@ -1035,7 +1161,7 @@ int camera_stop_preview(camera_h camera)
 	return ret;
 }
 
-int camera_start_capture(camera_h camera, camera_capturing_cb capturing_cb , camera_capture_completed_cb completed_cb , void *user_data)
+int camera_start_capture(camera_h camera, camera_capturing_cb capturing_cb, camera_capture_completed_cb completed_cb, void *user_data)
 {
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);

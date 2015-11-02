@@ -63,8 +63,8 @@ int camera_print_state;
 int multishot_num;
 static GTimer *timer = NULL;
 
-GTimeVal previous;
-GTimeVal current;
+GTimeVal previous_time;
+GTimeVal current_time;
 GTimeVal res;
 
 /*-----------------------------------------------------------------------
@@ -222,7 +222,7 @@ typedef struct{
 /*---------------------------------------------------------------------------
 |    LOCAL VARIABLE DEFINITIONS:                                            |
 ---------------------------------------------------------------------------*/
-static cam_handle_t *hcamcorder ;
+static cam_handle_t *hcamcorder;
 
 const char *wb[SENSOR_WHITEBALANCE_NUM]={
     "None",
@@ -437,6 +437,10 @@ static inline void flush_stdin()
     while ((ch=getchar()) != EOF && ch != '\n');
 }
 
+void _camera_state_changed_cb(camera_state_e previous, camera_state_e current,bool by_policy, void *user_data){
+    printf("camera state changed %d -> %d\n", previous , current);
+}
+
 bool preview_resolution_cb(int width, int height, void *user_data)
 {
     resolution_stack *data = (resolution_stack*)user_data;
@@ -620,6 +624,15 @@ void capturing_cb(camera_image_data_s* image, camera_image_data_s* postview, cam
     return;
 }
 
+void capture_completed_cb(void *user_data)
+{
+    camera_start_preview(hcamcorder->camera);
+
+    print_menu();
+
+    return;
+}
+
 static void print_menu()
 {
     switch (hcamcorder->menu_state)
@@ -701,9 +714,7 @@ static void main_menu(gchar buf)
             camera_get_state(hcamcorder->camera, &capi_state);
             camera_attr_set_image_quality(hcamcorder->camera, 100);
             camera_set_capture_format(hcamcorder->camera, CAMERA_PIXEL_FORMAT_JPEG);
-            camera_start_capture(hcamcorder->camera, capturing_cb,NULL, NULL);
-            sleep(3);
-            camera_start_preview(hcamcorder->camera);
+            camera_start_capture(hcamcorder->camera, capturing_cb, capture_completed_cb, hcamcorder);
             break;
 
         case '2' : //multishot Capture
@@ -727,6 +738,9 @@ static void main_menu(gchar buf)
             break;
 
         case 'b' : // back
+            camera_stop_preview(hcamcorder->camera);
+            camera_destroy(hcamcorder->camera);
+            hcamcorder->camera = NULL;
             hcamcorder->menu_state = MENU_STATE_MAIN;
             mode_change();
             break;
@@ -735,9 +749,7 @@ static void main_menu(gchar buf)
             g_print("\t Invalid input \n");
             break;
         }
-    }
-
-    else {
+    } else {
         g_print("\t Invalid mode, back to upper menu \n");
         hcamcorder->menu_state = MENU_STATE_MAIN;
         mode_change();
@@ -1362,7 +1374,7 @@ static gboolean mode_change()
     }
 
     LOGD("camcorder_create");
-    g_get_current_time(&previous);
+    g_get_current_time(&previous_time);
     g_timer_reset(timer);
 
     err = camera_create(cam_info,&hcamcorder->camera);
@@ -1376,12 +1388,13 @@ static gboolean mode_change()
     }
     camera_print_state = CAMERA_STATE_CREATED;
 
+    camera_set_state_changed_cb(hcamcorder->camera, _camera_state_changed_cb, NULL);
     camera_set_display_mode(hcamcorder->camera,0 ); //MM_DISPLAY_METHOD_LETTER_BOX
     camera_set_display(hcamcorder->camera,CAMERA_DISPLAY_TYPE_OVERLAY, GET_DISPLAY(eo));
 
     camera_start_preview(hcamcorder->camera);
-    g_get_current_time(&current);
-    timersub(&current, &previous, &res);
+    g_get_current_time(&current_time);
+    timersub(&current_time, &previous_time, &res);
     LOGD("Camera Starting Time  : %ld.%lds", res.tv_sec, res.tv_usec);
     camera_print_state = CAMERA_STATE_PREVIEW;
 

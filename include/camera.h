@@ -817,7 +817,7 @@ int camera_stop_preview(camera_h camera);
  * @see camera_attr_set_image_quality()
  * @see camera_attr_get_image_quality()
  */
-int camera_start_capture(camera_h camera, camera_capturing_cb capturing_cb , camera_capture_completed_cb completed_cb , void *user_data);
+int camera_start_capture(camera_h camera, camera_capturing_cb capturing_cb, camera_capture_completed_cb completed_cb, void *user_data);
 
 /**
  * @brief Starts continuously capturing still images.
