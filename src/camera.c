@@ -43,6 +43,153 @@
 #define LOG_TAG "TIZEN_N_CAMERA_CLIENT"
 
 
+int __convert_camera_error_code(const char *func, int code)
+{
+	int ret = CAMERA_ERROR_NONE;
+	const char *errorstr = NULL;
+
+	switch (code) {
+	case MM_ERROR_NONE:
+		ret = CAMERA_ERROR_NONE;
+		errorstr = "ERROR_NONE";
+		break;
+	case MM_ERROR_CAMCORDER_INVALID_ARGUMENT:
+	case MM_ERROR_COMMON_INVALID_ATTRTYPE:
+		ret = CAMERA_ERROR_INVALID_PARAMETER;
+		errorstr = "INVALID_PARAMETER";
+		break;
+	case MM_ERROR_CAMCORDER_NOT_INITIALIZED:
+	case MM_ERROR_CAMCORDER_INVALID_STATE:
+		ret = CAMERA_ERROR_INVALID_STATE;
+		errorstr = "INVALID_STATE";
+		break;
+	case MM_ERROR_CAMCORDER_DEVICE_NOT_FOUND:
+		ret = CAMERA_ERROR_DEVICE_NOT_FOUND;
+		errorstr = "DEVICE_NOT_FOUND";
+		break;
+	case MM_ERROR_CAMCORDER_DEVICE_BUSY:
+	case MM_ERROR_CAMCORDER_DEVICE_OPEN:
+	case MM_ERROR_CAMCORDER_CMD_IS_RUNNING:
+		ret = CAMERA_ERROR_DEVICE_BUSY;
+		errorstr = "DEVICE_BUSY";
+		break;
+	case MM_ERROR_CAMCORDER_DEVICE:
+	case MM_ERROR_CAMCORDER_DEVICE_IO:
+	case MM_ERROR_CAMCORDER_DEVICE_TIMEOUT:
+	case MM_ERROR_CAMCORDER_DEVICE_WRONG_JPEG:
+	case MM_ERROR_CAMCORDER_DEVICE_LACK_BUFFER:
+		ret = CAMERA_ERROR_DEVICE;
+		errorstr = "ERROR_DEVICE";
+		break;
+	case MM_ERROR_CAMCORDER_GST_CORE:
+	case MM_ERROR_CAMCORDER_GST_LIBRARY:
+	case MM_ERROR_CAMCORDER_GST_RESOURCE:
+	case MM_ERROR_CAMCORDER_GST_STREAM:
+	case MM_ERROR_CAMCORDER_GST_STATECHANGE:
+	case MM_ERROR_CAMCORDER_GST_NEGOTIATION:
+	case MM_ERROR_CAMCORDER_GST_LINK:
+	case MM_ERROR_CAMCORDER_GST_FLOW_ERROR:
+	case MM_ERROR_CAMCORDER_ENCODER:
+	case MM_ERROR_CAMCORDER_ENCODER_BUFFER:
+	case MM_ERROR_CAMCORDER_ENCODER_WRONG_TYPE:
+	case MM_ERROR_CAMCORDER_ENCODER_WORKING:
+	case MM_ERROR_CAMCORDER_INTERNAL:
+	case MM_ERROR_CAMCORDER_RESPONSE_TIMEOUT:
+	case MM_ERROR_CAMCORDER_DSP_FAIL:
+	case MM_ERROR_CAMCORDER_AUDIO_EMPTY:
+	case MM_ERROR_CAMCORDER_CREATE_CONFIGURE:
+	case MM_ERROR_CAMCORDER_FILE_SIZE_OVER:
+	case MM_ERROR_CAMCORDER_DISPLAY_DEVICE_OFF:
+	case MM_ERROR_CAMCORDER_INVALID_CONDITION:
+		ret = CAMERA_ERROR_INVALID_OPERATION;
+		errorstr = "INVALID_OPERATION";
+		break;
+	case MM_ERROR_CAMCORDER_RESOURCE_CREATION:
+	case MM_ERROR_COMMON_OUT_OF_MEMORY:
+		ret = CAMERA_ERROR_OUT_OF_MEMORY;
+		errorstr = "OUT_OF_MEMORY";
+		break;
+	case MM_ERROR_POLICY_BLOCKED:
+		ret = CAMERA_ERROR_SOUND_POLICY;
+		errorstr = "ERROR_SOUND_POLICY";
+		break;
+	case MM_ERROR_POLICY_BLOCKED_BY_CALL:
+		ret = CAMERA_ERROR_SOUND_POLICY_BY_CALL;
+		errorstr = "ERROR_SOUND_POLICY_BY_CALL";
+		break;
+	case MM_ERROR_POLICY_BLOCKED_BY_ALARM:
+		ret = CAMERA_ERROR_SOUND_POLICY_BY_ALARM;
+		errorstr = "ERROR_SOUND_POLICY_BY_ALARM";
+		break;
+	case MM_ERROR_POLICY_RESTRICTED:
+		ret = CAMERA_ERROR_SECURITY_RESTRICTED;
+		errorstr = "ERROR_RESTRICTED";
+		break;
+	case MM_ERROR_CAMCORDER_DEVICE_REG_TROUBLE:
+		ret = CAMERA_ERROR_ESD;
+		errorstr = "ERROR_ESD";
+		break;
+	case MM_ERROR_COMMON_INVALID_PERMISSION:
+		ret = CAMERA_ERROR_PERMISSION_DENIED;
+		errorstr = "ERROR_PERMISSION_DENIED";
+		break;
+	case MM_ERROR_COMMON_OUT_OF_ARRAY:
+	case MM_ERROR_COMMON_OUT_OF_RANGE:
+	case MM_ERROR_COMMON_ATTR_NOT_EXIST:
+	case MM_ERROR_CAMCORDER_NOT_SUPPORTED:
+		ret = CAMERA_ERROR_NOT_SUPPORTED;
+		errorstr = "ERROR_NOT_SUPPORTED";
+		break;
+	default:
+		ret = CAMERA_ERROR_INVALID_OPERATION;
+		errorstr = "INVALID_OPERATION";
+	}
+
+	if (code != MM_ERROR_NONE) {
+		LOGE("[%s] %s(0x%08x) : core frameworks error code(0x%08x)", func ? func : "NULL_FUNC", errorstr, ret, code);
+	}
+
+	return ret;
+}
+
+#ifdef HAVE_WAYLAND
+static MMCamWaylandInfo *_get_wl_info(Evas_Object *obj)
+{
+	MMCamWaylandInfo *wl_info = NULL;
+
+	if (obj == NULL) {
+		LOGE("evas object is NULL");
+		return NULL;
+	}
+
+	wl_info = g_new0(MMCamWaylandInfo, 1);
+	if (wl_info == NULL) {
+		LOGE("wl_info alloc failed : %d", sizeof(MMCamWaylandInfo));
+		return NULL;
+	}
+
+	wl_info->evas_obj = (void *)obj;
+	wl_info->window = (void *)elm_win_wl_window_get(obj);
+	wl_info->surface = (void *)ecore_wl_window_surface_get(wl_info->window);
+	wl_info->display = (void *)ecore_wl_display_get();
+
+	if (wl_info->window == NULL || wl_info->surface == NULL || wl_info->display == NULL) {
+		LOGE("something is NULL %p, %p, %p", wl_info->window, wl_info->surface, wl_info->display);
+		g_free(wl_info);
+		return NULL;
+	}
+
+	evas_object_geometry_get(obj, &wl_info->window_x, &wl_info->window_y,
+	                         &wl_info->window_width, &wl_info->window_height);
+
+	LOGD("wayland obj %p, window %p, surface %p, display %p, size %d,%d,%dx%d",
+	     wl_info->evas_obj, wl_info->window, wl_info->surface, wl_info->display,
+	     wl_info->window_x, wl_info->window_y, wl_info->window_width, wl_info->window_height);
+
+	return wl_info;
+}
+#endif /* HAVE_WAYLAND */
+
 static int _import_tbm_key(tbm_bufmgr bufmgr, unsigned int tbm_key, tbm_bo *bo, tbm_bo_handle *bo_handle)
 {
 	tbm_bo tmp_bo = NULL;
@@ -609,6 +756,7 @@ static bool _camera_idle_event_callback(void *data)
 	if (cb_info->idle_event_list) {
 		cb_info->idle_event_list = g_list_remove(cb_info->idle_event_list, (gpointer)cam_idle_event);
 	}
+	/*LOGD("remove idle event %p, %p", cam_idle_event, cb_info->idle_event_list);*/
 	g_mutex_unlock(&cb_info->idle_event_mutex);
 
 	/* user callback */
@@ -642,7 +790,7 @@ static void _camera_remove_idle_event_all(callback_cb_info_s *cb_info)
 
 	g_mutex_lock(&cb_info->idle_event_mutex);
 
-	if (cb_info->idle_event_list) {
+	if (cb_info->idle_event_list == NULL) {
 		LOGD("No idle event is remained.");
 	} else {
 		list = cb_info->idle_event_list;
@@ -838,10 +986,11 @@ static void *_client_cb_handler(gpointer data)
 							g_mutex_init(&cam_idle_event->event_mutex);
 							memcpy(cam_idle_event->recvMsg, recvMsg, sizeof(cam_idle_event->recvMsg));
 
-							LOGD("add event to IDLE : %d", event);
+							LOGD("add event[%d] to IDLE %p", event, cam_idle_event);
 
 							g_mutex_lock(&cb_info->idle_event_mutex);
 							cb_info->idle_event_list = g_list_append(cb_info->idle_event_list, (gpointer)cam_idle_event);
+							/*LOGD("add idle event %p, %p", cam_idle_event, cb_info->idle_event_list);*/
 							g_mutex_unlock(&cb_info->idle_event_mutex);
 
 							g_idle_add_full(G_PRIORITY_DEFAULT,
@@ -1076,8 +1225,15 @@ ErrorExit:
 
 	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
 	if (ret == CAMERA_ERROR_NONE) {
+		mm_camcorder_client_destroy(pc->client_handle);
 		_camera_remove_idle_event_all(pc->cb_info);
 		_client_callback_destroy(pc->cb_info);
+
+		if (pc->wl_info) {
+			g_free(pc->wl_info);
+			pc->wl_info = NULL;
+		}
+
 		g_free(pc);
 		pc = NULL;
 	} else {
@@ -1089,41 +1245,60 @@ ErrorExit:
 
 int camera_start_preview(camera_h camera)
 {
-	LOGD("start");
+	int ret = CAMERA_ERROR_NONE;
+	muse_camera_api_e api = MUSE_CAMERA_API_START_PREVIEW;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	int sock_fd = 0;
+	int prev_state = CAMERA_STATE_NONE;
+	char caps[MUSE_CAMERA_MSG_MAX_LENGTH] = {0};
+
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-
-	int ret = CAMERA_ERROR_NONE;
-	muse_camera_api_e api = MUSE_CAMERA_API_START_PREVIEW;
-	camera_cli_s *pc = (camera_cli_s *)camera;
-	int sock_fd;
-	char caps[MUSE_CAMERA_MSG_MAX_LENGTH] = {0};
 
 	if (pc->cb_info == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
+	LOGD("start");
+
 	sock_fd = pc->cb_info->fd;
 
 	muse_camera_msg_send_longtime(api, sock_fd, pc->cb_info, ret);
-	LOGD("Enter,  ret :0x%x", ret);
-	if(ret == CAMERA_ERROR_NONE) {
+
+	if (ret != CAMERA_ERROR_NONE) {
+		LOGE("start preview failed 0x%x", ret);
+		return ret;
+	}
+
+	muse_camera_msg_get(prev_state, pc->cb_info->recvMsg);
+
+	if (prev_state == CAMERA_STATE_CREATED) {
 		muse_camera_msg_get_string(caps, pc->cb_info->recvMsg);
+		if (caps == NULL) {
+			LOGE("failed to get caps string");
+			goto _START_PREVIEW_ERROR;
+		}
+
 		LOGD("caps : %s", caps);
-		if (pc->cli_display_handle != 0) {
-			LOGD("client's display handle is : 0x%x", pc->cli_display_handle);
-			if(strlen(caps) > 0 &&
-					mm_camcorder_client_realize(pc->client_handle, caps) != MM_ERROR_NONE)
-				ret = CAMERA_ERROR_INVALID_OPERATION;
-		} else {
-			LOGD("display handle is NULL");
+
+		ret = mm_camcorder_client_realize(pc->client_handle, caps);
+		if (ret != MM_ERROR_NONE) {
+			LOGE("client realize failed 0x%x", ret);
+			goto _START_PREVIEW_ERROR;
 		}
 	}
+
 	LOGD("ret : 0x%x", ret);
-	return ret;
+
+	return CAMERA_ERROR_NONE;
+
+_START_PREVIEW_ERROR:
+	muse_camera_msg_send_longtime(MUSE_CAMERA_API_STOP_PREVIEW, sock_fd, pc->cb_info, ret);
+
+	return CAMERA_ERROR_INVALID_OPERATION;
 }
 
 int camera_stop_preview(camera_h camera)
@@ -1146,18 +1321,25 @@ int camera_stop_preview(camera_h camera)
 	LOGD("Enter");
 	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
 
-	if(ret == CAMERA_ERROR_NONE) {
-		if (pc->cli_display_handle != 0) {
-			LOGD("Unrealize client");
-			if (pc->client_handle != NULL) {
-				ret = mm_camcorder_client_unrealize(pc->client_handle);
-				mm_camcorder_client_destroy(pc->client_handle);
-			}
-		} else {
-			LOGD("Client did not realized : Display handle is NULL");
-		}
+	if (ret != CAMERA_ERROR_NONE) {
+		LOGE("stop preview failed 0x%x", ret);
+		return ret;
 	}
+
+	if (pc->client_handle != NULL) {
+		if (mm_camcorder_client_unrealize(pc->client_handle) == MM_ERROR_NONE) {
+			LOGD("client unrealize done");
+		} else {
+			LOGE("client unrealize failed. restart preview...");
+			muse_camera_msg_send_longtime(MUSE_CAMERA_API_START_PREVIEW, sock_fd, pc->cb_info, ret);
+			return CAMERA_ERROR_INVALID_OPERATION;
+		}
+	} else {
+		LOGW("client handle is NULL");
+	}
+
 	LOGD("ret : 0x%x", ret);
+
 	return ret;
 }
 
@@ -1510,12 +1692,14 @@ int camera_cancel_focusing(camera_h camera)
 int camera_set_display(camera_h camera, camera_display_type_e type, camera_display_h display)
 {
 	int ret = CAMERA_ERROR_NONE;
-	int display_surface;
 	void *set_display_handle = NULL;
 	int set_surface = MM_DISPLAY_SURFACE_X;
 	Evas_Object *obj = NULL;
 	const char *object_type = NULL;
 	char socket_path[MUSE_CAMERA_MSG_MAX_LENGTH] = {0,};
+#ifdef HAVE_WAYLAND
+	MMCamWaylandInfo *wl_info = NULL;
+#endif /* HAVE_WAYLAND */
 
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
@@ -1527,7 +1711,6 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int display_type = (int)type;
 	camera_cli_s *pc = (camera_cli_s *)camera;
 	muse_camera_api_e api = MUSE_CAMERA_API_SET_DISPLAY;
 	int sock_fd;
@@ -1549,40 +1732,20 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 		if (object_type) {
 			if (type == CAMERA_DISPLAY_TYPE_OVERLAY && !strcmp(object_type, "elm_win")) {
 #ifdef HAVE_WAYLAND
-				MMCamWaylandInfo *wl_info = g_new0(MMCamWaylandInfo, 1);
-
+				/* set wayland info */
+				wl_info = _get_wl_info(obj);
 				if (wl_info == NULL) {
-					LOGE("wl_info alloc failed : %d", sizeof(MMCamWaylandInfo));
-					return CAMERA_ERROR_OUT_OF_MEMORY;
-				}
-
-				wl_info->evas_obj = (void *)obj;
-				wl_info->window = (void *)elm_win_wl_window_get(obj);
-				wl_info->surface = (void *)ecore_wl_window_surface_get(wl_info->window);
-				wl_info->display = (void *)ecore_wl_display_get();
-
-				if (wl_info->window == NULL || wl_info->surface == NULL || wl_info->display == NULL) {
-					LOGE("something is NULL %p, %p, %p", wl_info->window, wl_info->surface, wl_info->display);
+					LOGE("failed to get wl_info");
 					return CAMERA_ERROR_INVALID_OPERATION;
 				}
 
-				evas_object_geometry_get(obj, &wl_info->window_x, &wl_info->window_y,
-							      &wl_info->window_width, &wl_info->window_height);
-
-				/* set wayland info */
-				pc->wl_info = wl_info;
-				set_surface = MM_DISPLAY_SURFACE_X;
 				set_display_handle = (void *)wl_info;
-
-				LOGD("wayland obj %p, window %p, surface %p, display %p, size %d,%d,%dx%d",
-				     wl_info->evas_obj, wl_info->window, wl_info->surface, wl_info->display,
-				     wl_info->window_x, wl_info->window_y, wl_info->window_width, wl_info->window_height);
 #else /* HAVE_WAYLAND */
 				/* x window overlay surface */
 				set_display_handle = (void *)elm_win_xwindow_get(obj);
+#endif
 				set_surface = MM_DISPLAY_SURFACE_X;
 				LOGD("display type OVERLAY : handle %p", set_display_handle);
-#endif
 			} else if (type == CAMERA_DISPLAY_TYPE_EVAS && !strcmp(object_type, "image")) {
 				/* evas object surface */
 				set_display_handle = (void *)display;
@@ -1599,33 +1762,70 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 	}
 
 	pc->cli_display_handle = (intptr_t)set_display_handle;
-	display_surface = (int)set_surface;
-	muse_camera_msg_send2(api, sock_fd, pc->cb_info, ret,
-							    INT, display_type,
-							    INT, display_surface);
 
-	if (ret == CAMERA_ERROR_NONE && type == CAMERA_DISPLAY_TYPE_OVERLAY && !strcmp(object_type, "elm_win")) {
-		if (mm_camcorder_client_create(&(pc->client_handle))) {
-			LOGE("camera client create Failed");
-			return CAMERA_ERROR_INVALID_OPERATION;
+	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		if (pc->client_handle == NULL) {
+			ret = mm_camcorder_client_create(&pc->client_handle);
+			if (ret != MM_ERROR_NONE) {
+				LOGE("camera client create Failed 0x%x", ret);
+				goto _SET_DISPLAY_ERROR;
+			}
 		}
+
 		muse_camera_msg_get_string(socket_path, pc->cb_info->recvMsg);
-		LOGD("shmsrc stream path : %s", socket_path);
-		if(mm_camcorder_client_set_shm_socket_path(pc->client_handle, socket_path)
-				!= MM_ERROR_NONE)
-			return CAMERA_ERROR_INVALID_OPERATION;
-		ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
-						  MMCAM_DISPLAY_SURFACE, set_surface,
-						  NULL);
-		if (ret == MM_ERROR_NONE && type != CAMERA_DISPLAY_TYPE_NONE) {
-			ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
-							  MMCAM_DISPLAY_HANDLE, pc->cli_display_handle, sizeof(void *),
-							  NULL);
-			LOGD("ret : 0x%x", ret);
+		if (socket_path == NULL) {
+			LOGE("failed to get socket path");
+			goto _SET_DISPLAY_ERROR;
 		}
+
+		LOGD("shmsrc socket path : %s", socket_path);
+
+		ret = mm_camcorder_client_set_shm_socket_path(pc->client_handle, socket_path);
+		if (ret != MM_ERROR_NONE) {
+			LOGE("failed to set socket path 0x%x", ret);
+			goto _SET_DISPLAY_ERROR;
+		}
+
+		ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
+		                                  MMCAM_DISPLAY_SURFACE, set_surface,
+		                                  NULL);
+		if (ret != MM_ERROR_NONE) {
+			LOGE("set display surface failed 0x%x", ret);
+			goto _SET_DISPLAY_ERROR;
+		}
+
+		if (type != CAMERA_DISPLAY_TYPE_NONE) {
+			ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
+			                                  MMCAM_DISPLAY_HANDLE, set_display_handle, sizeof(void *),
+			                                  NULL);
+			if (ret != MM_ERROR_NONE) {
+				LOGE("set display handle failed 0x%x", ret);
+				goto _SET_DISPLAY_ERROR;
+			}
+		}
+
+		if (pc->wl_info) {
+			g_free(pc->wl_info);
+			pc->wl_info = NULL;
+		}
+
+		pc->wl_info = wl_info;
+
+		return CAMERA_ERROR_NONE;;
+	} else {
+		LOGE("set display error - 0x%x");
+		return ret;
 	}
-	LOGD("ret : 0x%x", ret);
-	return ret;
+
+_SET_DISPLAY_ERROR:
+	if (wl_info) {
+		g_free(wl_info);
+		wl_info = NULL;
+	}
+
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_set_preview_resolution(camera_h camera,  int width, int height)
