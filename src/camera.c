@@ -1231,11 +1231,12 @@ ErrorExit:
 		}
 		_camera_remove_idle_event_all(pc->cb_info);
 		_client_callback_destroy(pc->cb_info);
-
+#ifdef HAVE_WAYLAND
 		if (pc->wl_info) {
 			g_free(pc->wl_info);
 			pc->wl_info = NULL;
 		}
+#endif /* HAVE_WAYLAND */
 
 		g_free(pc);
 		pc = NULL;
@@ -1818,12 +1819,14 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 			}
 		}
 
+#ifdef HAVE_WAYLAND
 		if (pc->wl_info) {
 			g_free(pc->wl_info);
 			pc->wl_info = NULL;
 		}
 
 		pc->wl_info = wl_info;
+#endif /* HAVE_WAYLAND */
 
 		return CAMERA_ERROR_NONE;;
 	} else {
@@ -1832,10 +1835,12 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 	}
 
 _SET_DISPLAY_ERROR:
+#ifdef HAVE_WAYLAND
 	if (wl_info) {
 		g_free(wl_info);
 		wl_info = NULL;
 	}
+#endif /* HAVE_WAYLAND */
 
 	return __convert_camera_error_code(__func__, ret);
 }
