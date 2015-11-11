@@ -517,7 +517,7 @@ typedef void (*camera_focus_changed_cb)(camera_focus_state_e state, void *user_d
  * @brief Called to register for notifications about delivering a copy of the new preview frame when every preview frame is displayed.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  *
- * @remarks This function is issued in the context of gstreamer so the UI update code should not be directly invoked.\n
+ * @remarks This function is issued in the context of internal framework so the UI update code should not be directly invoked.\n
  *          If the camera is used as a recorder then this callback function won't be called.
  *
  * @param[in] frame The reference pointer to preview stream data
@@ -533,7 +533,7 @@ typedef void (*camera_preview_cb)(camera_preview_data_s *frame, void *user_data)
  * @brief Called to register for notifications about delivering media packet when every preview frame is displayed.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  *
- * @remarks This function is issued in the context of gstreamer so the UI update code should not be directly invoked.\n
+ * @remarks This function is issued in the context of internal framework so the UI update code should not be directly invoked.\n
  *          If the camera is used as a recorder then this callback function won't be called.\n
  *          and the packet should be released by media_packet_destroy() after use.
  *
@@ -1549,10 +1549,12 @@ bool camera_is_supported_media_packet_preview_cb(camera_h camera);
  * @remarks This callback does not work in the video recorder mode.\n
  *          This function should be called before previewing (see camera_start_preview()).\n
  *          A registered callback is called on the internal thread of the camera.\n
- *          A video frame can be retrieved using a registered callback.\n
- *          The callback function holds the same buffer that will be drawn on the display device.\n
- *          So if you change the buffer in a registerd callback, it will be displayed on the device\n
- *          and the buffer is only available in a registerd callback.
+ *          A video frame can be retrieved using a registered callback,\n
+ *          and the buffer is only available in a registerd callback.\n
+ *          Since tizen 3.0, if you change the buffer in a registered callback,\n
+ *          it could not be displayed on the device in case of copied buffer.\n
+ *          and if camera_is_supported_media_packet_preview_cb() returns false,\n
+ *          it's copied buffer case.
  * @param[in] camera The handle to the camera
  * @param[in] callback The callback function to be registered
  * @param[in] user_data The user data to be passed to the callback function

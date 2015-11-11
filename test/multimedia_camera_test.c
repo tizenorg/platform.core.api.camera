@@ -1316,6 +1316,42 @@ static gboolean init_handle()
 
     return TRUE;
 }
+
+void _preview_cb(camera_preview_data_s *frame, void *user_data)
+{
+#if 0
+	FILE *fp = fopen("/opt/usr/media/test.yuv", "a");
+	if (fp == NULL) {
+		g_print("\n============ file open failed ===========================\n");
+		return;
+	}
+
+	switch (frame->num_of_planes) {
+	case 1:
+		fwrite(frame->data.single_plane.yuv, 1, frame->data.single_plane.size, fp);
+	case 2:
+		fwrite(frame->data.double_plane.y, 1, frame->data.double_plane.y_size, fp);
+		fwrite(frame->data.double_plane.uv, 1, frame->data.double_plane.uv_size, fp);
+	case 3:
+		fwrite(frame->data.triple_plane.y, 1, frame->data.triple_plane.y_size, fp);
+		fwrite(frame->data.triple_plane.u, 1, frame->data.triple_plane.u_size, fp);
+		fwrite(frame->data.triple_plane.v, 1, frame->data.triple_plane.v_size, fp);
+	default:
+		break;
+	}
+
+	g_print("file write done ---\n");
+
+	fclose(fp);
+	fp = NULL;
+#else
+	g_print("----- preview callback - format %d, %dx%d, num plane %d\n",
+	        frame->format, frame->width, frame->height, frame->num_of_planes);
+#endif
+
+	return;
+}
+
 /**
 * This function is to change camcorder mode.
 *
@@ -1391,6 +1427,8 @@ static gboolean mode_change()
     camera_set_state_changed_cb(hcamcorder->camera, _camera_state_changed_cb, NULL);
     camera_set_display_mode(hcamcorder->camera,0 ); //MM_DISPLAY_METHOD_LETTER_BOX
     camera_set_display(hcamcorder->camera, CAMERA_DISPLAY_TYPE_OVERLAY, GET_DISPLAY(eo));
+
+    //camera_set_preview_cb(hcamcorder->camera, _preview_cb, hcamcorder->camera);
 
     camera_start_preview(hcamcorder->camera);
     g_get_current_time(&current_time);

@@ -25,6 +25,7 @@
 #include <muse_camera.h>
 #include <mm_camcorder.h>
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -76,6 +77,8 @@ typedef struct _callback_cb_info {
 	gint *activating;
 	tbm_bufmgr bufmgr;
 	GQueue *event_queue;
+	gint prev_state;
+	media_format_h pkt_fmt;
 } callback_cb_info_s;
 
 typedef struct _camera_event_s {
@@ -100,6 +103,13 @@ typedef struct _camera_cli_s {
 	MMCamWaylandInfo *wl_info;
 #endif /* #ifdef HAVE_WAYLAND */
 } camera_cli_s;
+
+typedef struct _camera_media_packet_data {
+	int tbm_key;
+	tbm_bo bo;
+	tbm_bo buffer_bo[BUFFER_MAX_PLANE_NUM];
+	int num_buffer_key;
+} camera_media_packet_data;
 
 typedef enum {
 	MUSE_CAMERA_CLIENT_SYNC_CB_HANDLER,
