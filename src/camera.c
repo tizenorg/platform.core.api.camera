@@ -29,6 +29,9 @@
 //#include <glib.h>
 #include <dlog.h>
 #include <Elementary.h>
+#include <tbm_surface_internal.h>
+#include <gst/gst.h>
+#include <mm_camcorder.h>
 #include <mm_camcorder_client.h>
 #include <Evas.h>
 #ifdef HAVE_WAYLAND
@@ -225,7 +228,7 @@ static int _import_tbm_key(tbm_bufmgr bufmgr, unsigned int tbm_key, tbm_bo *bo, 
 static void _release_imported_bo(tbm_bo *bo)
 {
 	if (bo == NULL || *bo == NULL) {
-		LOGE("NULL bo");
+		LOGW("NULL bo");
 		return;
 	}
 
@@ -272,6 +275,174 @@ static int _client_wait_for_cb_return(muse_camera_api_e api, callback_cb_info_s 
 	g_mutex_unlock(&(cb_info->pMutex[api]));
 	LOGD("ret : 0x%x", ret);
 	return ret;
+}
+
+int _camera_get_tbm_surface_format(int in_format, uint32_t *out_format)
+{
+	if (in_format <= MM_PIXEL_FORMAT_INVALID ||
+	    in_format >= MM_PIXEL_FORMAT_NUM ||
+	    out_format == NULL) {
+		LOGE("INVALID_PARAMETER : in_format %d, out_format ptr %p", in_format, out_format);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	switch (in_format) {
+	case MM_PIXEL_FORMAT_NV12:
+	case MM_PIXEL_FORMAT_NV12T:
+		*out_format = TBM_FORMAT_NV12;
+		break;
+	case MM_PIXEL_FORMAT_NV16:
+		*out_format = TBM_FORMAT_NV16;
+		break;
+	case MM_PIXEL_FORMAT_NV21:
+		*out_format = TBM_FORMAT_NV21;
+		break;
+	case MM_PIXEL_FORMAT_YUYV:
+		*out_format = TBM_FORMAT_YUYV;
+		break;
+	case MM_PIXEL_FORMAT_UYVY:
+	case MM_PIXEL_FORMAT_ITLV_JPEG_UYVY:
+		*out_format = TBM_FORMAT_UYVY;
+		break;
+	case MM_PIXEL_FORMAT_422P:
+		*out_format = TBM_FORMAT_YUV422;
+		break;
+	case MM_PIXEL_FORMAT_I420:
+		*out_format = TBM_FORMAT_YUV420;
+		break;
+	case MM_PIXEL_FORMAT_YV12:
+		*out_format = TBM_FORMAT_YVU420;
+		break;
+	case MM_PIXEL_FORMAT_RGB565:
+		*out_format = TBM_FORMAT_RGB565;
+		break;
+	case MM_PIXEL_FORMAT_RGB888:
+		*out_format = TBM_FORMAT_RGB888;
+		break;
+	case MM_PIXEL_FORMAT_RGBA:
+		*out_format = TBM_FORMAT_RGBA8888;
+		break;
+	case MM_PIXEL_FORMAT_ARGB:
+		*out_format = TBM_FORMAT_ARGB8888;
+		break;
+	default:
+		LOGE("invalid in_format %d", in_format);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	return CAMERA_ERROR_NONE;
+}
+
+
+int _camera_get_media_packet_mimetype(int in_format, media_format_mimetype_e *mimetype)
+{
+	if (in_format <= MM_PIXEL_FORMAT_INVALID ||
+	    in_format >= MM_PIXEL_FORMAT_NUM ||
+	    mimetype == NULL) {
+		LOGE("INVALID_PARAMETER : in_format %d, mimetype ptr %p", in_format, mimetype);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	switch (in_format) {
+	case MM_PIXEL_FORMAT_NV12:
+	case MM_PIXEL_FORMAT_NV12T:
+		*mimetype = MEDIA_FORMAT_NV12;
+		break;
+	case MM_PIXEL_FORMAT_NV16:
+		*mimetype = MEDIA_FORMAT_NV16;
+		break;
+	case MM_PIXEL_FORMAT_NV21:
+		*mimetype = MEDIA_FORMAT_NV21;
+		break;
+	case MM_PIXEL_FORMAT_YUYV:
+		*mimetype = MEDIA_FORMAT_YUYV;
+		break;
+	case MM_PIXEL_FORMAT_UYVY:
+	case MM_PIXEL_FORMAT_ITLV_JPEG_UYVY:
+		*mimetype = MEDIA_FORMAT_UYVY;
+		break;
+	case MM_PIXEL_FORMAT_422P:
+		*mimetype = MEDIA_FORMAT_422P;
+		break;
+	case MM_PIXEL_FORMAT_I420:
+		*mimetype = MEDIA_FORMAT_I420;
+		break;
+	case MM_PIXEL_FORMAT_YV12:
+		*mimetype = MEDIA_FORMAT_YV12;
+		break;
+	case MM_PIXEL_FORMAT_RGB565:
+		*mimetype = MEDIA_FORMAT_RGB565;
+		break;
+	case MM_PIXEL_FORMAT_RGB888:
+		*mimetype = MEDIA_FORMAT_RGB888;
+		break;
+	case MM_PIXEL_FORMAT_RGBA:
+		*mimetype = MEDIA_FORMAT_RGBA;
+		break;
+	case MM_PIXEL_FORMAT_ARGB:
+		*mimetype = MEDIA_FORMAT_ARGB;
+		break;
+	default:
+		LOGE("invalid in_format %d", in_format);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	return CAMERA_ERROR_NONE;
+}
+
+int _camera_media_packet_finalize(media_packet_h pkt, int error_code, void *user_data)
+{
+	int i = 0;
+	int ret = 0;
+	callback_cb_info_s *cb_info = (callback_cb_info_s *)user_data;
+	camera_media_packet_data *mp_data = NULL;
+	tbm_surface_h tsurf = NULL;
+
+	if (pkt == NULL || cb_info == NULL) {
+		LOGE("invalid parameter buffer %p, cb_info %p", pkt, cb_info);
+		return MEDIA_PACKET_FINALIZE;
+	}
+
+	ret = media_packet_get_extra(pkt, (void **)&mp_data);
+	if (ret != MEDIA_PACKET_ERROR_NONE) {
+		LOGE("media_packet_get_extra failed 0x%x", ret);
+		return MEDIA_PACKET_FINALIZE;
+	}
+
+	/*LOGD("mp_data %p", mp_data);*/
+
+	if (mp_data) {
+		int tbm_key = mp_data->tbm_key;
+
+		/* release imported bo */
+		for (i = 0 ; i < mp_data->num_buffer_key ; i++) {
+			tbm_bo_unref(mp_data->buffer_bo[i]);
+			mp_data->buffer_bo[i] = NULL;
+		}
+
+		/* unmap and unref tbm bo */
+		_release_imported_bo(&mp_data->bo);
+
+		/* return buffer */
+		muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
+		                                cb_info->fd, cb_info,
+		                                INT, tbm_key);
+
+		mp_data = NULL;
+	}
+
+	ret = media_packet_get_tbm_surface(pkt, &tsurf);
+	if (ret != MEDIA_PACKET_ERROR_NONE) {
+		LOGE("media_packet_get_tbm_surface failed 0x%x", ret);
+		return MEDIA_PACKET_FINALIZE;
+	}
+
+	if (tsurf) {
+		tbm_surface_destroy(tsurf);
+		tsurf = NULL;
+	}
+
+	return MEDIA_PACKET_FINALIZE;
 }
 
 static void _client_user_callback(callback_cb_info_s *cb_info, char *recvMsg, muse_camera_event_e event)
@@ -331,12 +502,24 @@ static void _client_user_callback(callback_cb_info_s *cb_info, char *recvMsg, mu
 		((camera_capture_completed_cb)cb_info->user_cb[event])(cb_info->user_data[event]);
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_PREVIEW:
+	case MUSE_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW:
 		{
+			camera_preview_data_s frame;
 			unsigned char *buf_pos = NULL;
-			camera_preview_data_s *frame = NULL;
+			MMCamcorderVideoStreamDataType *stream = NULL;
+			int i = 0;
 			int total_size = 0;
+			int num_buffer_key = 0;
+			int buffer_key[BUFFER_MAX_PLANE_NUM] = {0, };
+			tbm_bo buffer_bo[BUFFER_MAX_PLANE_NUM] = {NULL, };
+			tbm_bo_handle buffer_bo_handle[BUFFER_MAX_PLANE_NUM] = {{.ptr = NULL}, };
+			camera_media_packet_data *mp_data = NULL;
 
 			muse_camera_msg_get(tbm_key, recvMsg);
+			muse_camera_msg_get(num_buffer_key, recvMsg);
+			muse_camera_msg_get_array(buffer_key, recvMsg);
+
+			memset(&frame, 0x0, sizeof(camera_preview_data_s));
 
 			if (tbm_key <= 0) {
 				LOGE("invalid key %d", tbm_key);
@@ -345,57 +528,313 @@ static void _client_user_callback(callback_cb_info_s *cb_info, char *recvMsg, mu
 
 			/* import tbm bo and get virtual address */
 			if (!_import_tbm_key(cb_info->bufmgr, tbm_key, &bo, &bo_handle)) {
+				LOGE("failed to import key %d", tbm_key);
+
+				muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
+				                                cb_info->fd, cb_info,
+				                                INT, tbm_key);
 				break;
 			}
 
 			buf_pos = (unsigned char *)bo_handle.ptr;
 
-			frame = (camera_preview_data_s *)buf_pos;
-			buf_pos += sizeof(camera_preview_data_s);
+			/* get stream info */
+			stream = (MMCamcorderVideoStreamDataType *)buf_pos;
 
-			switch (frame->num_of_planes) {
-			case 1:
-				frame->data.single_plane.yuv = buf_pos;
-				total_size = frame->data.single_plane.size;
-			case 2:
-				frame->data.double_plane.y = buf_pos;
-				buf_pos += frame->data.double_plane.y_size;
-				frame->data.double_plane.uv = buf_pos;
-				total_size = frame->data.double_plane.y_size + \
-				             frame->data.double_plane.uv_size;
-			case 3:
-				frame->data.triple_plane.y = buf_pos;
-				buf_pos += frame->data.triple_plane.y_size;
-				frame->data.triple_plane.u = buf_pos;
-				buf_pos += frame->data.triple_plane.u_size;
-				frame->data.triple_plane.v = buf_pos;
-				total_size = frame->data.triple_plane.y_size + \
-				             frame->data.triple_plane.u_size + \
-				             frame->data.triple_plane.v_size;
-			default:
-				break;
+			for (i = 0 ; i < num_buffer_key ; i++) {
+				/* import buffer bo and get virtual address */
+				if (!_import_tbm_key(cb_info->bufmgr, buffer_key[i], &buffer_bo[i], &buffer_bo_handle[i])) {
+					LOGE("failed to import buffer key %d", buffer_key[i]);
+
+					/* release imported bo */
+					for (i -= 1 ; i >= 0 ; i--) {
+						_release_imported_bo(&buffer_bo[i]);
+					}
+					_release_imported_bo(&bo);
+
+					/* send return buffer */
+					muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
+					                                cb_info->fd, cb_info,
+					                                INT, tbm_key);
+					return;
+				}
 			}
 
-			LOGD("PREVIEW_CB - format %d, %dx%d, size %d plane num %d",
-			     frame->format, frame->width, frame->height, total_size, frame->num_of_planes);
+			if (cb_info->user_cb[MUSE_CAMERA_EVENT_TYPE_PREVIEW]) {
+				/* set frame info */
+				if (stream->format == MM_PIXEL_FORMAT_ITLV_JPEG_UYVY) {
+					frame.format  = MM_PIXEL_FORMAT_UYVY;
+				} else {
+					frame.format = stream->format;
+				}
+				frame.width = stream->width;
+				frame.height = stream->height;
+				frame.timestamp = stream->timestamp;
+				frame.num_of_planes = stream->num_planes;
 
-			((camera_preview_cb)cb_info->user_cb[event])(frame, cb_info->user_data[event]);
+				if (num_buffer_key == 0) {
+					/* non-zero copy */
+					buf_pos += sizeof(MMCamcorderVideoStreamDataType);
+					switch (stream->num_planes) {
+					case 1:
+						frame.data.single_plane.yuv = buf_pos;
+						frame.data.single_plane.size = stream->data.yuv420.length_yuv;
+						total_size = stream->data.yuv420.length_yuv;
+					case 2:
+						frame.data.double_plane.y = buf_pos;
+						frame.data.double_plane.y_size = stream->data.yuv420sp.length_y;
+						buf_pos += stream->data.yuv420sp.length_y;
+						frame.data.double_plane.uv = buf_pos;
+						frame.data.double_plane.uv_size = stream->data.yuv420sp.length_uv;
+						total_size = stream->data.yuv420sp.length_y + \
+						             stream->data.yuv420sp.length_uv;
+					case 3:
+						frame.data.triple_plane.y = buf_pos;
+						frame.data.triple_plane.y_size = stream->data.yuv420p.length_y;
+						buf_pos += stream->data.yuv420p.length_y;
+						frame.data.triple_plane.u = buf_pos;
+						frame.data.triple_plane.u_size = stream->data.yuv420p.length_u;
+						buf_pos += stream->data.yuv420p.length_u;
+						frame.data.triple_plane.v = buf_pos;
+						frame.data.triple_plane.v_size = stream->data.yuv420p.length_v;
+						total_size = stream->data.yuv420p.length_y + \
+						             stream->data.yuv420p.length_u + \
+						             stream->data.yuv420p.length_v;
+					default:
+						break;
+					}
+				} else {
+					/* zero copy */
+					switch (stream->num_planes) {
+					case 1:
+						frame.data.single_plane.yuv = buffer_bo_handle[0].ptr;
+						frame.data.single_plane.size = stream->data.yuv420.length_yuv;
+						total_size = stream->data.yuv420.length_yuv;
+					case 2:
+						frame.data.double_plane.y = buffer_bo_handle[0].ptr;
+						if (stream->num_planes == (unsigned int)num_buffer_key) {
+							frame.data.double_plane.uv = buffer_bo_handle[1].ptr;
+						} else {
+							frame.data.double_plane.uv = buffer_bo_handle[0].ptr + stream->data.yuv420sp.length_y;
+						}
+						frame.data.double_plane.y_size = stream->data.yuv420sp.length_y;
+						frame.data.double_plane.uv_size = stream->data.yuv420sp.length_uv;
+						total_size = stream->data.yuv420sp.length_y + \
+						             stream->data.yuv420sp.length_uv;
+					case 3:
+						frame.data.triple_plane.y = buffer_bo_handle[0].ptr;
+						if (stream->num_planes == (unsigned int)num_buffer_key) {
+							frame.data.triple_plane.u = buffer_bo_handle[1].ptr;
+							frame.data.triple_plane.v = buffer_bo_handle[2].ptr;
+						} else {
+							frame.data.triple_plane.u = buffer_bo_handle[0].ptr + stream->data.yuv420p.length_y;
+							frame.data.triple_plane.v = buffer_bo_handle[1].ptr + stream->data.yuv420p.length_u;
+						}
+						frame.data.triple_plane.y_size = stream->data.yuv420p.length_y;
+						frame.data.triple_plane.u_size = stream->data.yuv420p.length_u;
+						frame.data.triple_plane.v_size = stream->data.yuv420p.length_v;
+						total_size = stream->data.yuv420p.length_y + \
+						             stream->data.yuv420p.length_u + \
+						             stream->data.yuv420p.length_v;
+					default:
+						break;
+					}
+				}
 
-			LOGD("PREVIEW_CB retuned");
+				/*
+				LOGD("PREVIEW_CB - format %d, %dx%d, size %d plane num %d",
+				     frame.format, frame.width, frame.height, total_size, frame.num_of_planes);
+				*/
 
-			/* unmap and unref tbm bo */
-			_release_imported_bo(&bo);
+				((camera_preview_cb)cb_info->user_cb[event])(&frame, cb_info->user_data[event]);
 
-			/* return buffer */
-			muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
-			                                cb_info->fd, cb_info,
-			                                INT, tbm_key);
+				/*LOGD("PREVIEW_CB retuned");*/
+			}
 
-			LOGD("return buffer Done");
+			if (cb_info->user_cb[MUSE_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW]) {
+				media_packet_h pkt = NULL;
+				tbm_surface_h tsurf = NULL;
+				uint32_t bo_format = 0;
+				int ret = 0;
+				media_format_mimetype_e mimetype = MEDIA_FORMAT_NV12;
+				bool make_pkt_fmt = false;
+				tbm_surface_info_s tsurf_info;
+
+				memset(&tsurf_info, 0x0, sizeof(tbm_surface_info_s));
+
+				/* unmap buffer bo */
+				for (i = 0 ; i < num_buffer_key ; i++) {
+					if (buffer_bo[i]) {
+						tbm_bo_unmap(buffer_bo[i]);
+					}
+				}
+
+				/* create tbm surface */
+				for (i = 0 ; i < BUFFER_MAX_PLANE_NUM ; i++) {
+					tsurf_info.planes[i].stride = stream->stride[i];
+				}
+
+				/* get tbm surface format */
+				ret = _camera_get_tbm_surface_format(stream->format, &bo_format);
+				ret |= _camera_get_media_packet_mimetype(stream->format, &mimetype);
+
+				if (num_buffer_key > 0 && ret == CAMERA_ERROR_NONE) {
+					tsurf_info.width = stream->width;
+					tsurf_info.height = stream->height;
+					tsurf_info.format = bo_format;
+					tsurf_info.bpp = tbm_surface_internal_get_bpp(bo_format);
+					tsurf_info.num_planes = tbm_surface_internal_get_num_planes(bo_format);
+
+					switch (bo_format) {
+					case TBM_FORMAT_NV12:
+					case TBM_FORMAT_NV21:
+						tsurf_info.planes[0].size = stream->stride[0] * stream->elevation[0];
+						tsurf_info.planes[1].size = stream->stride[1] * stream->elevation[1];
+						tsurf_info.planes[0].offset = 0;
+						if (num_buffer_key == 1) {
+							tsurf_info.planes[1].offset = tsurf_info.planes[0].size;
+						}
+						tsurf_info.size = tsurf_info.planes[0].size + tsurf_info.planes[1].size;
+						break;
+					case TBM_FORMAT_YUV420:
+					case TBM_FORMAT_YVU420:
+						tsurf_info.planes[0].size = stream->stride[0] * stream->elevation[0];
+						tsurf_info.planes[1].size = stream->stride[1] * stream->elevation[1];
+						tsurf_info.planes[2].size = stream->stride[2] * stream->elevation[2];
+						tsurf_info.planes[0].offset = 0;
+						if (num_buffer_key == 1) {
+							tsurf_info.planes[1].offset = tsurf_info.planes[0].size;
+							tsurf_info.planes[2].offset = tsurf_info.planes[0].size + tsurf_info.planes[1].size;
+						}
+						tsurf_info.size = tsurf_info.planes[0].size + tsurf_info.planes[1].size + tsurf_info.planes[2].size;
+						break;
+					case TBM_FORMAT_UYVY:
+					case TBM_FORMAT_YUYV:
+						tsurf_info.planes[0].size = (stream->stride[0] * stream->elevation[0]) << 1;
+						tsurf_info.planes[0].offset = 0;
+						tsurf_info.size = tsurf_info.planes[0].size;
+						break;
+					default:
+						break;
+					}
+
+					tsurf = tbm_surface_internal_create_with_bos(&tsurf_info, buffer_bo, num_buffer_key);
+					/*LOGD("tbm surface %p", tsurf);*/
+				}
+
+				if (tsurf) {
+					/* check media packet format */
+					if (cb_info->pkt_fmt) {
+						int pkt_fmt_width = 0;
+						int pkt_fmt_height = 0;
+						media_format_mimetype_e pkt_fmt_mimetype = MEDIA_FORMAT_NV12;
+
+						media_format_get_video_info(cb_info->pkt_fmt, &pkt_fmt_mimetype, &pkt_fmt_width, &pkt_fmt_height, NULL, NULL);
+						if (pkt_fmt_mimetype != mimetype ||
+						    pkt_fmt_width != stream->width ||
+						    pkt_fmt_height != stream->height) {
+							LOGW("different format. current 0x%x, %dx%d, new 0x%x, %dx%d",
+							     pkt_fmt_mimetype, pkt_fmt_width, pkt_fmt_height, mimetype, stream->width, stream->height);
+							media_format_unref(cb_info->pkt_fmt);
+							cb_info->pkt_fmt = NULL;
+							make_pkt_fmt = true;
+						}
+					} else {
+						make_pkt_fmt = true;
+					}
+
+					/* create packet format */
+					if (make_pkt_fmt) {
+						LOGW("make new pkt_fmt - mimetype 0x%x, %dx%d", mimetype, stream->width, stream->height);
+						ret = media_format_create(&cb_info->pkt_fmt);
+						if (ret == MEDIA_FORMAT_ERROR_NONE) {
+							ret = media_format_set_video_mime(cb_info->pkt_fmt, mimetype);
+							ret |= media_format_set_video_width(cb_info->pkt_fmt, stream->width);
+							ret |= media_format_set_video_height(cb_info->pkt_fmt, stream->height);
+							LOGW("media_format_set_video_mime,width,height ret : 0x%x", ret);
+						} else {
+							LOGW("media_format_create failed");
+						}
+					}
+
+					/* create media packet */
+					ret = media_packet_create_from_tbm_surface(cb_info->pkt_fmt,
+					                                           tsurf,
+					                                           (media_packet_finalize_cb)_camera_media_packet_finalize,
+					                                           (void *)cb_info,
+					                                           &pkt);
+					if (ret != MEDIA_PACKET_ERROR_NONE) {
+						LOGE("media_packet_create_from_tbm_surface failed");
+
+						tbm_surface_destroy(tsurf);
+						tsurf = NULL;
+					}
+				} else {
+					LOGE("failed to create tbm surface %dx%d, format %d, num_buffer_key %d",
+					     stream->width, stream->height, stream->format, num_buffer_key);
+				}
+
+				if (pkt) {
+					/*LOGD("media packet %p, internal buffer %p", pkt, stream->internal_buffer);*/
+
+					mp_data = g_new0(camera_media_packet_data, 1);
+					if (mp_data) {
+						mp_data->tbm_key = tbm_key;
+						mp_data->num_buffer_key = num_buffer_key;
+						mp_data->bo = bo;
+						for (i = 0 ; i < num_buffer_key ; i++) {
+							mp_data->buffer_bo[i] = buffer_bo[i];
+						}
+
+						/* set media packet data */
+						ret = media_packet_set_extra(pkt, (void *)mp_data);
+						if (ret != MEDIA_PACKET_ERROR_NONE) {
+							LOGE("media_packet_set_extra failed");
+
+							if (mp_data) {
+								g_free(mp_data);
+								mp_data = NULL;
+							}
+
+							media_packet_destroy(pkt);
+							pkt = NULL;
+						} else {
+							int e_type = MUSE_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW;
+
+							/* set timestamp : msec -> nsec */
+							if (media_packet_set_pts(pkt, (uint64_t)(stream->timestamp) * 1000000) != MEDIA_PACKET_ERROR_NONE) {
+								LOGW("media_packet_set_pts failed");
+							}
+
+							/* call media packet callback */
+							((camera_media_packet_preview_cb)cb_info->user_cb[e_type])(pkt, cb_info->user_data[e_type]);
+						}
+					} else {
+						LOGE("failed to alloc media packet data");
+					}
+				}
+			}
+
+			/* send message for preview callback return */
+			muse_camera_msg_send_no_return(MUSE_CAMERA_API_PREVIEW_CB_RETURN, cb_info->fd, cb_info);
+
+			if (mp_data == NULL) {
+				/* release imported bo */
+				for (i = 0 ; i < num_buffer_key ; i++) {
+					_release_imported_bo(&buffer_bo[i]);
+				}
+
+				/* unmap and unref tbm bo */
+				_release_imported_bo(&bo);
+
+				/* return buffer */
+				muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
+				                                cb_info->fd, cb_info,
+				                                INT, tbm_key);
+
+				/*LOGD("return buffer Done");*/
+			}
 		}
-		break;
-	case MUSE_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW:
-		((camera_media_packet_preview_cb)cb_info->user_cb[event])(NULL, cb_info->user_data[event]);
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_HDR_PROGRESS:
 		{
@@ -855,6 +1294,7 @@ static void *_client_cb_handler(gpointer data)
 	int i = 0;
 	int str_pos = 0;
 	int prev_pos = 0;
+	int prev_state = CAMERA_STATE_NONE;
 	callback_cb_info_s *cb_info = (callback_cb_info_s *)data;
 	char *recvMsg = NULL;
 	char **parseStr = NULL;
@@ -924,8 +1364,6 @@ static void *_client_cb_handler(gpointer data)
 					strcpy(cb_info->recvApiMsg, parseStr[i]);
 					LOGD("cb_info->recvApiMsg : [%s]", cb_info->recvApiMsg);
 					cb_info->activating[api] = 1;
-					g_cond_signal(&(cb_info->pCond[api]));
-					g_mutex_unlock(&(cb_info->pMutex[api]));
 
 					if (api == MUSE_CAMERA_API_CREATE) {
 						if (muse_camera_msg_get(ret, cb_info->recvApiMsg)) {
@@ -945,7 +1383,13 @@ static void *_client_cb_handler(gpointer data)
 						} else {
 							LOGE("failed to get api return");
 						}
+					} else if (api == MUSE_CAMERA_API_START_PREVIEW) {
+						muse_camera_msg_get(prev_state, cb_info->recvApiMsg);
+						cb_info->prev_state = prev_state;
 					}
+
+					g_cond_signal(&(cb_info->pCond[api]));
+					g_mutex_unlock(&(cb_info->pMutex[api]));
 				} else if(api == MUSE_CAMERA_CB_EVENT) {
 					int event = -1;
 					int class = -1;
@@ -1098,15 +1542,21 @@ static void _client_callback_destroy(callback_cb_info_s * cb_info)
 		tbm_bufmgr_deinit(cb_info->bufmgr);
 		cb_info->bufmgr = NULL;
 	}
-
 	if (cb_info->pCond) {
 		g_free(cb_info->pCond);
+		cb_info->pCond = NULL;
 	}
 	if (cb_info->pMutex) {
 		g_free(cb_info->pMutex);
+		cb_info->pMutex = NULL;
 	}
 	if (cb_info->activating) {
 		g_free(cb_info->activating);
+		cb_info->activating = NULL;
+	}
+	if (cb_info->pkt_fmt) {
+		media_format_unref(cb_info->pkt_fmt);
+		cb_info->pkt_fmt = NULL;
 	}
 
 	g_free(cb_info);
@@ -1231,6 +1681,8 @@ ErrorExit:
 		}
 		_camera_remove_idle_event_all(pc->cb_info);
 		_client_callback_destroy(pc->cb_info);
+		pc->cb_info = NULL;
+
 #ifdef HAVE_WAYLAND
 		if (pc->wl_info) {
 			g_free(pc->wl_info);
@@ -1253,7 +1705,6 @@ int camera_start_preview(camera_h camera)
 	muse_camera_api_e api = MUSE_CAMERA_API_START_PREVIEW;
 	camera_cli_s *pc = (camera_cli_s *)camera;
 	int sock_fd = 0;
-	int prev_state = CAMERA_STATE_NONE;
 	char caps[MUSE_CAMERA_MSG_MAX_LENGTH] = {0};
 
 	if (camera == NULL) {
@@ -1286,9 +1737,7 @@ int camera_start_preview(camera_h camera)
 		return ret;
 	}
 
-	muse_camera_msg_get(prev_state, pc->cb_info->recvMsg);
-
-	if (prev_state == CAMERA_STATE_CREATED) {
+	if (pc->cb_info->prev_state == CAMERA_STATE_CREATED) {
 		muse_camera_msg_get_string(caps, pc->cb_info->recvMsg);
 		if (caps == NULL) {
 			LOGE("failed to get caps string");
