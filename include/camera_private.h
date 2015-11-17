@@ -56,40 +56,44 @@ typedef struct _camera_cb_data {
 
 typedef struct _callback_cb_info {
 	GThread *msg_rcv_thread;
-	GThread *event_thread;
+	GThread *message_handler_thread;
 	gint rcv_thread_running;
-	gint event_thread_running;
+	gint message_handler_running;
 	gint fd;
 	gint id;
 	gpointer user_cb[MUSE_CAMERA_EVENT_TYPE_NUM];
 	gpointer user_cb_completed[MUSE_CAMERA_EVENT_TYPE_NUM];
 	gpointer user_data[MUSE_CAMERA_EVENT_TYPE_NUM];
-	gchar recvMsg[MUSE_CAMERA_MSG_MAX_LENGTH];
-	gchar recvApiMsg[MUSE_CAMERA_MSG_MAX_LENGTH];
-	gchar recvEventMsg[MUSE_CAMERA_MSG_MAX_LENGTH];
+	gchar recv_msg[MUSE_CAMERA_MSG_MAX_LENGTH];
 	GCond *pCond;
 	GMutex *pMutex;
-	GCond event_cond;
-	GMutex event_mutex;
+	GCond message_handler_cond;
+	GMutex message_handler_mutex;
 	GList *idle_event_list;
 	GCond idle_event_cond;
 	GMutex idle_event_mutex;
 	gint *activating;
+	gint *ret;
 	tbm_bufmgr bufmgr;
-	GQueue *event_queue;
+	GQueue *message_queue;
 	gint prev_state;
 	media_format_h pkt_fmt;
 } callback_cb_info_s;
 
+typedef struct _camera_message_s {
+	gchar recv_msg[MUSE_CAMERA_MSG_MAX_LENGTH];
+	muse_camera_api_e api;
+} camera_message_s;
+
 typedef struct _camera_event_s {
 	callback_cb_info_s *cb_info;
-	gchar recvMsg[MUSE_CAMERA_MSG_MAX_LENGTH];
+	gchar recv_msg[MUSE_CAMERA_MSG_MAX_LENGTH];
 	muse_camera_event_e event;
 } camera_event_s;
 
 typedef struct _camera_idle_event_s {
 	callback_cb_info_s *cb_info;
-	gchar recvMsg[MUSE_CAMERA_MSG_MAX_LENGTH];
+	gchar recv_msg[MUSE_CAMERA_MSG_MAX_LENGTH];
 	muse_camera_event_e event;
 	GMutex event_mutex;
 } camera_idle_event_s;
