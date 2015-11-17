@@ -441,6 +441,10 @@ void _camera_state_changed_cb(camera_state_e previous, camera_state_e current,bo
     printf("camera state changed %d -> %d\n", previous , current);
 }
 
+void _camera_interrupted_cb(camera_policy_e policy, camera_state_e previous, camera_state_e current, void *user_data){
+    printf("camera interrupted callback called %d\n", policy);
+}
+
 bool preview_resolution_cb(int width, int height, void *user_data)
 {
     resolution_stack *data = (resolution_stack*)user_data;
@@ -1425,6 +1429,7 @@ static gboolean mode_change()
     camera_print_state = CAMERA_STATE_CREATED;
 
     camera_set_state_changed_cb(hcamcorder->camera, _camera_state_changed_cb, NULL);
+    camera_set_interrupted_cb(hcamcorder->camera, _camera_interrupted_cb, NULL);
     camera_set_display_mode(hcamcorder->camera,0 ); //MM_DISPLAY_METHOD_LETTER_BOX
     camera_set_display(hcamcorder->camera, CAMERA_DISPLAY_TYPE_OVERLAY, GET_DISPLAY(eo));
 
