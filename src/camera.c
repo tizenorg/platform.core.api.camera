@@ -422,7 +422,7 @@ int _camera_media_packet_finalize(media_packet_h pkt, int error_code, void *user
 		muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
 		                                cb_info->fd, cb_info,
 		                                INT, tbm_key);
-
+		g_free(mp_data);
 		mp_data = NULL;
 	}
 
@@ -575,6 +575,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 						frame.data.single_plane.yuv = buf_pos;
 						frame.data.single_plane.size = stream->data.yuv420.length_yuv;
 						total_size = stream->data.yuv420.length_yuv;
+						break;
 					case 2:
 						frame.data.double_plane.y = buf_pos;
 						frame.data.double_plane.y_size = stream->data.yuv420sp.length_y;
@@ -583,6 +584,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 						frame.data.double_plane.uv_size = stream->data.yuv420sp.length_uv;
 						total_size = stream->data.yuv420sp.length_y + \
 						             stream->data.yuv420sp.length_uv;
+						break;
 					case 3:
 						frame.data.triple_plane.y = buf_pos;
 						frame.data.triple_plane.y_size = stream->data.yuv420p.length_y;
@@ -595,6 +597,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 						total_size = stream->data.yuv420p.length_y + \
 						             stream->data.yuv420p.length_u + \
 						             stream->data.yuv420p.length_v;
+						break;
 					default:
 						break;
 					}
@@ -605,6 +608,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 						frame.data.single_plane.yuv = buffer_bo_handle[0].ptr;
 						frame.data.single_plane.size = stream->data.yuv420.length_yuv;
 						total_size = stream->data.yuv420.length_yuv;
+						break;
 					case 2:
 						frame.data.double_plane.y = buffer_bo_handle[0].ptr;
 						if (stream->num_planes == (unsigned int)num_buffer_key) {
@@ -616,6 +620,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 						frame.data.double_plane.uv_size = stream->data.yuv420sp.length_uv;
 						total_size = stream->data.yuv420sp.length_y + \
 						             stream->data.yuv420sp.length_uv;
+						break;
 					case 3:
 						frame.data.triple_plane.y = buffer_bo_handle[0].ptr;
 						if (stream->num_planes == (unsigned int)num_buffer_key) {
@@ -631,6 +636,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 						total_size = stream->data.yuv420p.length_y + \
 						             stream->data.yuv420p.length_u + \
 						             stream->data.yuv420p.length_v;
+						break;
 					default:
 						break;
 					}
@@ -1799,15 +1805,16 @@ ErrorExit:
 	int ret = CAMERA_ERROR_NONE;
 	muse_camera_api_e api = MUSE_CAMERA_API_DESTROY;
 	camera_cli_s *pc = (camera_cli_s *)camera;
-	int sock_fd = pc->cb_info->fd;
+	int sock_fd = 0;
+
 	LOGD("ENTER");
 
-	if (pc == NULL) {
-		LOGE("pc is already nul!!");
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	} else if (pc->cb_info == NULL) {
+	if (pc->cb_info == NULL) {
+		LOGE("cb_info NULL, INVALID_PARAMETER");
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+
+	sock_fd = pc->cb_info->fd;
 
 	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
 	if (ret == CAMERA_ERROR_NONE) {
@@ -1874,8 +1881,7 @@ int camera_start_preview(camera_h camera)
 	}
 
 	if (pc->cb_info->prev_state == CAMERA_STATE_CREATED) {
-		muse_camera_msg_get_string(caps, pc->cb_info->recv_msg);
-		if (caps == NULL) {
+		if (muse_camera_msg_get_string(caps, pc->cb_info->recv_msg) == FALSE) {
 			LOGE("failed to get caps string");
 			goto _START_PREVIEW_ERROR;
 		}
@@ -2374,8 +2380,7 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 			}
 		}
 
-		muse_camera_msg_get_string(socket_path, pc->cb_info->recv_msg);
-		if (socket_path == NULL) {
+		if (muse_camera_msg_get_string(socket_path, pc->cb_info->recv_msg) == FALSE) {
 			LOGE("failed to get socket path");
 			goto _SET_DISPLAY_ERROR;
 		}
