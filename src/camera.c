@@ -2943,7 +2943,7 @@ int camera_set_media_packet_preview_cb(camera_h camera, camera_media_packet_prev
 
 	if (callback == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x) - callback", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_NOT_SUPPORTED;
+		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
 	int ret = CAMERA_ERROR_NONE;
