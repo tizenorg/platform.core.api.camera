@@ -2879,6 +2879,36 @@ int camera_get_preview_format(camera_h camera, camera_pixel_format_e *format)
 	return ret;
 }
 
+int camera_get_facing_direction(camera_h camera, camera_facing_direction_e *facing_direciton)
+{
+	if( camera == NULL || facing_direciton == NULL){
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	int ret = CAMERA_ERROR_NONE;
+
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	muse_camera_api_e api = MUSE_CAMERA_API_GET_FACING_DIRECTION;
+	int sock_fd;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+	sock_fd = pc->cb_info->fd;
+	int get_facing_direction;
+
+	LOGD("Enter, remote_handle : %x", pc->remote_handle);
+	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get(get_facing_direction, pc->cb_info->recv_msg);
+		*facing_direciton = (camera_facing_direction_e)get_facing_direction;
+	}
+	LOGD("ret : 0x%x", ret);
+	return ret;
+}
+
 int camera_set_preview_cb(camera_h camera, camera_preview_cb callback, void* user_data)
 {
 	if (camera == NULL || callback == NULL) {

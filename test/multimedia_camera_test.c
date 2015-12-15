@@ -420,6 +420,11 @@ const char *visible_mode[] = {
     "Display ON",
 };
 
+const char *facing_direction[] = {
+    "REAR",
+    "FRONT",
+};
+
 
 /*---------------------------------------------------------------------------
 |    LOCAL FUNCTION PROTOTYPES:                                             |
@@ -677,6 +682,7 @@ static void print_menu()
         g_print("\t     'j' Jpeg quality \n");
         g_print("\t     'p' Picture format \n");
         g_print("\t     'E' EXIF orientation \n");
+        g_print("\t     'F' Get facing direction of camera module\n");
         g_print("\t  >>>>>>>>>>>>>>>>>>>> [Display/Filter]\n");
         g_print("\t     'v' Visible \n");
         g_print("\t     'o' Output mode \n");
@@ -994,6 +1000,17 @@ static void setting_menu(gchar buf)
                 g_print("Wrong INPUT[%d]!! \n", idx);
             } else {
                 camera_attr_set_tag_orientation(hcamcorder->camera,idx);
+            }
+
+            break;
+
+        case 'F' : // Getting > Get Facing direction
+            g_print("* Get facing direction of camera module\n");
+            err = camera_get_facing_direction(hcamcorder->camera,&idx);
+            if (CAMERA_ERROR_NONE == err) {
+                g_print("* Facing direction : %s(%d)\n", facing_direction[idx], idx);
+            } else {
+                g_print("* Error : %d\n", err);
             }
 
             break;
