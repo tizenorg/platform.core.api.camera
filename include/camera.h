@@ -161,6 +161,15 @@ typedef enum {
 } camera_focus_state_e;
 
 /**
+ * @brief Enumeration for the facing direction of camera module
+ * @since_tizen @if MOBILE 3.0 @elseif WEARABLE 3.0 @endif
+ */
+typedef enum {
+	CAMERA_FACING_DIRECTION_REAR = 0, /**< Rear */
+	CAMERA_FACING_DIRECTION_FRONT,    /**< front */
+} camera_facing_direction_e;
+
+/**
  * @brief The structure type of the image data.
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  */
@@ -1443,6 +1452,19 @@ int camera_set_preview_format(camera_h camera, camera_pixel_format_e format);
  * @see	camera_foreach_supported_preview_format()
  */
 int camera_get_preview_format(camera_h camera, camera_pixel_format_e *format);
+
+/**
+ * @brief Gets the facing direction of camera module.
+ * @since_tizen @if MOBILE 3.0 @elseif WEARABLE 3.0 @endif
+ * @param[in] camera The handle to the camera
+ * @param[out] facing_direciton The facing direction of camera module
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_PERMISSION_DENIED The access to the resources can not be granted
+ * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
+ */
+int camera_get_facing_direction(camera_h camera, camera_facing_direction_e *facing_direciton);
 
 /**
  * @}
