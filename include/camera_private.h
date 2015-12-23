@@ -95,5 +95,5 @@ int __convert_camera_error_code(const char* func, int code);
 }
 #endif
 
-#endif //__TIZEN_MULTIMEDIA_CAMERA_PRIVATE_H__
+#endif /* __TIZEN_MULTIMEDIA_CAMERA_PRIVATE_H__ */
 

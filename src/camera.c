@@ -26,7 +26,6 @@
 #include <muse_core_ipc.h>
 #include <camera_private.h>
 #include <muse_core.h>
-//#include <glib.h>
 #include <dlog.h>
 #include <Elementary.h>
 #include <tbm_surface_internal.h>
@@ -148,9 +147,8 @@ int __convert_camera_error_code(const char *func, int code)
 		errorstr = "INVALID_OPERATION";
 	}
 
-	if (code != MM_ERROR_NONE) {
+	if (code != MM_ERROR_NONE)
 		LOGE("[%s] %s(0x%08x) : core frameworks error code(0x%08x)", func ? func : "NULL_FUNC", errorstr, ret, code);
-	}
 
 	return ret;
 }
@@ -183,7 +181,7 @@ static MMCamWaylandInfo *_get_wl_info(Evas_Object *obj)
 	}
 
 	evas_object_geometry_get(obj, &wl_info->window_x, &wl_info->window_y,
-	                         &wl_info->window_width, &wl_info->window_height);
+		&wl_info->window_width, &wl_info->window_height);
 
 	LOGD("wayland obj %p, window %p, surface %p, display %p, size %d,%d,%dx%d",
 	     wl_info->evas_obj, wl_info->window, wl_info->surface, wl_info->display,
@@ -420,8 +418,7 @@ int _camera_media_packet_finalize(media_packet_h pkt, int error_code, void *user
 
 		/* return buffer */
 		muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
-		                                cb_info->fd, cb_info,
-		                                INT, tbm_key);
+			cb_info->fd, cb_info, INT, tbm_key);
 		g_free(mp_data);
 		mp_data = NULL;
 	}
@@ -475,9 +472,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 			     previous, current, by_policy);
 
 			((camera_state_changed_cb)cb_info->user_cb[event])((camera_state_e)previous,
-			                                                   (camera_state_e)current,
-			                                                   (bool)by_policy,
-			                                                   cb_info->user_data[event]);
+				(camera_state_e)current, (bool)by_policy, cb_info->user_data[event]);
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOCUS_CHANGE:
@@ -488,8 +483,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 
 			LOGD("FOCUS state - %d", state);
 
-			((camera_focus_changed_cb)cb_info->user_cb[event])((camera_focus_state_e)state,
-			                                                   cb_info->user_data[event]);
+			((camera_focus_changed_cb)cb_info->user_cb[event])((camera_focus_state_e)state, cb_info->user_data[event]);
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE:
@@ -526,8 +520,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 				LOGE("failed to import key %d", tbm_key);
 
 				muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
-				                                cb_info->fd, cb_info,
-				                                INT, tbm_key);
+					cb_info->fd, cb_info, INT, tbm_key);
 				break;
 			}
 
@@ -542,26 +535,24 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 					LOGE("failed to import buffer key %d", buffer_key[i]);
 
 					/* release imported bo */
-					for (i -= 1 ; i >= 0 ; i--) {
+					for (i -= 1 ; i >= 0 ; i--)
 						_release_imported_bo(&buffer_bo[i]);
-					}
+
 					_release_imported_bo(&bo);
 
 					/* send return buffer */
 					muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
-					                                cb_info->fd, cb_info,
-					                                INT, tbm_key);
+						cb_info->fd, cb_info, INT, tbm_key);
 					return;
 				}
 			}
 
 			if (cb_info->user_cb[MUSE_CAMERA_EVENT_TYPE_PREVIEW]) {
 				/* set frame info */
-				if (stream->format == MM_PIXEL_FORMAT_ITLV_JPEG_UYVY) {
+				if (stream->format == MM_PIXEL_FORMAT_ITLV_JPEG_UYVY)
 					frame.format  = MM_PIXEL_FORMAT_UYVY;
-				} else {
+				else
 					frame.format = stream->format;
-				}
 				frame.width = stream->width;
 				frame.height = stream->height;
 				frame.timestamp = stream->timestamp;
@@ -583,7 +574,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 						frame.data.double_plane.uv = buf_pos;
 						frame.data.double_plane.uv_size = stream->data.yuv420sp.length_uv;
 						total_size = stream->data.yuv420sp.length_y + \
-						             stream->data.yuv420sp.length_uv;
+							stream->data.yuv420sp.length_uv;
 						break;
 					case 3:
 						frame.data.triple_plane.y = buf_pos;
@@ -595,8 +586,8 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 						frame.data.triple_plane.v = buf_pos;
 						frame.data.triple_plane.v_size = stream->data.yuv420p.length_v;
 						total_size = stream->data.yuv420p.length_y + \
-						             stream->data.yuv420p.length_u + \
-						             stream->data.yuv420p.length_v;
+							stream->data.yuv420p.length_u + \
+							stream->data.yuv420p.length_v;
 						break;
 					default:
 						break;
@@ -611,15 +602,14 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 						break;
 					case 2:
 						frame.data.double_plane.y = buffer_bo_handle[0].ptr;
-						if (stream->num_planes == (unsigned int)num_buffer_key) {
+						if (stream->num_planes == (unsigned int)num_buffer_key)
 							frame.data.double_plane.uv = buffer_bo_handle[1].ptr;
-						} else {
+						else
 							frame.data.double_plane.uv = buffer_bo_handle[0].ptr + stream->data.yuv420sp.length_y;
-						}
 						frame.data.double_plane.y_size = stream->data.yuv420sp.length_y;
 						frame.data.double_plane.uv_size = stream->data.yuv420sp.length_uv;
 						total_size = stream->data.yuv420sp.length_y + \
-						             stream->data.yuv420sp.length_uv;
+							stream->data.yuv420sp.length_uv;
 						break;
 					case 3:
 						frame.data.triple_plane.y = buffer_bo_handle[0].ptr;
@@ -634,8 +624,8 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 						frame.data.triple_plane.u_size = stream->data.yuv420p.length_u;
 						frame.data.triple_plane.v_size = stream->data.yuv420p.length_v;
 						total_size = stream->data.yuv420p.length_y + \
-						             stream->data.yuv420p.length_u + \
-						             stream->data.yuv420p.length_v;
+							stream->data.yuv420p.length_u + \
+							stream->data.yuv420p.length_v;
 						break;
 					default:
 						break;
@@ -665,15 +655,13 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 
 				/* unmap buffer bo */
 				for (i = 0 ; i < num_buffer_key ; i++) {
-					if (buffer_bo[i]) {
+					if (buffer_bo[i])
 						tbm_bo_unmap(buffer_bo[i]);
-					}
 				}
 
 				/* create tbm surface */
-				for (i = 0 ; i < BUFFER_MAX_PLANE_NUM ; i++) {
+				for (i = 0 ; i < BUFFER_MAX_PLANE_NUM ; i++)
 					tsurf_info.planes[i].stride = stream->stride[i];
-				}
 
 				/* get tbm surface format */
 				ret = _camera_get_tbm_surface_format(stream->format, &bo_format);
@@ -692,9 +680,8 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 						tsurf_info.planes[0].size = stream->stride[0] * stream->elevation[0];
 						tsurf_info.planes[1].size = stream->stride[1] * stream->elevation[1];
 						tsurf_info.planes[0].offset = 0;
-						if (num_buffer_key == 1) {
+						if (num_buffer_key == 1)
 							tsurf_info.planes[1].offset = tsurf_info.planes[0].size;
-						}
 						tsurf_info.size = tsurf_info.planes[0].size + tsurf_info.planes[1].size;
 						break;
 					case TBM_FORMAT_YUV420:
@@ -760,10 +747,8 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 
 					/* create media packet */
 					ret = media_packet_create_from_tbm_surface(cb_info->pkt_fmt,
-					                                           tsurf,
-					                                           (media_packet_finalize_cb)_camera_media_packet_finalize,
-					                                           (void *)cb_info,
-					                                           &pkt);
+						tsurf, (media_packet_finalize_cb)_camera_media_packet_finalize,
+						(void *)cb_info, &pkt);
 					if (ret != MEDIA_PACKET_ERROR_NONE) {
 						LOGE("media_packet_create_from_tbm_surface failed");
 
@@ -783,9 +768,8 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 						mp_data->tbm_key = tbm_key;
 						mp_data->num_buffer_key = num_buffer_key;
 						mp_data->bo = bo;
-						for (i = 0 ; i < num_buffer_key ; i++) {
+						for (i = 0 ; i < num_buffer_key ; i++)
 							mp_data->buffer_bo[i] = buffer_bo[i];
-						}
 
 						/* set media packet data */
 						ret = media_packet_set_extra(pkt, (void *)mp_data);
@@ -803,9 +787,8 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 							int e_type = MUSE_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW;
 
 							/* set timestamp : msec -> nsec */
-							if (media_packet_set_pts(pkt, (uint64_t)(stream->timestamp) * 1000000) != MEDIA_PACKET_ERROR_NONE) {
+							if (media_packet_set_pts(pkt, (uint64_t)(stream->timestamp) * 1000000) != MEDIA_PACKET_ERROR_NONE)
 								LOGW("media_packet_set_pts failed");
-							}
 
 							/* call media packet callback */
 							((camera_media_packet_preview_cb)cb_info->user_cb[e_type])(pkt, cb_info->user_data[e_type]);
@@ -821,17 +804,15 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 
 			if (mp_data == NULL) {
 				/* release imported bo */
-				for (i = 0 ; i < num_buffer_key ; i++) {
+				for (i = 0 ; i < num_buffer_key ; i++)
 					_release_imported_bo(&buffer_bo[i]);
-				}
 
 				/* unmap and unref tbm bo */
 				_release_imported_bo(&bo);
 
 				/* return buffer */
 				muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
-				                                cb_info->fd, cb_info,
-				                                INT, tbm_key);
+					cb_info->fd, cb_info, INT, tbm_key);
 
 				/*LOGD("return buffer Done");*/
 			}
@@ -862,9 +843,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 			     policy, previous, current);
 
 			((camera_interrupted_cb)cb_info->user_cb[event])((camera_policy_e)policy,
-			                                                 (camera_state_e)previous,
-			                                                 (camera_state_e)current,
-			                                                 cb_info->user_data[event]);
+				(camera_state_e)previous, (camera_state_e)current, cb_info->user_data[event]);
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FACE_DETECTION:
@@ -878,9 +857,8 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 			if (count > 0 && tbm_key > 0) {
 				LOGD("FACE_DETECTION - count %d, tbm_key %d", count, tbm_key);
 
-				if (!_import_tbm_key(cb_info->bufmgr, tbm_key, &bo, &bo_handle)) {
+				if (!_import_tbm_key(cb_info->bufmgr, tbm_key, &bo, &bo_handle))
 					break;
-				}
 
 				/* set face info */
 				faces = bo_handle.ptr;
@@ -903,8 +881,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 
 				/* return buffer */
 				muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
-				                                cb_info->fd, cb_info,
-				                                INT, tbm_key);
+					cb_info->fd, cb_info, INT, tbm_key);
 
 				LOGD("return buffer done");
 			} else {
@@ -923,8 +900,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 			LOGE("ERROR - error 0x%x, current_state %d", error, current_state);
 
 			((camera_error_cb)cb_info->user_cb[event])((camera_error_e)error,
-			                                           (camera_state_e)current_state,
-			                                           cb_info->user_data[event]);
+				(camera_state_e)current_state, cb_info->user_data[event]);
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_PREVIEW_RESOLUTION:
@@ -1063,9 +1039,8 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 			}
 
 			/* import tbm bo and get virtual address */
-			if (!_import_tbm_key(cb_info->bufmgr, tbm_key, &bo, &bo_handle)) {
+			if (!_import_tbm_key(cb_info->bufmgr, tbm_key, &bo, &bo_handle))
 				break;
-			}
 
 			buf_pos = (unsigned char *)bo_handle.ptr;
 			rImage = (camera_image_data_s *)buf_pos;
@@ -1095,9 +1070,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 
 			/* return buffer */
 			muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
-			                                cb_info->fd,
-			                                cb_info,
-			                                INT, tbm_key);
+				cb_info->fd, cb_info, INT, tbm_key);
 
 			LOGD("return buffer done");
 		}
@@ -1133,9 +1106,9 @@ static bool _camera_idle_event_callback(void *data)
 
 	/* remove event from list */
 	g_mutex_lock(&cb_info->idle_event_mutex);
-	if (cb_info->idle_event_list) {
+	if (cb_info->idle_event_list)
 		cb_info->idle_event_list = g_list_remove(cb_info->idle_event_list, (gpointer)cam_idle_event);
-	}
+
 	/*LOGD("remove camera idle event %p, %p", cam_idle_event, cb_info->idle_event_list);*/
 	g_mutex_unlock(&cb_info->idle_event_mutex);
 
@@ -1252,9 +1225,9 @@ static void *_camera_msg_handler_func(gpointer data)
 				g_mutex_unlock(&cb_info->idle_event_mutex);
 
 				g_idle_add_full(G_PRIORITY_DEFAULT,
-				                (GSourceFunc)_camera_idle_event_callback,
-				                (gpointer)cam_idle_event,
-				                NULL);
+					(GSourceFunc)_camera_idle_event_callback,
+					(gpointer)cam_idle_event,
+					NULL);
 				break;
 			default:
 				LOGE("unknown camera event class %d", event_class);
@@ -1340,13 +1313,12 @@ static void _camera_remove_idle_event_all(camera_cb_info_s *cb_info)
 				} else {
 					LOGW("event lock failed. it's being called...");
 
-					end_time = g_get_monotonic_time () + G_TIME_SPAN_MILLISECOND * 100;
+					end_time = g_get_monotonic_time() + G_TIME_SPAN_MILLISECOND * 100;
 
-					if (g_cond_wait_until(&cb_info->idle_event_cond, &cb_info->idle_event_mutex, end_time)) {
+					if (g_cond_wait_until(&cb_info->idle_event_cond, &cb_info->idle_event_mutex, end_time))
 						LOGW("signal received");
-					} else {
+					else
 						LOGW("timeout");
-					}
 				}
 			}
 		}
@@ -1412,7 +1384,7 @@ static void *_camera_msg_recv_func(gpointer data)
 		/* Need to split the combined entering msgs.
 		    This module supports up to 200 combined msgs. */
 		for (str_pos = 0; str_pos < ret; str_pos++) {
-			if(recv_msg[str_pos] == '}') {
+			if (recv_msg[str_pos] == '}') {
 				memset(parse_str[num_token], 0x0, sizeof(char) * MUSE_CAMERA_MSG_MAX_LENGTH);
 				strncpy(parse_str[num_token], recv_msg + prev_pos, str_pos - prev_pos + 1);
 				LOGD("splitted msg : [%s], Index : %d", parse_str[num_token], num_token);
@@ -1438,9 +1410,8 @@ static void *_camera_msg_recv_func(gpointer data)
 				continue;
 			}
 
-			if (muse_camera_msg_get(api_class, parse_str[i])) {
+			if (muse_camera_msg_get(api_class, parse_str[i]))
 				LOGD("camera api_class[%d]", api_class);
-			}
 
 			if (api_class == MUSE_CAMERA_API_CLASS_IMMEDIATE) {
 				g_mutex_lock(&cb_info->api_mutex[api]);
@@ -1471,8 +1442,7 @@ static void *_camera_msg_recv_func(gpointer data)
 
 				g_cond_signal(&cb_info->api_cond[api]);
 				g_mutex_unlock(&cb_info->api_mutex[api]);
-			} else if (api_class == MUSE_CAMERA_API_CLASS_THREAD_SUB ||
-			           api == MUSE_CAMERA_CB_EVENT) {
+			} else if (api_class == MUSE_CAMERA_API_CLASS_THREAD_SUB || api == MUSE_CAMERA_CB_EVENT) {
 				camera_message_s *cam_msg = g_new0(camera_message_s, 1);
 				if (cam_msg == NULL) {
 					LOGE("failed to alloc cam_msg");
@@ -1566,9 +1536,7 @@ static camera_cb_info_s *_client_callback_new(gint sockfd)
 
 	g_atomic_int_set(&cb_info->msg_handler_running, 1);
 	cb_info->msg_handler_thread = g_thread_try_new("camera_msg_handler",
-	                                               _camera_msg_handler_func,
-	                                               (gpointer)cb_info,
-	                                               NULL);
+		_camera_msg_handler_func, (gpointer)cb_info, NULL);
 	if (cb_info->msg_handler_thread == NULL) {
 		LOGE("message handler thread creation failed");
 		goto ErrorExit;
@@ -1582,9 +1550,7 @@ static camera_cb_info_s *_client_callback_new(gint sockfd)
 
 	g_atomic_int_set(&cb_info->msg_recv_running, 1);
 	cb_info->msg_recv_thread = g_thread_try_new("camera_msg_recv",
-	                                            _camera_msg_recv_func,
-	                                            (gpointer)cb_info,
-	                                            NULL);
+		_camera_msg_recv_func, (gpointer)cb_info, NULL);
 	if (cb_info->msg_recv_thread == NULL) {
 		LOGE("message receive thread creation failed");
 		goto ErrorExit;
@@ -1713,8 +1679,8 @@ int camera_create(camera_device_e device, camera_h* camera)
 	muse_core_api_module_e muse_module = MUSE_CAMERA;
 	int device_type = (int)device;
 
-	if (camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -1734,10 +1700,10 @@ int camera_create(camera_device_e device, camera_h* camera)
 	pid = getpid();
 
 	sndMsg = muse_core_msg_json_factory_new(api,
-	                                        MUSE_TYPE_INT, "module", muse_module,
-	                                        MUSE_TYPE_INT, PARAM_DEVICE_TYPE, device_type,
-	                                        MUSE_TYPE_INT, "pid", pid,
-	                                        0);
+		MUSE_TYPE_INT, "module", muse_module,
+		MUSE_TYPE_INT, PARAM_DEVICE_TYPE, device_type,
+		MUSE_TYPE_INT, "pid", pid,
+		0);
 
 	muse_core_ipc_send_msg(sock_fd, sndMsg);
 	muse_core_msg_json_factory_free(sndMsg);
@@ -1795,10 +1761,10 @@ ErrorExit:
 	return ret;
 }
 
- int camera_destroy(camera_h camera)
+int camera_destroy(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -1851,12 +1817,12 @@ int camera_start_preview(camera_h camera)
 	char caps[MUSE_CAMERA_MSG_MAX_LENGTH] = {0};
 
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -1908,7 +1874,7 @@ _START_PREVIEW_ERROR:
 int camera_stop_preview(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -1917,7 +1883,7 @@ int camera_stop_preview(camera_h camera)
 	muse_camera_api_e api = MUSE_CAMERA_API_STOP_PREVIEW;
 
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -1950,7 +1916,7 @@ int camera_stop_preview(camera_h camera)
 int camera_start_capture(camera_h camera, camera_capturing_cb capturing_cb, camera_capture_completed_cb completed_cb, void *user_data)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -1963,7 +1929,7 @@ int camera_start_capture(camera_h camera, camera_capturing_cb capturing_cb, came
 	LOGD("Enter, handle :%x", pc->remote_handle);
 
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -1975,7 +1941,7 @@ int camera_start_capture(camera_h camera, camera_capturing_cb capturing_cb, came
 		pc->cb_info->user_data[MUSE_CAMERA_EVENT_TYPE_CAPTURE] = user_data;
 	}
 
-	if(completed_cb != NULL) {
+	if (completed_cb != NULL) {
 		is_completed_cb = 1;
 		pc->cb_info->user_cb[MUSE_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE] = completed_cb;
 		pc->cb_info->user_data[MUSE_CAMERA_EVENT_TYPE_CAPTURE_COMPLETE] = user_data;
@@ -1990,7 +1956,7 @@ int camera_start_capture(camera_h camera, camera_capturing_cb capturing_cb, came
 bool camera_is_supported_continuous_capture(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return false;
 	}
 
@@ -2000,7 +1966,7 @@ bool camera_is_supported_continuous_capture(camera_h camera)
 	int sock_fd;
 
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2028,7 +1994,7 @@ int camera_start_continuous_capture(camera_h camera, int count, int interval, ca
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2047,7 +2013,7 @@ int camera_start_continuous_capture(camera_h camera, int count, int interval, ca
 int camera_stop_continuous_capture(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2059,7 +2025,7 @@ int camera_stop_continuous_capture(camera_h camera)
 	LOGD("Enter,  handle :%x", pc->remote_handle);
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2071,7 +2037,7 @@ int camera_stop_continuous_capture(camera_h camera)
 bool camera_is_supported_face_detection(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return false;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -2080,7 +2046,7 @@ bool camera_is_supported_face_detection(camera_h camera)
 	muse_camera_api_e api = MUSE_CAMERA_API_SUPPORT_FACE_DETECTION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2094,7 +2060,7 @@ bool camera_is_supported_face_detection(camera_h camera)
 bool camera_is_supported_zero_shutter_lag(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return false;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -2103,7 +2069,7 @@ bool camera_is_supported_zero_shutter_lag(camera_h camera)
 	muse_camera_api_e api = MUSE_CAMERA_API_SUPPORT_ZERO_SHUTTER_LAG;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2117,7 +2083,7 @@ bool camera_is_supported_zero_shutter_lag(camera_h camera)
 bool camera_is_supported_media_packet_preview_cb(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return false;
 	}
 
@@ -2127,7 +2093,7 @@ bool camera_is_supported_media_packet_preview_cb(camera_h camera)
 	muse_camera_api_e api = MUSE_CAMERA_API_SUPPORT_MEDIA_PACKET_PREVIEW_CB;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2150,7 +2116,7 @@ int camera_get_device_count(camera_h camera, int *device_count)
 	muse_camera_api_e api = MUSE_CAMERA_API_GET_DEVICE_COUNT;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2182,7 +2148,7 @@ int camera_start_face_detection(camera_h camera, camera_face_detected_cb callbac
 	LOGD("Enter, handle :%x", pc->remote_handle);
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2197,7 +2163,7 @@ int camera_start_face_detection(camera_h camera, camera_face_detected_cb callbac
 int camera_stop_face_detection(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2208,7 +2174,7 @@ int camera_stop_face_detection(camera_h camera)
 	LOGD("Enter,  handle :%x", pc->remote_handle);
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2220,7 +2186,7 @@ int camera_stop_face_detection(camera_h camera)
 int camera_get_state(camera_h camera, camera_state_e * state)
 {
 	if (camera == NULL || state == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -2229,7 +2195,7 @@ int camera_get_state(camera_h camera, camera_state_e * state)
 	muse_camera_api_e api = MUSE_CAMERA_API_GET_STATE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2248,8 +2214,8 @@ int camera_get_state(camera_h camera, camera_state_e * state)
 
 int camera_start_focusing(camera_h camera, bool continuous)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2259,7 +2225,7 @@ int camera_start_focusing(camera_h camera, bool continuous)
 	muse_camera_api_e api = MUSE_CAMERA_API_START_FOCUSING;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2274,7 +2240,7 @@ int camera_start_focusing(camera_h camera, bool continuous)
 int camera_cancel_focusing(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2284,7 +2250,7 @@ int camera_cancel_focusing(camera_h camera)
 	muse_camera_api_e api = MUSE_CAMERA_API_CANCEL_FOCUSING;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2321,7 +2287,7 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 	muse_camera_api_e api = MUSE_CAMERA_API_SET_DISPLAY;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2394,8 +2360,8 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 		}
 
 		ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
-		                                  MMCAM_DISPLAY_SURFACE, set_surface,
-		                                  NULL);
+			MMCAM_DISPLAY_SURFACE, set_surface,
+			NULL);
 		if (ret != MM_ERROR_NONE) {
 			LOGE("set display surface failed 0x%x", ret);
 			goto _SET_DISPLAY_ERROR;
@@ -2403,8 +2369,8 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 
 		if (type != CAMERA_DISPLAY_TYPE_NONE) {
 			ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
-			                                  MMCAM_DISPLAY_HANDLE, set_display_handle, sizeof(void *),
-			                                  NULL);
+				MMCAM_DISPLAY_HANDLE, set_display_handle, sizeof(void *),
+				NULL);
 			if (ret != MM_ERROR_NONE) {
 				LOGE("set display handle failed 0x%x", ret);
 				goto _SET_DISPLAY_ERROR;
@@ -2439,8 +2405,8 @@ _SET_DISPLAY_ERROR:
 
 int camera_set_preview_resolution(camera_h camera,  int width, int height)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -2449,7 +2415,7 @@ int camera_set_preview_resolution(camera_h camera,  int width, int height)
 	muse_camera_api_e api = MUSE_CAMERA_API_SET_PREVIEW_RESOLUTION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2464,7 +2430,7 @@ int camera_set_preview_resolution(camera_h camera,  int width, int height)
 int camera_set_capture_resolution(camera_h camera,  int width, int height)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2474,7 +2440,7 @@ int camera_set_capture_resolution(camera_h camera,  int width, int height)
 	muse_camera_api_e api = MUSE_CAMERA_API_SET_CAPTURE_RESOLUTION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2488,7 +2454,7 @@ int camera_set_capture_resolution(camera_h camera,  int width, int height)
 int camera_set_capture_format(camera_h camera, camera_pixel_format_e format)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2499,7 +2465,7 @@ int camera_set_capture_format(camera_h camera, camera_pixel_format_e format)
 	muse_camera_api_e api = MUSE_CAMERA_API_SET_CAPTURE_FORMAT;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2513,7 +2479,7 @@ int camera_set_capture_format(camera_h camera, camera_pixel_format_e format)
 int camera_set_preview_format(camera_h camera, camera_pixel_format_e format)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2524,7 +2490,7 @@ int camera_set_preview_format(camera_h camera, camera_pixel_format_e format)
 	muse_camera_api_e api = MUSE_CAMERA_API_SET_PREVIEW_FORMAT;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2538,7 +2504,7 @@ int camera_set_preview_format(camera_h camera, camera_pixel_format_e format)
 int camera_get_preview_resolution(camera_h camera,  int *width, int *height)
 {
 	if (camera == NULL || width == NULL || height == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2549,7 +2515,7 @@ int camera_get_preview_resolution(camera_h camera,  int *width, int *height)
 	muse_camera_api_e api = MUSE_CAMERA_API_GET_PREVIEW_RESOLUTION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2571,8 +2537,8 @@ int camera_get_preview_resolution(camera_h camera,  int *width, int *height)
 
 int camera_set_display_rotation(camera_h camera, camera_rotation_e rotation)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2581,7 +2547,7 @@ int camera_set_display_rotation(camera_h camera, camera_rotation_e rotation)
 	muse_camera_api_e api = MUSE_CAMERA_API_SET_DISPLAY_ROTATION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2595,8 +2561,8 @@ int camera_set_display_rotation(camera_h camera, camera_rotation_e rotation)
 
 int camera_get_display_rotation(camera_h camera, camera_rotation_e *rotation)
 {
-	if( camera == NULL || rotation == NULL ){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || rotation == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2606,7 +2572,7 @@ int camera_get_display_rotation(camera_h camera, camera_rotation_e *rotation)
 	muse_camera_api_e api = MUSE_CAMERA_API_GET_DISPLAY_ROTATION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2625,8 +2591,8 @@ int camera_get_display_rotation(camera_h camera, camera_rotation_e *rotation)
 
 int camera_set_display_flip(camera_h camera, camera_flip_e flip)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2636,7 +2602,7 @@ int camera_set_display_flip(camera_h camera, camera_flip_e flip)
 	muse_camera_api_e api = MUSE_CAMERA_API_SET_DISPLAY_FLIP;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2650,8 +2616,8 @@ int camera_set_display_flip(camera_h camera, camera_flip_e flip)
 
 int camera_get_display_flip(camera_h camera, camera_flip_e *flip)
 {
-	if( camera == NULL || flip == NULL ){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || flip == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2661,7 +2627,7 @@ int camera_get_display_flip(camera_h camera, camera_flip_e *flip)
 	muse_camera_api_e api = MUSE_CAMERA_API_GET_DISPLAY_FLIP;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2680,8 +2646,8 @@ int camera_get_display_flip(camera_h camera, camera_flip_e *flip)
 
 int camera_set_display_visible(camera_h camera, bool visible)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2692,7 +2658,7 @@ int camera_set_display_visible(camera_h camera, bool visible)
 	int set_visible = (int)visible;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2705,8 +2671,8 @@ int camera_set_display_visible(camera_h camera, bool visible)
 
 int camera_is_display_visible(camera_h camera, bool* visible)
 {
-	if( camera == NULL || visible == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || visible == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2716,7 +2682,7 @@ int camera_is_display_visible(camera_h camera, bool* visible)
 	muse_camera_api_e api = MUSE_CAMERA_API_IS_DISPLAY_VISIBLE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2736,7 +2702,7 @@ int camera_is_display_visible(camera_h camera, bool* visible)
 int camera_set_display_mode(camera_h camera, camera_display_mode_e mode)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2747,7 +2713,7 @@ int camera_set_display_mode(camera_h camera, camera_display_mode_e mode)
 	muse_camera_api_e api = MUSE_CAMERA_API_SET_DISPLAY_MODE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2760,8 +2726,8 @@ int camera_set_display_mode(camera_h camera, camera_display_mode_e mode)
 
 int camera_get_display_mode(camera_h camera, camera_display_mode_e* mode)
 {
-	if( camera == NULL || mode == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || mode == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2771,7 +2737,7 @@ int camera_get_display_mode(camera_h camera, camera_display_mode_e* mode)
 	muse_camera_api_e api = MUSE_CAMERA_API_GET_DISPLAY_MODE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2790,8 +2756,8 @@ int camera_get_display_mode(camera_h camera, camera_display_mode_e* mode)
 
 int camera_get_capture_resolution(camera_h camera, int *width, int *height)
 {
-	if( camera == NULL || width== NULL || height == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || width == NULL || height == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -2800,7 +2766,7 @@ int camera_get_capture_resolution(camera_h camera, int *width, int *height)
 	muse_camera_api_e api = MUSE_CAMERA_API_GET_CAPTURE_RESOLUTION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2822,8 +2788,8 @@ int camera_get_capture_resolution(camera_h camera, int *width, int *height)
 
 int camera_get_capture_format(camera_h camera, camera_pixel_format_e *format)
 {
-	if( camera == NULL || format == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || format == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -2833,7 +2799,7 @@ int camera_get_capture_format(camera_h camera, camera_pixel_format_e *format)
 	int get_format;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2851,8 +2817,8 @@ int camera_get_capture_format(camera_h camera, camera_pixel_format_e *format)
 
 int camera_get_preview_format(camera_h camera, camera_pixel_format_e *format)
 {
-	if( camera == NULL || format == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || format == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2863,7 +2829,7 @@ int camera_get_preview_format(camera_h camera, camera_pixel_format_e *format)
 	int get_format;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2881,8 +2847,8 @@ int camera_get_preview_format(camera_h camera, camera_pixel_format_e *format)
 
 int camera_get_facing_direction(camera_h camera, camera_facing_direction_e *facing_direciton)
 {
-	if( camera == NULL || facing_direciton == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || facing_direciton == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2892,7 +2858,7 @@ int camera_get_facing_direction(camera_h camera, camera_facing_direction_e *faci
 	muse_camera_api_e api = MUSE_CAMERA_API_GET_FACING_DIRECTION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2912,7 +2878,7 @@ int camera_get_facing_direction(camera_h camera, camera_facing_direction_e *faci
 int camera_set_preview_cb(camera_h camera, camera_preview_cb callback, void* user_data)
 {
 	if (camera == NULL || callback == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -2920,7 +2886,7 @@ int camera_set_preview_cb(camera_h camera, camera_preview_cb callback, void* use
 	camera_cli_s *pc = (camera_cli_s *)camera;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2939,7 +2905,7 @@ int camera_set_preview_cb(camera_h camera, camera_preview_cb callback, void* use
 int camera_unset_preview_cb(camera_h camera)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2952,7 +2918,7 @@ int camera_unset_preview_cb(camera_h camera)
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -2990,7 +2956,7 @@ int camera_set_media_packet_preview_cb(camera_h camera, camera_media_packet_prev
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3018,7 +2984,7 @@ int camera_unset_media_packet_preview_cb(camera_h camera)
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3032,8 +2998,8 @@ int camera_unset_media_packet_preview_cb(camera_h camera)
 
 int camera_set_state_changed_cb(camera_h camera, camera_state_changed_cb callback, void* user_data)
 {
-	if( camera == NULL || callback == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || callback == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3045,7 +3011,7 @@ int camera_set_state_changed_cb(camera_h camera, camera_state_changed_cb callbac
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3058,8 +3024,8 @@ int camera_set_state_changed_cb(camera_h camera, camera_state_changed_cb callbac
 }
 int camera_unset_state_changed_cb(camera_h camera)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3071,7 +3037,7 @@ int camera_unset_state_changed_cb(camera_h camera)
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3085,8 +3051,8 @@ int camera_unset_state_changed_cb(camera_h camera)
 
 int camera_set_interrupted_cb(camera_h camera, camera_interrupted_cb callback, void *user_data)
 {
-	if( camera == NULL || callback == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || callback == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3098,7 +3064,7 @@ int camera_set_interrupted_cb(camera_h camera, camera_interrupted_cb callback, v
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3112,8 +3078,8 @@ int camera_set_interrupted_cb(camera_h camera, camera_interrupted_cb callback, v
 
 int camera_unset_interrupted_cb(camera_h camera)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3125,7 +3091,7 @@ int camera_unset_interrupted_cb(camera_h camera)
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3139,8 +3105,8 @@ int camera_unset_interrupted_cb(camera_h camera)
 
 int camera_set_focus_changed_cb(camera_h camera, camera_focus_changed_cb callback, void* user_data)
 {
-	if( camera == NULL || callback == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || callback == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3152,7 +3118,7 @@ int camera_set_focus_changed_cb(camera_h camera, camera_focus_changed_cb callbac
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3166,8 +3132,8 @@ int camera_set_focus_changed_cb(camera_h camera, camera_focus_changed_cb callbac
 
 int camera_unset_focus_changed_cb(camera_h camera)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3179,7 +3145,7 @@ int camera_unset_focus_changed_cb(camera_h camera)
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3193,8 +3159,8 @@ int camera_unset_focus_changed_cb(camera_h camera)
 
 int camera_set_error_cb(camera_h camera, camera_error_cb callback, void *user_data)
 {
-	if( camera == NULL || callback == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || callback == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3206,7 +3172,7 @@ int camera_set_error_cb(camera_h camera, camera_error_cb callback, void *user_da
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3220,8 +3186,8 @@ int camera_set_error_cb(camera_h camera, camera_error_cb callback, void *user_da
 
 int camera_unset_error_cb(camera_h camera)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3233,7 +3199,7 @@ int camera_unset_error_cb(camera_h camera)
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3247,8 +3213,8 @@ int camera_unset_error_cb(camera_h camera)
 
 int camera_foreach_supported_preview_resolution(camera_h camera, camera_supported_preview_resolution_cb foreach_cb , void *user_data)
 {
-	if( camera == NULL || foreach_cb == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || foreach_cb == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3260,7 +3226,7 @@ int camera_foreach_supported_preview_resolution(camera_h camera, camera_supporte
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3274,8 +3240,8 @@ int camera_foreach_supported_preview_resolution(camera_h camera, camera_supporte
 
 int camera_foreach_supported_capture_resolution(camera_h camera, camera_supported_capture_resolution_cb foreach_cb , void *user_data)
 {
-	if( camera == NULL || foreach_cb == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || foreach_cb == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3287,7 +3253,7 @@ int camera_foreach_supported_capture_resolution(camera_h camera, camera_supporte
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3301,8 +3267,8 @@ int camera_foreach_supported_capture_resolution(camera_h camera, camera_supporte
 
 int camera_foreach_supported_capture_format(camera_h camera, camera_supported_capture_format_cb foreach_cb , void *user_data)
 {
-	if( camera == NULL || foreach_cb == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || foreach_cb == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3314,7 +3280,7 @@ int camera_foreach_supported_capture_format(camera_h camera, camera_supported_ca
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3329,8 +3295,8 @@ int camera_foreach_supported_capture_format(camera_h camera, camera_supported_ca
 
 int camera_foreach_supported_preview_format(camera_h camera, camera_supported_preview_format_cb foreach_cb , void *user_data)
 {
-	if( camera == NULL || foreach_cb == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || foreach_cb == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3342,7 +3308,7 @@ int camera_foreach_supported_preview_format(camera_h camera, camera_supported_pr
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3358,7 +3324,7 @@ int camera_foreach_supported_preview_format(camera_h camera, camera_supported_pr
 int camera_get_recommended_preview_resolution(camera_h camera, int *width, int *height)
 {
 	if (camera == NULL || width == NULL || height == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3367,7 +3333,7 @@ int camera_get_recommended_preview_resolution(camera_h camera, int *width, int *
 	muse_camera_api_e api = MUSE_CAMERA_API_GET_RECOMMENDED_PREVIEW_RESOLUTION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3390,8 +3356,8 @@ int camera_get_recommended_preview_resolution(camera_h camera, int *width, int *
 
 int camera_attr_get_lens_orientation(camera_h camera, int *angle)
 {
-	if( camera == NULL || angle == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || angle == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3400,7 +3366,7 @@ int camera_attr_get_lens_orientation(camera_h camera, int *angle)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_LENS_ORIENTATION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3428,7 +3394,7 @@ int camera_attr_set_theater_mode(camera_h camera, camera_attr_theater_mode_e mod
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_THEATER_MODE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3451,7 +3417,7 @@ int camera_attr_get_theater_mode(camera_h camera, camera_attr_theater_mode_e *mo
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_THEATER_MODE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3482,7 +3448,7 @@ int camera_attr_foreach_supported_theater_mode(camera_h camera, camera_attr_supp
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3498,8 +3464,8 @@ int camera_attr_foreach_supported_theater_mode(camera_h camera, camera_attr_supp
 
 int camera_attr_set_preview_fps(camera_h camera,  camera_attr_fps_e fps)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3507,7 +3473,7 @@ int camera_attr_set_preview_fps(camera_h camera,  camera_attr_fps_e fps)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_PREVIEW_FPS;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3521,8 +3487,8 @@ int camera_attr_set_preview_fps(camera_h camera,  camera_attr_fps_e fps)
 
 int camera_attr_set_image_quality(camera_h camera,  int quality)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3531,7 +3497,7 @@ int camera_attr_set_image_quality(camera_h camera,  int quality)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_IMAGE_QUALITY;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3543,8 +3509,8 @@ int camera_attr_set_image_quality(camera_h camera,  int quality)
 
 int camera_attr_get_preview_fps(camera_h camera,  camera_attr_fps_e *fps)
 {
-	if( camera == NULL || fps == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || fps == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3554,7 +3520,7 @@ int camera_attr_get_preview_fps(camera_h camera,  camera_attr_fps_e *fps)
 	int get_fps;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3573,8 +3539,8 @@ int camera_attr_get_preview_fps(camera_h camera,  camera_attr_fps_e *fps)
 
 int camera_attr_get_image_quality(camera_h camera, int *quality)
 {
-	if( camera == NULL || quality == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || quality == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3583,7 +3549,7 @@ int camera_attr_get_image_quality(camera_h camera, int *quality)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_IMAGE_QUALITY;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3602,8 +3568,8 @@ int camera_attr_get_image_quality(camera_h camera, int *quality)
 
 int camera_attr_set_zoom(camera_h camera, int zoom)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3612,7 +3578,7 @@ int camera_attr_set_zoom(camera_h camera, int zoom)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_ZOOM;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3625,8 +3591,8 @@ int camera_attr_set_zoom(camera_h camera, int zoom)
 
 int camera_attr_set_af_mode(camera_h camera,  camera_attr_af_mode_e mode)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3635,7 +3601,7 @@ int camera_attr_set_af_mode(camera_h camera,  camera_attr_af_mode_e mode)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_AF_MODE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3648,8 +3614,8 @@ int camera_attr_set_af_mode(camera_h camera,  camera_attr_af_mode_e mode)
 
 int camera_attr_set_af_area(camera_h camera, int x, int y)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3665,7 +3631,7 @@ int camera_attr_set_af_area(camera_h camera, int x, int y)
 
 int camera_attr_clear_af_area(camera_h camera)
 {
-	if( camera == NULL){
+	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
@@ -3675,7 +3641,7 @@ int camera_attr_clear_af_area(camera_h camera)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_CLEAR_AF_AREA;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3688,8 +3654,8 @@ int camera_attr_clear_af_area(camera_h camera)
 
 int camera_attr_set_exposure_mode(camera_h camera,  camera_attr_exposure_mode_e mode)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -3704,7 +3670,7 @@ int camera_attr_set_exposure_mode(camera_h camera,  camera_attr_exposure_mode_e 
 	int set_mode = (int)mode;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3717,8 +3683,8 @@ int camera_attr_set_exposure_mode(camera_h camera,  camera_attr_exposure_mode_e 
 
 int camera_attr_set_exposure(camera_h camera, int value)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3727,7 +3693,7 @@ int camera_attr_set_exposure(camera_h camera, int value)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_EXPOSURE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3741,8 +3707,8 @@ int camera_attr_set_exposure(camera_h camera, int value)
 
 int camera_attr_set_iso(camera_h camera, camera_attr_iso_e iso)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3751,7 +3717,7 @@ int camera_attr_set_iso(camera_h camera, camera_attr_iso_e iso)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_ISO;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3765,8 +3731,8 @@ int camera_attr_set_iso(camera_h camera, camera_attr_iso_e iso)
 
 int camera_attr_set_brightness(camera_h camera, int level)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3775,7 +3741,7 @@ int camera_attr_set_brightness(camera_h camera, int level)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_BRIGHTNESS;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3789,8 +3755,8 @@ int camera_attr_set_brightness(camera_h camera, int level)
 
 int camera_attr_set_contrast(camera_h camera, int level)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3799,7 +3765,7 @@ int camera_attr_set_contrast(camera_h camera, int level)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_CONTRAST;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3814,12 +3780,12 @@ int camera_attr_set_contrast(camera_h camera, int level)
 int camera_attr_set_whitebalance(camera_h camera, camera_attr_whitebalance_e wb)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
 	if (wb < CAMERA_ATTR_WHITE_BALANCE_NONE || wb > CAMERA_ATTR_WHITE_BALANCE_CUSTOM) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_NOT_SUPPORTED);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_NOT_SUPPORTED);
 		return CAMERA_ERROR_NOT_SUPPORTED;
 	}
 
@@ -3829,7 +3795,7 @@ int camera_attr_set_whitebalance(camera_h camera, camera_attr_whitebalance_e wb)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_WHITEBALANCE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3843,8 +3809,8 @@ int camera_attr_set_whitebalance(camera_h camera, camera_attr_whitebalance_e wb)
 
 int camera_attr_set_effect(camera_h camera, camera_attr_effect_mode_e effect)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3853,7 +3819,7 @@ int camera_attr_set_effect(camera_h camera, camera_attr_effect_mode_e effect)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_EFFECT;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3867,8 +3833,8 @@ int camera_attr_set_effect(camera_h camera, camera_attr_effect_mode_e effect)
 
 int camera_attr_set_scene_mode(camera_h camera, camera_attr_scene_mode_e mode)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3877,7 +3843,7 @@ int camera_attr_set_scene_mode(camera_h camera, camera_attr_scene_mode_e mode)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_SCENE_MODE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3891,8 +3857,8 @@ int camera_attr_set_scene_mode(camera_h camera, camera_attr_scene_mode_e mode)
 
 int camera_attr_enable_tag(camera_h camera, bool enable)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3900,7 +3866,7 @@ int camera_attr_enable_tag(camera_h camera, bool enable)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_ENABLE_TAG;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3915,12 +3881,12 @@ int camera_attr_enable_tag(camera_h camera, bool enable)
 
 int camera_attr_set_tag_image_description(camera_h camera, const char *description)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-	if( description == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (description == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3928,7 +3894,7 @@ int camera_attr_set_tag_image_description(camera_h camera, const char *descripti
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_TAG_IMAGE_DESCRIPTION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3941,8 +3907,8 @@ int camera_attr_set_tag_image_description(camera_h camera, const char *descripti
 
 int camera_attr_set_tag_orientation(camera_h camera,  camera_attr_tag_orientation_e orientation)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3950,7 +3916,7 @@ int camera_attr_set_tag_orientation(camera_h camera,  camera_attr_tag_orientatio
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_TAG_ORIENTATION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3965,12 +3931,12 @@ int camera_attr_set_tag_orientation(camera_h camera,  camera_attr_tag_orientatio
 
 int camera_attr_set_tag_software(camera_h camera,  const char *software)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-	if( software == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (software == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -3978,7 +3944,7 @@ int camera_attr_set_tag_software(camera_h camera,  const char *software)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_TAG_SOFTWARE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -3991,8 +3957,8 @@ int camera_attr_set_tag_software(camera_h camera,  const char *software)
 
 int camera_attr_set_geotag(camera_h camera, double latitude , double longitude, double altitude)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4000,7 +3966,7 @@ int camera_attr_set_geotag(camera_h camera, double latitude , double longitude, 
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_GEOTAG;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4016,8 +3982,8 @@ int camera_attr_set_geotag(camera_h camera, double latitude , double longitude, 
 
 int camera_attr_remove_geotag(camera_h camera)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4025,7 +3991,7 @@ int camera_attr_remove_geotag(camera_h camera)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_REMOVE_GEOTAG;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4038,8 +4004,8 @@ int camera_attr_remove_geotag(camera_h camera)
 
 int camera_attr_set_flash_mode(camera_h camera, camera_attr_flash_mode_e mode)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4047,7 +4013,7 @@ int camera_attr_set_flash_mode(camera_h camera, camera_attr_flash_mode_e mode)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_FLASH_MODE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4062,8 +4028,8 @@ int camera_attr_set_flash_mode(camera_h camera, camera_attr_flash_mode_e mode)
 
 int camera_attr_get_zoom(camera_h camera, int *zoom)
 {
-	if( camera == NULL || zoom == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || zoom == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4073,7 +4039,7 @@ int camera_attr_get_zoom(camera_h camera, int *zoom)
 	int get_zoom;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4092,15 +4058,15 @@ int camera_attr_get_zoom(camera_h camera, int *zoom)
 
 int camera_attr_get_zoom_range(camera_h camera, int *min, int *max)
 {
-	if( camera == NULL || min == NULL || max == NULL ){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || min == NULL || max == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
 	camera_cli_s *pc = (camera_cli_s *)camera;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4122,17 +4088,17 @@ int camera_attr_get_zoom_range(camera_h camera, int *min, int *max)
 }
 
 
-int camera_attr_get_af_mode( camera_h camera,  camera_attr_af_mode_e *mode)
+int camera_attr_get_af_mode(camera_h camera, camera_attr_af_mode_e *mode)
 {
-	if( camera == NULL || mode == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || mode == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
 	camera_cli_s *pc = (camera_cli_s *)camera;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4151,17 +4117,17 @@ int camera_attr_get_af_mode( camera_h camera,  camera_attr_af_mode_e *mode)
 }
 
 
-int camera_attr_get_exposure_mode( camera_h camera, camera_attr_exposure_mode_e *mode)
+int camera_attr_get_exposure_mode(camera_h camera, camera_attr_exposure_mode_e *mode)
 {
-	if( camera == NULL|| mode == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || mode == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
 	camera_cli_s *pc = (camera_cli_s *)camera;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4181,15 +4147,15 @@ int camera_attr_get_exposure_mode( camera_h camera, camera_attr_exposure_mode_e 
 
 int camera_attr_get_exposure(camera_h camera, int *value)
 {
-	if( camera == NULL || value == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || value == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
 	camera_cli_s *pc = (camera_cli_s *)camera;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4210,15 +4176,15 @@ int camera_attr_get_exposure(camera_h camera, int *value)
 
 int camera_attr_get_exposure_range(camera_h camera, int *min, int *max)
 {
-	if( camera == NULL || min == NULL || max == NULL ){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || min == NULL || max == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
 	camera_cli_s *pc = (camera_cli_s *)camera;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4240,17 +4206,17 @@ int camera_attr_get_exposure_range(camera_h camera, int *min, int *max)
 }
 
 
-int camera_attr_get_iso( camera_h camera,  camera_attr_iso_e *iso)
+int camera_attr_get_iso(camera_h camera, camera_attr_iso_e *iso)
 {
-	if( camera == NULL || iso == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || iso == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
 	camera_cli_s *pc = (camera_cli_s *)camera;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4271,15 +4237,15 @@ int camera_attr_get_iso( camera_h camera,  camera_attr_iso_e *iso)
 
 int camera_attr_get_brightness(camera_h camera,  int *level)
 {
-	if( camera == NULL || level == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || level == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
 	camera_cli_s *pc = (camera_cli_s *)camera;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4300,15 +4266,15 @@ int camera_attr_get_brightness(camera_h camera,  int *level)
 
 int camera_attr_get_brightness_range(camera_h camera, int *min, int *max)
 {
-	if( camera == NULL || min == NULL || max == NULL ){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || min == NULL || max == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
 	camera_cli_s *pc = (camera_cli_s *)camera;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4332,8 +4298,8 @@ int camera_attr_get_brightness_range(camera_h camera, int *min, int *max)
 
 int camera_attr_get_contrast(camera_h camera,  int *level)
 {
-	if( camera == NULL || level == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || level == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4341,7 +4307,7 @@ int camera_attr_get_contrast(camera_h camera,  int *level)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_CONTRAST;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4361,8 +4327,8 @@ int camera_attr_get_contrast(camera_h camera,  int *level)
 
 int camera_attr_get_contrast_range(camera_h camera, int *min , int *max)
 {
-	if( camera == NULL || min == NULL || max == NULL ){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || min == NULL || max == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4370,7 +4336,7 @@ int camera_attr_get_contrast_range(camera_h camera, int *min , int *max)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_CONTRAST_RANGE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4393,8 +4359,8 @@ int camera_attr_get_contrast_range(camera_h camera, int *min , int *max)
 
 int camera_attr_get_whitebalance(camera_h camera,  camera_attr_whitebalance_e *wb)
 {
-	if( camera == NULL || wb == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || wb == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4402,7 +4368,7 @@ int camera_attr_get_whitebalance(camera_h camera,  camera_attr_whitebalance_e *w
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_WHITEBALANCE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4422,8 +4388,8 @@ int camera_attr_get_whitebalance(camera_h camera,  camera_attr_whitebalance_e *w
 
 int camera_attr_get_effect(camera_h camera, camera_attr_effect_mode_e *effect)
 {
-	if( camera == NULL || effect == NULL ){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || effect == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -4432,7 +4398,7 @@ int camera_attr_get_effect(camera_h camera, camera_attr_effect_mode_e *effect)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_EFFECT;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4452,8 +4418,8 @@ int camera_attr_get_effect(camera_h camera, camera_attr_effect_mode_e *effect)
 
 int camera_attr_get_scene_mode(camera_h camera,  camera_attr_scene_mode_e *mode)
 {
-	if( camera == NULL || mode == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || mode == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -4462,7 +4428,7 @@ int camera_attr_get_scene_mode(camera_h camera,  camera_attr_scene_mode_e *mode)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_SCENE_MODE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4482,8 +4448,8 @@ int camera_attr_get_scene_mode(camera_h camera,  camera_attr_scene_mode_e *mode)
 
 int camera_attr_is_enabled_tag(camera_h camera,  bool *enable)
 {
-	if( camera == NULL || enable == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || enable == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -4492,7 +4458,7 @@ int camera_attr_is_enabled_tag(camera_h camera,  bool *enable)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_IS_ENABLED_TAG;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4512,8 +4478,8 @@ int camera_attr_is_enabled_tag(camera_h camera,  bool *enable)
 
 int camera_attr_get_tag_image_description(camera_h camera,  char **description)
 {
-	if( camera == NULL || description == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || description == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -4522,7 +4488,7 @@ int camera_attr_get_tag_image_description(camera_h camera,  char **description)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_TAG_IMAGE_DESCRIPTION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4542,8 +4508,8 @@ int camera_attr_get_tag_image_description(camera_h camera,  char **description)
 
 int camera_attr_get_tag_orientation(camera_h camera, camera_attr_tag_orientation_e *orientation)
 {
-	if( camera == NULL || orientation == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || orientation == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -4552,7 +4518,7 @@ int camera_attr_get_tag_orientation(camera_h camera, camera_attr_tag_orientation
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_TAG_ORIENTATION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4573,8 +4539,8 @@ int camera_attr_get_tag_orientation(camera_h camera, camera_attr_tag_orientation
 
 int camera_attr_get_tag_software(camera_h camera, char **software)
 {
-	if( camera == NULL || software == NULL ){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || software == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -4583,7 +4549,7 @@ int camera_attr_get_tag_software(camera_h camera, char **software)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_TAG_SOFTWARE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4603,8 +4569,8 @@ int camera_attr_get_tag_software(camera_h camera, char **software)
 
 int camera_attr_get_geotag(camera_h camera, double *latitude , double *longitude, double *altitude)
 {
-	if( camera == NULL || latitude == NULL || longitude == NULL || altitude == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || latitude == NULL || longitude == NULL || altitude == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -4614,7 +4580,7 @@ int camera_attr_get_geotag(camera_h camera, double *latitude , double *longitude
 	double get_geotag[3] = {0,};
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4639,8 +4605,8 @@ int camera_attr_get_geotag(camera_h camera, double *latitude , double *longitude
 
 int camera_attr_get_flash_mode(camera_h camera,  camera_attr_flash_mode_e *mode)
 {
-	if( camera == NULL || mode == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || mode == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -4649,7 +4615,7 @@ int camera_attr_get_flash_mode(camera_h camera,  camera_attr_flash_mode_e *mode)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_FLASH_MODE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4667,10 +4633,10 @@ int camera_attr_get_flash_mode(camera_h camera,  camera_attr_flash_mode_e *mode)
 }
 
 
-int camera_attr_foreach_supported_af_mode( camera_h camera, camera_attr_supported_af_mode_cb foreach_cb , void *user_data)
+int camera_attr_foreach_supported_af_mode(camera_h camera, camera_attr_supported_af_mode_cb foreach_cb, void *user_data)
 {
-	if( camera == NULL || foreach_cb == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || foreach_cb == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4682,7 +4648,7 @@ int camera_attr_foreach_supported_af_mode( camera_h camera, camera_attr_supporte
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4697,8 +4663,8 @@ int camera_attr_foreach_supported_af_mode( camera_h camera, camera_attr_supporte
 
 int camera_attr_foreach_supported_exposure_mode(camera_h camera, camera_attr_supported_exposure_mode_cb foreach_cb , void *user_data)
 {
-	if( camera == NULL || foreach_cb == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || foreach_cb == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4710,7 +4676,7 @@ int camera_attr_foreach_supported_exposure_mode(camera_h camera, camera_attr_sup
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4723,10 +4689,10 @@ int camera_attr_foreach_supported_exposure_mode(camera_h camera, camera_attr_sup
 }
 
 
-int camera_attr_foreach_supported_iso( camera_h camera, camera_attr_supported_iso_cb foreach_cb , void *user_data)
+int camera_attr_foreach_supported_iso(camera_h camera, camera_attr_supported_iso_cb foreach_cb, void *user_data)
 {
-	if( camera == NULL || foreach_cb == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || foreach_cb == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4738,7 +4704,7 @@ int camera_attr_foreach_supported_iso( camera_h camera, camera_attr_supported_is
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4753,8 +4719,8 @@ int camera_attr_foreach_supported_iso( camera_h camera, camera_attr_supported_is
 
 int camera_attr_foreach_supported_whitebalance(camera_h camera, camera_attr_supported_whitebalance_cb foreach_cb , void *user_data)
 {
-	if( camera == NULL || foreach_cb == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || foreach_cb == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4766,7 +4732,7 @@ int camera_attr_foreach_supported_whitebalance(camera_h camera, camera_attr_supp
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4781,8 +4747,8 @@ int camera_attr_foreach_supported_whitebalance(camera_h camera, camera_attr_supp
 
 int camera_attr_foreach_supported_effect(camera_h camera, camera_attr_supported_effect_cb foreach_cb , void *user_data)
 {
-	if( camera == NULL || foreach_cb == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || foreach_cb == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4794,7 +4760,7 @@ int camera_attr_foreach_supported_effect(camera_h camera, camera_attr_supported_
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4809,8 +4775,8 @@ int camera_attr_foreach_supported_effect(camera_h camera, camera_attr_supported_
 
 int camera_attr_foreach_supported_scene_mode(camera_h camera, camera_attr_supported_scene_mode_cb foreach_cb , void *user_data)
 {
-	if( camera == NULL || foreach_cb == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || foreach_cb == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4822,7 +4788,7 @@ int camera_attr_foreach_supported_scene_mode(camera_h camera, camera_attr_suppor
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4837,8 +4803,8 @@ int camera_attr_foreach_supported_scene_mode(camera_h camera, camera_attr_suppor
 
 int camera_attr_foreach_supported_flash_mode(camera_h camera, camera_attr_supported_flash_mode_cb foreach_cb , void *user_data)
 {
-	if( camera == NULL || foreach_cb == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || foreach_cb == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4850,7 +4816,7 @@ int camera_attr_foreach_supported_flash_mode(camera_h camera, camera_attr_suppor
 
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4865,8 +4831,8 @@ int camera_attr_foreach_supported_flash_mode(camera_h camera, camera_attr_suppor
 
 int camera_attr_foreach_supported_fps(camera_h camera, camera_attr_supported_fps_cb foreach_cb , void *user_data)
 {
-	if( camera == NULL || foreach_cb == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || foreach_cb == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4875,7 +4841,7 @@ int camera_attr_foreach_supported_fps(camera_h camera, camera_attr_supported_fps
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_FOREACH_SUPPORTED_FPS;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4890,8 +4856,8 @@ int camera_attr_foreach_supported_fps(camera_h camera, camera_attr_supported_fps
 
 int camera_attr_foreach_supported_fps_by_resolution(camera_h camera, int width, int height, camera_attr_supported_fps_cb foreach_cb, void *user_data)
 {
-	if( camera == NULL || foreach_cb == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || foreach_cb == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4900,7 +4866,7 @@ int camera_attr_foreach_supported_fps_by_resolution(camera_h camera, int width, 
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_FOREACH_SUPPORTED_FPS_BY_RESOLUTION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4915,8 +4881,8 @@ int camera_attr_foreach_supported_fps_by_resolution(camera_h camera, int width, 
 
 int camera_attr_foreach_supported_stream_flip(camera_h camera, camera_attr_supported_stream_flip_cb foreach_cb, void *user_data)
 {
-	if( camera == NULL || foreach_cb == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || foreach_cb == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4925,7 +4891,7 @@ int camera_attr_foreach_supported_stream_flip(camera_h camera, camera_attr_suppo
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_FOREACH_SUPPORTED_STREAM_FLIP;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4941,8 +4907,8 @@ int camera_attr_foreach_supported_stream_flip(camera_h camera, camera_attr_suppo
 
 int camera_attr_foreach_supported_stream_rotation(camera_h camera, camera_attr_supported_stream_rotation_cb foreach_cb, void *user_data)
 {
-	if( camera == NULL || foreach_cb == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || foreach_cb == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -4951,7 +4917,7 @@ int camera_attr_foreach_supported_stream_rotation(camera_h camera, camera_attr_s
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_FOREACH_SUPPORTED_STREAM_ROTATION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4967,8 +4933,8 @@ int camera_attr_foreach_supported_stream_rotation(camera_h camera, camera_attr_s
 
 int camera_attr_set_stream_rotation(camera_h camera , camera_rotation_e rotation)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -4977,7 +4943,7 @@ int camera_attr_set_stream_rotation(camera_h camera , camera_rotation_e rotation
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_STREAM_ROTATION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -4992,8 +4958,8 @@ int camera_attr_set_stream_rotation(camera_h camera , camera_rotation_e rotation
 
 int camera_attr_get_stream_rotation(camera_h camera , camera_rotation_e *rotation)
 {
-	if( camera == NULL || rotation == NULL ){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || rotation == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -5002,7 +4968,7 @@ int camera_attr_get_stream_rotation(camera_h camera , camera_rotation_e *rotatio
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_STREAM_ROTATION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -5022,8 +4988,8 @@ int camera_attr_get_stream_rotation(camera_h camera , camera_rotation_e *rotatio
 
 int camera_attr_set_stream_flip(camera_h camera , camera_flip_e flip)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -5032,7 +4998,7 @@ int camera_attr_set_stream_flip(camera_h camera , camera_flip_e flip)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_STREAM_FLIP;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -5047,8 +5013,8 @@ int camera_attr_set_stream_flip(camera_h camera , camera_flip_e flip)
 
 int camera_attr_get_stream_flip(camera_h camera , camera_flip_e *flip)
 {
-	if( camera == NULL || flip == NULL ){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL || flip == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -5057,7 +5023,7 @@ int camera_attr_get_stream_flip(camera_h camera , camera_flip_e *flip)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_STREAM_FLIP;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -5076,7 +5042,7 @@ int camera_attr_get_stream_flip(camera_h camera , camera_flip_e *flip)
 
 int camera_attr_set_hdr_mode(camera_h camera, camera_attr_hdr_mode_e mode)
 {
-	if( camera == NULL){
+	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
@@ -5086,7 +5052,7 @@ int camera_attr_set_hdr_mode(camera_h camera, camera_attr_hdr_mode_e mode)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_HDR_MODE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -5102,11 +5068,11 @@ int camera_attr_set_hdr_mode(camera_h camera, camera_attr_hdr_mode_e mode)
 int camera_attr_get_hdr_mode(camera_h camera, camera_attr_hdr_mode_e *mode)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x) - handle",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x) - handle", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	if (mode == NULL) {
-		LOGE("CAMERA_ERROR_NOT_SUPPORTED(0x%08x) - mode",CAMERA_ERROR_NOT_SUPPORTED);
+		LOGE("CAMERA_ERROR_NOT_SUPPORTED(0x%08x) - mode", CAMERA_ERROR_NOT_SUPPORTED);
 		return CAMERA_ERROR_NOT_SUPPORTED;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -5114,7 +5080,7 @@ int camera_attr_get_hdr_mode(camera_h camera, camera_attr_hdr_mode_e *mode)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_HDR_MODE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -5134,8 +5100,8 @@ int camera_attr_get_hdr_mode(camera_h camera, camera_attr_hdr_mode_e *mode)
 
 bool camera_attr_is_supported_hdr_capture(camera_h camera)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return false;
 	}
 
@@ -5144,7 +5110,7 @@ bool camera_attr_is_supported_hdr_capture(camera_h camera)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_IS_SUPPORTED_HDR_CAPTURE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -5171,7 +5137,7 @@ int camera_attr_set_hdr_capture_progress_cb(camera_h camera, camera_attr_hdr_pro
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_HDR_CAPTURE_PROGRESS_CB;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -5188,8 +5154,8 @@ int camera_attr_set_hdr_capture_progress_cb(camera_h camera, camera_attr_hdr_pro
 
 int camera_attr_unset_hdr_capture_progress_cb(camera_h camera)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -5199,7 +5165,7 @@ int camera_attr_unset_hdr_capture_progress_cb(camera_h camera)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_UNSET_HDR_CAPTURE_PROGRESS_CB;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -5217,7 +5183,7 @@ int camera_attr_unset_hdr_capture_progress_cb(camera_h camera)
 int camera_attr_enable_anti_shake(camera_h camera, bool enable)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -5226,7 +5192,7 @@ int camera_attr_enable_anti_shake(camera_h camera, bool enable)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_ENABLE_ANTI_SHAKE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -5254,7 +5220,7 @@ int camera_attr_is_enabled_anti_shake(camera_h camera , bool *enabled)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_IS_ENABLED_ANTI_SHAKE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -5275,8 +5241,8 @@ int camera_attr_is_enabled_anti_shake(camera_h camera , bool *enabled)
 bool camera_attr_is_supported_anti_shake(camera_h camera)
 {
 
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return false;
 	}
 
@@ -5285,7 +5251,7 @@ bool camera_attr_is_supported_anti_shake(camera_h camera)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_IS_SUPPORTED_ANTI_SHAKE;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -5299,7 +5265,7 @@ bool camera_attr_is_supported_anti_shake(camera_h camera)
 int camera_attr_enable_video_stabilization(camera_h camera, bool enable)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -5308,7 +5274,7 @@ int camera_attr_enable_video_stabilization(camera_h camera, bool enable)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_ENABLE_VIDEO_STABILIZATION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -5324,11 +5290,11 @@ int camera_attr_enable_video_stabilization(camera_h camera, bool enable)
 int camera_attr_is_enabled_video_stabilization(camera_h camera, bool *enabled)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x) - handle",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x) - handle", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	if (enabled == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x) - enabled",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x) - enabled", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_NOT_SUPPORTED;
 	}
 	int ret = CAMERA_ERROR_NONE;
@@ -5336,7 +5302,7 @@ int camera_attr_is_enabled_video_stabilization(camera_h camera, bool *enabled)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_IS_ENABLED_VIDEO_STABILIZATION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -5356,8 +5322,8 @@ int camera_attr_is_enabled_video_stabilization(camera_h camera, bool *enabled)
 
 bool camera_attr_is_supported_video_stabilization(camera_h camera)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return false;
 	}
 
@@ -5366,7 +5332,7 @@ bool camera_attr_is_supported_video_stabilization(camera_h camera)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_IS_SUPPORTED_VIDEO_STABILIZATION;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -5379,7 +5345,7 @@ bool camera_attr_is_supported_video_stabilization(camera_h camera)
 
 int camera_attr_enable_auto_contrast(camera_h camera, bool enable)
 {
-	if( camera == NULL){
+	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
@@ -5389,7 +5355,7 @@ int camera_attr_enable_auto_contrast(camera_h camera, bool enable)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_ENABLE_AUTO_CONTRAST;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -5417,7 +5383,7 @@ int camera_attr_is_enabled_auto_contrast(camera_h camera, bool *enabled)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_IS_ENABLED_AUTO_CONTRAST;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -5437,8 +5403,8 @@ int camera_attr_is_enabled_auto_contrast(camera_h camera, bool *enabled)
 
 bool camera_attr_is_supported_auto_contrast(camera_h camera)
 {
-	if( camera == NULL){
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return false;
 	}
 
@@ -5447,7 +5413,7 @@ bool camera_attr_is_supported_auto_contrast(camera_h camera)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_IS_SUPPORTED_AUTO_CONTRAST;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
@@ -5461,7 +5427,7 @@ bool camera_attr_is_supported_auto_contrast(camera_h camera)
 int camera_attr_disable_shutter_sound(camera_h camera, bool disable)
 {
 	if (camera == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -5470,7 +5436,7 @@ int camera_attr_disable_shutter_sound(camera_h camera, bool disable)
 	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_DISABLE_SHUTTER_SOUND;
 	int sock_fd;
 	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)",CAMERA_ERROR_INVALID_PARAMETER);
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
