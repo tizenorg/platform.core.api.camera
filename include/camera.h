@@ -227,6 +227,11 @@ typedef struct {
 			unsigned int u_size;	/**< The size of u data */
 			unsigned int v_size;	/**< The size of v data */
 		} triple_plane;			/**< triple plane frame data */
+
+		struct {
+			unsigned char *data;	/**< The encoded data pointer */
+			unsigned int size;		/**< The size of encoded data */
+		} encoded_plane;
 	} data;
 } camera_preview_data_s;
 

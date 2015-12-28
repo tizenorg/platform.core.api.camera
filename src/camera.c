@@ -561,36 +561,43 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 				if (num_buffer_key == 0) {
 					/* non-zero copy */
 					buf_pos += sizeof(MMCamcorderVideoStreamDataType);
-					switch (stream->num_planes) {
-					case 1:
-						frame.data.single_plane.yuv = buf_pos;
-						frame.data.single_plane.size = stream->data.yuv420.length_yuv;
-						total_size = stream->data.yuv420.length_yuv;
-						break;
-					case 2:
-						frame.data.double_plane.y = buf_pos;
-						frame.data.double_plane.y_size = stream->data.yuv420sp.length_y;
-						buf_pos += stream->data.yuv420sp.length_y;
-						frame.data.double_plane.uv = buf_pos;
-						frame.data.double_plane.uv_size = stream->data.yuv420sp.length_uv;
-						total_size = stream->data.yuv420sp.length_y + \
-							stream->data.yuv420sp.length_uv;
-						break;
-					case 3:
-						frame.data.triple_plane.y = buf_pos;
-						frame.data.triple_plane.y_size = stream->data.yuv420p.length_y;
-						buf_pos += stream->data.yuv420p.length_y;
-						frame.data.triple_plane.u = buf_pos;
-						frame.data.triple_plane.u_size = stream->data.yuv420p.length_u;
-						buf_pos += stream->data.yuv420p.length_u;
-						frame.data.triple_plane.v = buf_pos;
-						frame.data.triple_plane.v_size = stream->data.yuv420p.length_v;
-						total_size = stream->data.yuv420p.length_y + \
-							stream->data.yuv420p.length_u + \
-							stream->data.yuv420p.length_v;
-						break;
-					default:
-						break;
+
+					if (stream->format == MM_PIXEL_FORMAT_ENCODED_H264) {
+						frame.data.encoded_plane.data = buf_pos;
+						frame.data.encoded_plane.size = stream->data.encoded.length_data;
+						total_size = stream->data.encoded.length_data;
+					} else {
+						switch (stream->num_planes) {
+						case 1:
+							frame.data.single_plane.yuv = buf_pos;
+							frame.data.single_plane.size = stream->data.yuv420.length_yuv;
+							total_size = stream->data.yuv420.length_yuv;
+							break;
+						case 2:
+							frame.data.double_plane.y = buf_pos;
+							frame.data.double_plane.y_size = stream->data.yuv420sp.length_y;
+							buf_pos += stream->data.yuv420sp.length_y;
+							frame.data.double_plane.uv = buf_pos;
+							frame.data.double_plane.uv_size = stream->data.yuv420sp.length_uv;
+							total_size = stream->data.yuv420sp.length_y + \
+								stream->data.yuv420sp.length_uv;
+							break;
+						case 3:
+							frame.data.triple_plane.y = buf_pos;
+							frame.data.triple_plane.y_size = stream->data.yuv420p.length_y;
+							buf_pos += stream->data.yuv420p.length_y;
+							frame.data.triple_plane.u = buf_pos;
+							frame.data.triple_plane.u_size = stream->data.yuv420p.length_u;
+							buf_pos += stream->data.yuv420p.length_u;
+							frame.data.triple_plane.v = buf_pos;
+							frame.data.triple_plane.v_size = stream->data.yuv420p.length_v;
+							total_size = stream->data.yuv420p.length_y + \
+								stream->data.yuv420p.length_u + \
+								stream->data.yuv420p.length_v;
+							break;
+						default:
+							break;
+						}
 					}
 				} else {
 					/* zero copy */

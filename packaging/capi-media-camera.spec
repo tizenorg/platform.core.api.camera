@@ -3,8 +3,8 @@
 
 Name:       capi-media-camera
 Summary:    A Camera API
-Version:    0.2.30
-Release:    2
+Version:    0.2.31
+Release:    0
 Group:      Multimedia/API
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
