@@ -949,7 +949,7 @@ static void setting_menu(gchar buf)
 			break;
 		case 'F': /* Getting > Get Facing direction */
 			g_print("* Get facing direction of camera module\n");
-			err = camera_get_facing_direction(hcamcorder->camera, &idx);
+			err = camera_get_facing_direction(hcamcorder->camera, (camera_facing_direction_e *)&idx);
 			if (CAMERA_ERROR_NONE == err)
 				g_print("* Facing direction : %s(%d)\n", facing_direction[idx], idx);
 			else

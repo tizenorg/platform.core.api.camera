@@ -47,8 +47,8 @@ typedef struct _camera_cb_info_s {
 	gpointer user_cb[MUSE_CAMERA_EVENT_TYPE_NUM];
 	gpointer user_data[MUSE_CAMERA_EVENT_TYPE_NUM];
 	gchar recv_msg[MUSE_CAMERA_MSG_MAX_LENGTH];
-	GCond *api_cond;
-	GMutex *api_mutex;
+	GCond api_cond[MUSE_CAMERA_API_MAX];
+	GMutex api_mutex[MUSE_CAMERA_API_MAX];
 	gint *api_activating;
 	gint *api_ret;
 	tbm_bufmgr bufmgr;
