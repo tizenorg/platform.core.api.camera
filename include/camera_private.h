@@ -30,7 +30,7 @@
 extern "C" {
 #endif
 
-#define CAMERA_PARSE_STRING_SIZE 10
+#define CAMERA_PARSE_STRING_SIZE 20
 
 typedef struct _camera_cb_info_s {
 	gint fd;

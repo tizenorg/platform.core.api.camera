@@ -42,7 +42,7 @@
 #ifdef LOG_TAG
 #undef LOG_TAG
 #endif
-#define LOG_TAG "TIZEN_N_CAMERA_CLIENT"
+#define LOG_TAG "TIZEN_N_CAMERA"
 
 
 int __convert_camera_error_code(const char *func, int code)
@@ -2345,9 +2345,9 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 			goto _SET_DISPLAY_ERROR;
 		}
 
-		LOGD("shmsrc socket path : %s", socket_path);
+		LOGD("socket path : %s", socket_path);
 
-		ret = mm_camcorder_client_set_shm_socket_path(pc->client_handle, socket_path);
+		ret = mm_camcorder_client_set_socket_path(pc->client_handle, socket_path);
 		if (ret != MM_ERROR_NONE) {
 			LOGE("failed to set socket path 0x%x", ret);
 			goto _SET_DISPLAY_ERROR;
