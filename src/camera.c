@@ -24,6 +24,7 @@
 #include <muse_camera.h>
 #include <muse_camera_msg.h>
 #include <muse_core_ipc.h>
+#include <muse_core_module.h>
 #include <camera_private.h>
 #include <muse_core.h>
 #include <dlog.h>
