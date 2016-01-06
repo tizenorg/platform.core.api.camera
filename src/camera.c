@@ -26,6 +26,7 @@
 #include <muse_core_ipc.h>
 #include <camera_private.h>
 #include <muse_core.h>
+#include <muse_core_module.h>
 #include <dlog.h>
 #include <Elementary.h>
 #include <tbm_surface_internal.h>
@@ -3560,6 +3561,116 @@ int camera_attr_get_image_quality(camera_h camera, int *quality)
 }
 
 
+int camera_attr_get_encoded_preview_bitrate(camera_h camera, int *bitrate)
+{
+	if (camera == NULL || bitrate == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	int ret = CAMERA_ERROR_NONE;
+
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_ENCODED_PREVIEW_BITRATE;
+	int sock_fd;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+	sock_fd = pc->cb_info->fd;
+	int get_encoded_preview_bitrate;
+
+	LOGD("Enter, remote_handle : %x", pc->remote_handle);
+	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get(get_encoded_preview_bitrate, pc->cb_info->recv_msg);
+		*bitrate = get_encoded_preview_bitrate;
+	}
+	LOGD("ret : 0x%x", ret);
+	return ret;
+}
+
+
+int camera_attr_set_encoded_preview_bitrate(camera_h camera, int bitrate)
+{
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	int ret = CAMERA_ERROR_NONE;
+
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_ENCODED_PREVIEW_BITRATE;
+	int sock_fd;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+	sock_fd = pc->cb_info->fd;
+	LOGD("Enter, remote_handle : %x", pc->remote_handle);
+	muse_camera_msg_send1(api, sock_fd, pc->cb_info, ret, INT, bitrate);
+	LOGD("ret : 0x%x", ret);
+	return ret;
+}
+
+
+int camera_attr_get_encoded_preview_gop_interval(camera_h camera, int *gop)
+{
+	if (camera == NULL || gop == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	int ret = CAMERA_ERROR_NONE;
+
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_ENCODED_PREVIEW_GOP_INTERVAL;
+	int sock_fd;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+	sock_fd = pc->cb_info->fd;
+	int get_encoded_preview_gop_interval;
+
+	LOGD("Enter, remote_handle : %x", pc->remote_handle);
+	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get(get_encoded_preview_gop_interval, pc->cb_info->recv_msg);
+		*gop = get_encoded_preview_gop_interval;
+	}
+	LOGD("ret : 0x%x", ret);
+	return ret;
+}
+
+
+int camera_attr_set_encoded_preview_gop_interval(camera_h camera, int gop)
+{
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	int ret = CAMERA_ERROR_NONE;
+
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_ENCODED_PREVIEW_GOP_INTERVAL;
+	int sock_fd;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+	sock_fd = pc->cb_info->fd;
+	LOGD("Enter, remote_handle : %x", pc->remote_handle);
+	muse_camera_msg_send1(api, sock_fd, pc->cb_info, ret, INT, gop);
+	LOGD("ret : 0x%x", ret);
+	return ret;
+}
+
+
 int camera_attr_set_zoom(camera_h camera, int zoom)
 {
 	if (camera == NULL) {
@@ -4018,7 +4129,6 @@ int camera_attr_set_flash_mode(camera_h camera, camera_attr_flash_mode_e mode)
 	LOGD("ret : 0x%x", ret);
 	return ret;
 }
-
 
 int camera_attr_get_zoom(camera_h camera, int *zoom)
 {
@@ -4626,6 +4736,69 @@ int camera_attr_get_flash_mode(camera_h camera,  camera_attr_flash_mode_e *mode)
 	return ret;
 }
 
+int camera_attr_get_flash_state(camera_attr_flash_state_e *mode)
+{
+	int sock_fd = -1;
+	char *sndMsg;
+	int ret = CAMERA_ERROR_NONE;
+	int pid = 0;
+	camera_cli_s *pc = NULL;
+
+	/* create muse connection */
+	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_FLASH_STATE;
+	muse_core_api_module_e muse_module = MUSE_CAMERA;
+
+	sock_fd = muse_core_client_new();
+	if (sock_fd < 0) {
+		LOGE("muse_core_client_new failed - returned fd %d", sock_fd);
+		ret = CAMERA_ERROR_INVALID_OPERATION;
+		goto ErrorExit;
+	}
+
+	sndMsg = muse_core_msg_json_factory_new(api,
+		MUSE_TYPE_INT, "module", muse_module,
+		0);
+
+	muse_core_ipc_send_msg(sock_fd, sndMsg);
+	muse_core_msg_json_factory_free(sndMsg);
+
+	pc = g_new0(camera_cli_s, 1);
+	if (pc == NULL) {
+		LOGE("camera_cli_s alloc failed");
+		ret = CAMERA_ERROR_OUT_OF_MEMORY;
+		goto ErrorExit;
+	}
+
+	pc->cb_info = _client_callback_new(sock_fd);
+	if (pc->cb_info == NULL) {
+		LOGE("cb_info alloc failed");
+		ret = CAMERA_ERROR_OUT_OF_MEMORY;
+		goto ErrorExit;
+	}
+
+	ret = _client_wait_for_cb_return(api, pc->cb_info, CALLBACK_TIME_OUT);
+
+	int get_flash_state = 0;
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get(get_flash_state, pc->cb_info->recv_msg);
+		*mode = (camera_attr_flash_state_e)get_flash_state;
+	}
+	LOGD("Flash state : %d\n", *mode);
+
+	return ret;
+
+ErrorExit:
+	if (pc) {
+		_client_callback_destroy(pc->cb_info);
+		pc->cb_info = NULL;
+		g_free(pc);
+		pc = NULL;
+	}
+
+	LOGE("camera create error : 0x%x", ret);
+
+	return ret;
+}
 
 int camera_attr_foreach_supported_af_mode(camera_h camera, camera_attr_supported_af_mode_cb foreach_cb, void *user_data)
 {
