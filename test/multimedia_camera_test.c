@@ -688,6 +688,7 @@ static void print_menu()
 		g_print("\t     'e' EV program mode \n");
 		g_print("\t  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> [etc.]\n");
 		g_print("\t     'z' Strobe (Flash) \n");
+		g_print("\t     'S' Strobe (Flash) state\n");
 		g_print("\t     'x' Capture mode (Still/Multishot/HDR)\n");
 		g_print("\t     'l' Face detection \n");
 		g_print("\t     'k' Anti-handshake \n");
@@ -955,7 +956,6 @@ static void setting_menu(gchar buf)
 			else
 				g_print("* Error : %d\n", err);
 			break;
-
 			/* Display / Filter setting */
 		case 'v': /* Display visible */
 			g_print("* Display visible setting !\n");
@@ -1051,6 +1051,14 @@ static void setting_menu(gchar buf)
 			flush_stdin();
 			err = scanf("%d", &idx);
 			bret = camera_attr_set_flash_mode(hcamcorder->camera, idx);
+			break;
+		case 'S' : // Setting > flash state
+			g_print("*flash state\n");
+			err = camera_get_flash_state(&idx);
+			if (CAMERA_ERROR_NONE == err)
+				g_print("Current flash state = %s\n", idx?"ON":"OFF");
+			else
+				g_print("* Error : %d\n", err);
 			break;
 		case 'x': /* Setting > Capture mode ,Muitishot? */
 			g_print("*Select Capture mode!\n");
