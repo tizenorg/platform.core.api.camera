@@ -101,6 +101,7 @@ typedef enum {
 	CAMERA_PIXEL_FORMAT_RGBA,           /**< RGBA pixel format */
 	CAMERA_PIXEL_FORMAT_ARGB,           /**< ARGB pixel format */
 	CAMERA_PIXEL_FORMAT_JPEG,           /**< Encoded pixel format */
+	CAMERA_PIXEL_FORMAT_H264 = 15,      /**< Encoded pixel format : H264 */
 } camera_pixel_format_e;
 
 /**
@@ -168,6 +169,15 @@ typedef enum {
 	CAMERA_FACING_DIRECTION_REAR = 0, /**< Rear */
 	CAMERA_FACING_DIRECTION_FRONT,    /**< Front */
 } camera_facing_direction_e;
+
+/**
+ * @brief Enumeration for the current flash state.
+ * @since_tizen 3.0
+ */
+typedef enum {
+	CAMERA_FLASH_STATE_NOT_USED = 0,  /**< Flash is not used now through camera API */
+	CAMERA_FLASH_STATE_USED,          /**< Flash is used now through camera API */
+} camera_flash_state_e;
 
 /**
  * @brief The structure type of the image data.
@@ -1472,6 +1482,20 @@ int camera_get_preview_format(camera_h camera, camera_pixel_format_e *format);
 int camera_get_facing_direction(camera_h camera, camera_facing_direction_e *facing_direciton);
 
 /**
+ * @brief Gets the camera's flash state.
+ * @since_tizen 3.0
+ * @param[out] mode The flash mode
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Internal error
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
+ * @see camera_attr_set_flash_mode()
+ * @see camera_attr_get_flash_mode()
+ */
+int camera_get_flash_state(camera_flash_state_e *state);
+
+/**
  * @}
  */
 
@@ -2043,6 +2067,62 @@ int camera_attr_set_image_quality(camera_h camera, int quality);
  * @see camera_attr_set_image_quality()
  */
 int camera_attr_get_image_quality(camera_h camera, int *quality);
+
+/**
+ * @brief Gets the bit rate of encoded preview.
+ * @since_tizen 3.0
+ * @param[in] camera The handle to the camera
+ * @param[out] bitrate The bit rate of encoded preview
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Internal error
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
+ * @see camera_attr_set_encoded_preview_bitrate()
+ */
+int camera_attr_get_encoded_preview_bitrate(camera_h camera, int *bitrate);
+
+/**
+ * @brief Sets the bit rate of encoded preview.
+ * @since_tizen 3.0
+ * @param[in] camera The handle to the camera
+ * @param[in] bitrate The bit rate of encoded preview
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Internal error
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
+ * @see camera_attr_get_encoded_preview_bitrate()
+ */
+int camera_attr_set_encoded_preview_bitrate(camera_h camera, int bitrate);
+
+/**
+ * @brief Gets the GOP(Group Of Pictures) interval of encoded preview.
+ * @since_tizen 3.0
+ * @param[in] camera The handle to the camera
+ * @param[out] interval the GOP interval of encoded preview (mili second)
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Internal error
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
+ * @see camera_attr_get_encoded_preview_gop_interval()
+ */
+int camera_attr_get_encoded_preview_gop_interval(camera_h camera, int *interval);
+
+/**
+ * @brief Sets the GOP(Group Of Pictures) interval of encoded preview.
+ * @since_tizen 3.0
+ * @param[in] camera The handle to the camera
+ * @param[in] interval the GOP interval of encoded preview (mili second)
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Internal error
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
+ * @see camera_attr_set_encoded_preview_gop_interval()
+ */
+int camera_attr_set_encoded_preview_gop_interval(camera_h camera, int interval);
 
 /**
  * @brief Sets the zoom level.
