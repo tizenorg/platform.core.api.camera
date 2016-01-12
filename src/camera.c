@@ -453,7 +453,13 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 
 	LOGD("get camera msg %s, event %d", recv_msg, event);
 
-	if (cb_info->user_cb[event] == NULL) {
+	if (event == MUSE_CAMERA_EVENT_TYPE_PREVIEW) {
+		if (cb_info->user_cb[MUSE_CAMERA_EVENT_TYPE_PREVIEW] == NULL &&
+			cb_info->user_cb[MUSE_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW] == NULL) {
+			LOGW("all preview callback from user are NULL");
+			return;
+		}
+	} else if (cb_info->user_cb[event] == NULL) {
 		LOGW("user callback for event %d is not set", event);
 		return;
 	}
