@@ -453,7 +453,13 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 
 	LOGD("get camera msg %s, event %d", recv_msg, event);
 
-	if (cb_info->user_cb[event] == NULL) {
+	if (event == MUSE_CAMERA_EVENT_TYPE_PREVIEW) {
+		if (cb_info->user_cb[MUSE_CAMERA_EVENT_TYPE_PREVIEW] == NULL &&
+			cb_info->user_cb[MUSE_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW] == NULL) {
+			LOGW("all preview callback from user are NULL");
+			return;
+		}
+	} else if (cb_info->user_cb[event] == NULL) {
 		LOGW("user callback for event %d is not set", event);
 		return;
 	}
@@ -1413,7 +1419,6 @@ static void *_camera_msg_recv_func(gpointer data)
 	int num_token = 0;
 	int str_pos = 0;
 	int prev_pos = 0;
-	int prev_state = CAMERA_STATE_NONE;
 	char *recv_msg = NULL;
 	char **parse_str = NULL;
 	camera_cb_info_s *cb_info = (camera_cb_info_s *)data;
@@ -1508,8 +1513,30 @@ static void *_camera_msg_recv_func(gpointer data)
 						LOGD("camera destroy done. close client cb handler");
 					}
 				} else if (api == MUSE_CAMERA_API_START_PREVIEW) {
+					int prev_state = CAMERA_STATE_NONE;
+					gchar caps[MUSE_CAMERA_MSG_MAX_LENGTH] = {'\0',};
+
 					muse_camera_msg_get(prev_state, parse_str[i]);
+
 					cb_info->prev_state = prev_state;
+					if (prev_state == CAMERA_STATE_CREATED) {
+						if (cb_info->caps) {
+							g_free(cb_info->caps);
+							cb_info->caps = NULL;
+						}
+
+						muse_camera_msg_get(caps, parse_str[i]);
+						if (strlen(caps) > 0) {
+							cb_info->caps = g_strdup(caps);
+							if (cb_info->caps) {
+								LOGD("caps from server [%s]", cb_info->caps);
+							} else {
+								LOGE("failed to copy caps string");
+							}
+						} else {
+							LOGE("no string for caps");
+						}
+					}
 				}
 
 				g_cond_signal(&cb_info->api_cond[api]);
@@ -1723,6 +1750,10 @@ static void _client_callback_destroy(camera_cb_info_s *cb_info)
 		media_format_unref(cb_info->pkt_fmt);
 		cb_info->pkt_fmt = NULL;
 	}
+	if (cb_info->caps) {
+		g_free(cb_info->caps);
+		cb_info->caps = NULL;
+	}
 
 	g_free(cb_info);
 	cb_info = NULL;
@@ -1878,7 +1909,6 @@ int camera_start_preview(camera_h camera)
 	muse_camera_api_e api = MUSE_CAMERA_API_START_PREVIEW;
 	camera_cli_s *pc = (camera_cli_s *)camera;
 	int sock_fd = 0;
-	char caps[MUSE_CAMERA_MSG_MAX_LENGTH] = {0};
 
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
@@ -1911,14 +1941,16 @@ int camera_start_preview(camera_h camera)
 	}
 
 	if (pc->cb_info->prev_state == CAMERA_STATE_CREATED) {
-		if (muse_camera_msg_get_string(caps, pc->cb_info->recv_msg) == FALSE) {
-			LOGE("failed to get caps string");
+		if (pc->cb_info->caps == NULL) {
+			LOGE("caps string is NULL");
 			goto _START_PREVIEW_ERROR;
 		}
 
-		LOGD("caps : %s", caps);
+		ret = mm_camcorder_client_realize(pc->client_handle, pc->cb_info->caps);
 
-		ret = mm_camcorder_client_realize(pc->client_handle, caps);
+		g_free(pc->cb_info->caps);
+		pc->cb_info->caps = NULL;
+
 		if (ret != MM_ERROR_NONE) {
 			LOGE("client realize failed 0x%x", ret);
 			goto _START_PREVIEW_ERROR;

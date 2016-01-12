@@ -53,6 +53,7 @@ typedef struct _camera_cb_info_s {
 	gint *api_ret;
 	tbm_bufmgr bufmgr;
 	gint prev_state;
+	gchar *caps;
 	media_format_h pkt_fmt;
 } camera_cb_info_s;
 
