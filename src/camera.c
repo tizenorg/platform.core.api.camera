@@ -1947,10 +1947,6 @@ int camera_start_preview(camera_h camera)
 		}
 
 		ret = mm_camcorder_client_realize(pc->client_handle, pc->cb_info->caps);
-
-		g_free(pc->cb_info->caps);
-		pc->cb_info->caps = NULL;
-
 		if (ret != MM_ERROR_NONE) {
 			LOGE("client realize failed 0x%x", ret);
 			goto _START_PREVIEW_ERROR;
@@ -1969,14 +1965,18 @@ _START_PREVIEW_ERROR:
 
 int camera_stop_preview(camera_h camera)
 {
+	int ret = CAMERA_ERROR_NONE;
+	int client_ret = MM_ERROR_NONE;
+	int sock_fd = 0;
+	camera_cli_s *pc = NULL;
+	muse_camera_api_e api = MUSE_CAMERA_API_STOP_PREVIEW;
+
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-	int ret = CAMERA_ERROR_NONE;
-	camera_cli_s *pc = (camera_cli_s *)camera;
-	int sock_fd;
-	muse_camera_api_e api = MUSE_CAMERA_API_STOP_PREVIEW;
+
+	pc = (camera_cli_s *)camera;
 
 	if (pc->cb_info == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
@@ -1984,24 +1984,27 @@ int camera_stop_preview(camera_h camera)
 	}
 
 	sock_fd = pc->cb_info->fd;
+
 	LOGD("Enter");
-	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
 
-	if (ret != CAMERA_ERROR_NONE) {
-		LOGE("stop preview failed 0x%x", ret);
-		return ret;
-	}
-
+	/* destroy client pipeline first */
 	if (pc->client_handle != NULL) {
-		if (mm_camcorder_client_unrealize(pc->client_handle) == MM_ERROR_NONE) {
-			LOGD("client unrealize done");
-		} else {
-			LOGE("client unrealize failed. restart preview...");
-			muse_camera_msg_send_longtime(MUSE_CAMERA_API_START_PREVIEW, sock_fd, pc->cb_info, ret);
-			return CAMERA_ERROR_INVALID_OPERATION;
-		}
+		client_ret = mm_camcorder_client_unrealize(pc->client_handle);
 	} else {
 		LOGW("client handle is NULL");
+	}
+
+	/* send stop preview message */
+	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
+
+	if (ret == MM_ERROR_NONE && client_ret != MM_ERROR_NONE) {
+		LOGE("client unrealize failed, restart preview");
+		muse_camera_msg_send_longtime(MUSE_CAMERA_API_START_PREVIEW, sock_fd, pc->cb_info, ret);
+		ret = CAMERA_ERROR_INVALID_OPERATION;
+	} else if (ret != MM_ERROR_NONE && client_ret == MM_ERROR_NONE) {
+		LOGE("stop preview failed, realize client again");
+		mm_camcorder_client_realize(pc->client_handle, pc->cb_info->caps);
+		ret = CAMERA_ERROR_INVALID_OPERATION;
 	}
 
 	LOGD("ret : 0x%x", ret);
