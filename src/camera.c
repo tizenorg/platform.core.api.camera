@@ -2636,136 +2636,122 @@ int camera_get_preview_resolution(camera_h camera,  int *width, int *height)
 
 int camera_set_display_rotation(camera_h camera, camera_rotation_e rotation)
 {
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = NULL;
+
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = CAMERA_ERROR_NONE;
-	camera_cli_s *pc = (camera_cli_s *)camera;
-	muse_camera_api_e api = MUSE_CAMERA_API_SET_DISPLAY_ROTATION;
-	int sock_fd;
-	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
-	}
-	sock_fd = pc->cb_info->fd;
-	int set_rotation = (int)rotation;
+	pc = (camera_cli_s *)camera;
 
-	LOGD("Enter, remote_handle : %x", pc->remote_handle);
-	muse_camera_msg_send1(api, sock_fd, pc->cb_info, ret, INT, set_rotation);
-	LOGD("ret : 0x%x", ret);
-	return ret;
+	if (pc->client_handle == NULL) {
+		LOGE("client handle is NULL");
+		return CAMERA_ERROR_INVALID_OPERATION;
+	}
+
+	ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
+		MMCAM_DISPLAY_ROTATION, rotation,
+		NULL);
+
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_get_display_rotation(camera_h camera, camera_rotation_e *rotation)
 {
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = NULL;
+
 	if (camera == NULL || rotation == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = CAMERA_ERROR_NONE;
+	pc = (camera_cli_s *)camera;
 
-	camera_cli_s *pc = (camera_cli_s *)camera;
-	muse_camera_api_e api = MUSE_CAMERA_API_GET_DISPLAY_ROTATION;
-	int sock_fd;
-	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
+	if (pc->client_handle == NULL) {
+		LOGE("client handle is NULL");
+		return CAMERA_ERROR_INVALID_OPERATION;
 	}
-	sock_fd = pc->cb_info->fd;
-	int get_rotation;
 
-	LOGD("Enter, remote_handle : %x", pc->remote_handle);
-	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
+	ret = mm_camcorder_get_attributes(pc->client_handle, NULL,
+		MMCAM_DISPLAY_ROTATION, rotation,
+		NULL);
 
-	if (ret == CAMERA_ERROR_NONE) {
-		muse_camera_msg_get(get_rotation, pc->cb_info->recv_msg);
-		*rotation = (camera_rotation_e)get_rotation;
-	}
-	LOGD("ret : 0x%x", ret);
-	return ret;
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_set_display_flip(camera_h camera, camera_flip_e flip)
 {
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = NULL;
+
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = CAMERA_ERROR_NONE;
+	pc = (camera_cli_s *)camera;
 
-	camera_cli_s *pc = (camera_cli_s *)camera;
-	muse_camera_api_e api = MUSE_CAMERA_API_SET_DISPLAY_FLIP;
-	int sock_fd;
-	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
+	if (pc->client_handle == NULL) {
+		LOGE("client handle is NULL");
+		return CAMERA_ERROR_INVALID_OPERATION;
 	}
-	sock_fd = pc->cb_info->fd;
-	int set_flip = (int)flip;
 
-	LOGD("Enter, remote_handle : %x", pc->remote_handle);
-	muse_camera_msg_send1(api, sock_fd, pc->cb_info, ret, INT, set_flip);
-	LOGD("ret : 0x%x", ret);
-	return ret;
+	ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
+		MMCAM_DISPLAY_FLIP, flip,
+		NULL);
+
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_get_display_flip(camera_h camera, camera_flip_e *flip)
 {
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = NULL;
+
 	if (camera == NULL || flip == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = CAMERA_ERROR_NONE;
+	pc = (camera_cli_s *)camera;
 
-	camera_cli_s *pc = (camera_cli_s *)camera;
-	muse_camera_api_e api = MUSE_CAMERA_API_GET_DISPLAY_FLIP;
-	int sock_fd;
-	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
+	if (pc->client_handle == NULL) {
+		LOGE("client handle is NULL");
+		return CAMERA_ERROR_INVALID_OPERATION;
 	}
-	sock_fd = pc->cb_info->fd;
-	int get_flip;
 
-	LOGD("Enter, remote_handle : %x", pc->remote_handle);
-	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
+	ret = mm_camcorder_get_attributes(pc->client_handle, NULL,
+		MMCAM_DISPLAY_FLIP, flip,
+		NULL);
 
-	if (ret == CAMERA_ERROR_NONE) {
-		muse_camera_msg_get(get_flip, pc->cb_info->recv_msg);
-		*flip = (camera_flip_e)get_flip;
-	}
-	LOGD("ret : 0x%x", ret);
-	return ret;
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_set_display_visible(camera_h camera, bool visible)
 {
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = NULL;
+
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = CAMERA_ERROR_NONE;
+	pc = (camera_cli_s *)camera;
 
-	camera_cli_s *pc = (camera_cli_s *)camera;
-	muse_camera_api_e api = MUSE_CAMERA_API_SET_DISPLAY_VISIBLE;
-	int set_visible = (int)visible;
-	int sock_fd;
-	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
+	if (pc->client_handle == NULL) {
+		LOGE("client handle is NULL");
+		return CAMERA_ERROR_INVALID_OPERATION;
 	}
-	sock_fd = pc->cb_info->fd;
 
-	LOGD("Enter, remote_handle : %x", pc->remote_handle);
-	muse_camera_msg_send1(api, sock_fd, pc->cb_info, ret, INT, set_visible);
-	LOGD("ret : 0x%x", ret);
-	return ret;
+	ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
+		MMCAM_DISPLAY_VISIBLE, visible,
+		NULL);
+
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_is_display_visible(camera_h camera, bool* visible)
@@ -2800,57 +2786,50 @@ int camera_is_display_visible(camera_h camera, bool* visible)
 
 int camera_set_display_mode(camera_h camera, camera_display_mode_e mode)
 {
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = NULL;
+
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = CAMERA_ERROR_NONE;
-	int set_mode = (int)mode;
+	pc = (camera_cli_s *)camera;
 
-	camera_cli_s *pc = (camera_cli_s *)camera;
-	muse_camera_api_e api = MUSE_CAMERA_API_SET_DISPLAY_MODE;
-	int sock_fd;
-	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
+	if (pc->client_handle == NULL) {
+		LOGE("client handle is NULL");
+		return CAMERA_ERROR_INVALID_OPERATION;
 	}
-	sock_fd = pc->cb_info->fd;
 
-	LOGD("Enter, remote_handle : %x", pc->remote_handle);
-	muse_camera_msg_send1(api, sock_fd, pc->cb_info, ret, INT, set_mode);
-	LOGD("ret : 0x%x", ret);
-	return ret;
+	ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
+		MMCAM_DISPLAY_GEOMETRY_METHOD, mode,
+		NULL);
+
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_get_display_mode(camera_h camera, camera_display_mode_e* mode)
 {
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = NULL;
+
 	if (camera == NULL || mode == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	int ret = CAMERA_ERROR_NONE;
+	pc = (camera_cli_s *)camera;
 
-	camera_cli_s *pc = (camera_cli_s *)camera;
-	muse_camera_api_e api = MUSE_CAMERA_API_GET_DISPLAY_MODE;
-	int sock_fd;
-	if (pc->cb_info == NULL) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_INVALID_PARAMETER;
+	if (pc->client_handle == NULL) {
+		LOGE("client handle is NULL");
+		return CAMERA_ERROR_INVALID_OPERATION;
 	}
-	sock_fd = pc->cb_info->fd;
-	int get_mode;
 
-	LOGD("Enter, remote_handle : %x", pc->remote_handle);
-	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
+	ret = mm_camcorder_get_attributes(pc->client_handle, NULL,
+		MMCAM_DISPLAY_GEOMETRY_METHOD, mode,
+		NULL);
 
-	if (ret == CAMERA_ERROR_NONE) {
-		muse_camera_msg_get(get_mode, pc->cb_info->recv_msg);
-		*mode = (camera_display_mode_e)get_mode;
-	}
-	LOGD("ret : 0x%x", ret);
-	return ret;
+	return __convert_camera_error_code(__func__, ret);
 }
 
 int camera_get_capture_resolution(camera_h camera, int *width, int *height)

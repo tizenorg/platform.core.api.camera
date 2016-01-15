@@ -39,8 +39,9 @@
 
 #define PACKAGE "camera_testsuite"
 
-Evas_Object* img;
-Evas_Object* eo;
+Evas_Object *eo;
+Evas_Object *bg;
+Evas_Object *rect;
 GMainLoop *g_loop;
 GIOChannel *stdin_channel;
 camera_device_e cam_info;
@@ -1356,13 +1357,44 @@ int main(int argc, char **argv)
 	elm_init(argc, argv);
 
 	eo = elm_win_add(NULL, "VIDEO OVERLAY", ELM_WIN_BASIC);
-	elm_win_title_set(eo, "TITLE");
-	elm_win_borderless_set(eo, EINA_TRUE);
-	elm_win_screen_size_get(eo, NULL, NULL, &w, &h);
-	evas_object_resize(eo, w, h);
-	evas_object_show(eo);
-	elm_win_activate(eo);
+	if (eo) {
+		elm_win_title_set(eo, "TITLE");
+		elm_win_borderless_set(eo, EINA_TRUE);
+		elm_win_screen_size_get(eo, NULL, NULL, &w, &h);
+		evas_object_resize(eo, w, h);
+		elm_win_autodel_set(eo, EINA_TRUE);
+#ifdef HAVE_WAYLAND
+		elm_win_alpha_set(eo, EINA_TRUE);
+#endif /* HAVE_WAYLAND */
+	} else {
+		g_print("\n\tfailed to get window\n\n");
+		return 1;
+	}
 
+	bg = elm_bg_add(eo);
+	if (bg) {
+		elm_win_resize_object_add(eo, bg);
+		evas_object_size_hint_weight_set(bg, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+		evas_object_show(bg);
+	} else {
+		g_print("\n\tfailed to get elm bg\n\n");
+		return 1;
+	}
+
+	rect = evas_object_rectangle_add(evas_object_evas_get(eo));
+	if (rect) {
+		evas_object_color_set(rect, 0, 0, 0, 0);
+		evas_object_render_op_set(rect, EVAS_RENDER_COPY);
+	} else {
+		g_print("\n\tfailed to get rectangle\n\n");
+		return 1;
+	}
+
+	elm_win_resize_object_add(eo, rect);
+	evas_object_size_hint_weight_set(rect, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+	evas_object_show(rect);
+	elm_win_activate(eo);
+	evas_object_show(eo);
 
 #if !GLIB_CHECK_VERSION(2, 35, 0)
 	if (!g_thread_supported())
