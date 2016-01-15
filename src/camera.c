@@ -1810,6 +1810,13 @@ int camera_create(camera_device_e device, camera_h* camera)
 		goto ErrorExit;
 	}
 
+	ret = mm_camcorder_client_create(&pc->client_handle);
+	if (ret != MM_ERROR_NONE) {
+		LOGE("camera client create Failed 0x%x", ret);
+		ret = __convert_camera_error_code(__func__, ret);
+		goto ErrorExit;
+	}
+
 	pc->cb_info = _client_callback_new(sock_fd);
 	if (pc->cb_info == NULL) {
 		LOGE("cb_info alloc failed");
@@ -1845,6 +1852,10 @@ ErrorExit:
 	bufmgr = NULL;
 
 	if (pc) {
+		if (pc->client_handle) {
+			mm_camcorder_client_destroy(pc->client_handle);
+			pc->client_handle = NULL;
+		}
 		_client_callback_destroy(pc->cb_info);
 		pc->cb_info = NULL;
 		g_free(pc);
@@ -2437,14 +2448,6 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
 
 	if (ret == CAMERA_ERROR_NONE) {
-		if (pc->client_handle == NULL) {
-			ret = mm_camcorder_client_create(&pc->client_handle);
-			if (ret != MM_ERROR_NONE) {
-				LOGE("camera client create Failed 0x%x", ret);
-				goto _SET_DISPLAY_ERROR;
-			}
-		}
-
 		if (muse_camera_msg_get_string(socket_path, pc->cb_info->recv_msg) == FALSE) {
 			LOGE("failed to get socket path");
 			goto _SET_DISPLAY_ERROR;
