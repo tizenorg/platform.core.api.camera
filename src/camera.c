@@ -2375,7 +2375,7 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 {
 	int ret = CAMERA_ERROR_NONE;
 	void *set_display_handle = NULL;
-	int set_surface = MM_DISPLAY_SURFACE_X;
+	int set_surface = MM_DISPLAY_SURFACE_OVERLAY;
 	Evas_Object *obj = NULL;
 	const char *object_type = NULL;
 	char socket_path[MUSE_CAMERA_MSG_MAX_LENGTH] = {0,};
@@ -2426,7 +2426,7 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 				/* x window overlay surface */
 				set_display_handle = (void *)elm_win_xwindow_get(obj);
 #endif
-				set_surface = MM_DISPLAY_SURFACE_X;
+				set_surface = MM_DISPLAY_SURFACE_OVERLAY;
 				LOGD("display type OVERLAY : handle %p", set_display_handle);
 			} else if (type == CAMERA_DISPLAY_TYPE_EVAS && !strcmp(object_type, "image")) {
 				/* evas object surface */
