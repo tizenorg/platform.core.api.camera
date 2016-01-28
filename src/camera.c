@@ -2647,6 +2647,10 @@ int camera_set_display_rotation(camera_h camera, camera_rotation_e rotation)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
+	if (rotation < CAMERA_ROTATION_NONE || rotation > CAMERA_ROTATION_270) {
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
 	pc = (camera_cli_s *)camera;
 
 	if (pc->client_handle == NULL) {
@@ -2692,6 +2696,10 @@ int camera_set_display_flip(camera_h camera, camera_flip_e flip)
 
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	if (flip < CAMERA_FLIP_NONE || flip > CAMERA_FLIP_BOTH) {
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2794,6 +2802,10 @@ int camera_set_display_mode(camera_h camera, camera_display_mode_e mode)
 
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	if (mode < CAMERA_DISPLAY_MODE_LETTER_BOX || mode > CAMERA_DISPLAY_MODE_CROPPED_FULL) {
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
