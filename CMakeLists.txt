@@ -9,7 +9,7 @@ SET(service "media")
 SET(submodule "camera")
 
 # for package file
-SET(dependents "libtbm dlog mm-common capi-base-common capi-media-tool mm-camcorder ecore elementary mmsvc-camera gstreamer-1.0")
+SET(dependents "libtbm dlog mm-common capi-base-common capi-media-tool mm-camcorder ecore elementary mmsvc-camera gstreamer-1.0 tizen-extension-client")
 SET(pc_dependents "capi-base-common capi-media-tool libtbm evas ecore elementary")
 SET(fw_name "${project_prefix}-${service}-${submodule}")
 

@@ -72,11 +72,12 @@ typedef struct _camera_idle_event_s {
 typedef struct _camera_cli_s {
 	intptr_t remote_handle;
 	MMHandleType client_handle;
+	int display_type;
 	intptr_t display_handle;
 	camera_cb_info_s *cb_info;
 #ifdef HAVE_WAYLAND
-	MMCamWaylandInfo *wl_info;
-#endif /* #ifdef HAVE_WAYLAND */
+	MMCamWaylandInfo wl_info;
+#endif /* HAVE_WAYLAND */
 } camera_cli_s;
 
 typedef struct _camera_media_packet_data {
@@ -90,7 +91,7 @@ typedef struct _camera_media_packet_data {
 int _camera_get_tbm_surface_format(int in_format, uint32_t *out_format);
 int _camera_get_media_packet_mimetype(int in_format, media_format_mimetype_e *mimetype);
 int _camera_media_packet_finalize(media_packet_h pkt, int error_code, void *user_data);
-int __convert_camera_error_code(const char* func, int code);
+int __convert_camera_error_code(const char *func, int code);
 
 #ifdef __cplusplus
 }
