@@ -37,7 +37,6 @@
 -----------------------------------------------------------------------*/
 #define EXPORT_API __attribute__((__visibility__("default")))
 
-#define PACKAGE "camera_testsuite"
 
 Evas_Object *eo;
 Evas_Object *bg;
@@ -1333,8 +1332,10 @@ static gboolean mode_change()
 
 	camera_set_state_changed_cb(hcamcorder->camera, _camera_state_changed_cb, NULL);
 	camera_set_interrupted_cb(hcamcorder->camera, _camera_interrupted_cb, NULL);
-	camera_set_display_mode(hcamcorder->camera, 0); /* MM_DISPLAY_METHOD_LETTER_BOX */
 	camera_set_display(hcamcorder->camera, CAMERA_DISPLAY_TYPE_OVERLAY, GET_DISPLAY(eo));
+	camera_set_display_mode(hcamcorder->camera, CAMERA_DISPLAY_MODE_LETTER_BOX);
+	/*camera_set_display_rotation(hcamcorder->camera, CAMERA_ROTATION_90);*/
+	/*camera_set_display_flip(hcamcorder->camera, CAMERA_FLIP_VERTICAL);*/
 
 	/*camera_set_preview_cb(hcamcorder->camera, _preview_cb, hcamcorder->camera);*/
 

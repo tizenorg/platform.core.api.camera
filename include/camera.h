@@ -586,7 +586,7 @@ typedef void (*camera_media_packet_preview_cb)(media_packet_h pkt, void *user_da
  * @see	camera_start_continuous_capture()
  * @see	camera_capture_completed_cb()
  */
-typedef void (*camera_capturing_cb)(camera_image_data_s* image, camera_image_data_s* postview, camera_image_data_s* thumbnail, void *user_data);
+typedef void (*camera_capturing_cb)(camera_image_data_s *image, camera_image_data_s *postview, camera_image_data_s *thumbnail, void *user_data);
 
 /**
  * @brief Called when the camera capturing completes.
@@ -1069,7 +1069,7 @@ int camera_get_recommended_preview_resolution(camera_h camera, int *width, int *
  * @see camera_face_detected_cb()
  * @see camera_is_supported_face_detection()
  */
-int camera_start_face_detection(camera_h camera, camera_face_detected_cb callback, void * user_data);
+int camera_start_face_detection(camera_h camera, camera_face_detected_cb callback, void *user_data);
 
 /**
  * @brief Stops face detection.
