@@ -3,7 +3,7 @@
 
 Name:       capi-media-camera
 Summary:    A Camera API
-Version:    0.2.43
+Version:    0.2.44
 Release:    0
 Group:      Multimedia/API
 License:    Apache-2.0
@@ -20,8 +20,6 @@ BuildRequires:  pkgconfig(elementary)
 BuildRequires:  pkgconfig(ecore)
 BuildRequires:  pkgconfig(evas)
 BuildRequires:  pkgconfig(capi-media-tool)
-BuildRequires:  pkgconfig(mm-camcorder)
-BuildRequires:  pkgconfig(gstreamer-1.0)
 %if %{with wayland}
 BuildRequires:  pkgconfig(ecore-wayland)
 %endif
