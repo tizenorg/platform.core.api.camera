@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <glib.h>
-#include <gst/gst.h>
 #include <sys/time.h>
 #include <dlog.h>
 #include <camera.h>
@@ -44,7 +43,6 @@ Evas_Object *rect;
 GMainLoop *g_loop;
 GIOChannel *stdin_channel;
 camera_device_e cam_info;
-GstCaps *filtercaps;
 int resolution_set;
 int g_current_state;
 int src_w, src_h;
@@ -107,9 +105,6 @@ GTimeVal res;
 #define IMAGE_CAPTURE_EXIF_PATH         TARGET_FILENAME_PATH"exif.raw"
 #define CAPTURE_FILENAME_LEN            256
 #define MAX_STILLSHOT_CAPTURE_RESOLUTION_SUPPORTED 2
-
-#define DEFAULT_CAM_DEVICE              MM_VIDEO_DEVICE_CAMERA1
-
 
 #define CHECK_MM_ERROR(expr) \
 	do {\
@@ -1054,7 +1049,7 @@ static void setting_menu(gchar buf)
 			break;
 		case 'S' : // Setting > flash state
 			g_print("*flash state\n");
-			err = camera_get_flash_state(cam_info, &idx);
+			err = camera_get_flash_state(cam_info, (camera_flash_state_e *)&idx);
 			if (CAMERA_ERROR_NONE == err)
 				g_print("Current flash state = %s\n", idx?"ON":"OFF");
 			else
@@ -1411,10 +1406,6 @@ int main(int argc, char **argv)
 #endif
 
 	timer = g_timer_new();
-
-	gst_init(&argc, &argv);
-
-	LOGD("gst_init() : %12.6lfs", g_timer_elapsed(timer, NULL));
 
 	hcamcorder = (cam_handle_t *) g_malloc0(sizeof(cam_handle_t));
 	camera_state = CAMERA_STATE_NONE;
