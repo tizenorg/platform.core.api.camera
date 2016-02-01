@@ -30,9 +30,6 @@
 #include <dlog.h>
 #include <Elementary.h>
 #include <tbm_surface_internal.h>
-#include <gst/gst.h>
-#include <mm_camcorder.h>
-#include <mm_camcorder_client.h>
 #include <Evas.h>
 #ifdef HAVE_WAYLAND
 #include <Ecore_Wayland.h>
@@ -221,7 +218,7 @@ static const struct tizen_resource_listener _camera_tz_resource_listener =
 	__parent_id_getter
 };
 
-int _get_wl_info(Evas_Object *obj, MMCamWaylandInfo *wl_info)
+int _get_wl_info(Evas_Object *obj, camera_wl_info_s *wl_info)
 {
 	int ret = CAMERA_ERROR_NONE;
 	Ecore_Wl_Window *window = NULL;
@@ -636,7 +633,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 		{
 			camera_preview_data_s frame;
 			unsigned char *buf_pos = NULL;
-			MMCamcorderVideoStreamDataType *stream = NULL;
+			camera_stream_data_s *stream = NULL;
 			int i = 0;
 			int total_size = 0;
 			int num_buffer_key = 0;
@@ -668,7 +665,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 			buf_pos = (unsigned char *)bo_handle.ptr;
 
 			/* get stream info */
-			stream = (MMCamcorderVideoStreamDataType *)buf_pos;
+			stream = (camera_stream_data_s *)buf_pos;
 
 			for (i = 0 ; i < num_buffer_key ; i++) {
 				/* import buffer bo and get virtual address */
@@ -701,7 +698,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 
 				if (num_buffer_key == 0) {
 					/* non-zero copy */
-					buf_pos += sizeof(MMCamcorderVideoStreamDataType);
+					buf_pos += sizeof(camera_stream_data_s);
 
 					if (stream->format == MM_PIXEL_FORMAT_ENCODED_H264) {
 						frame.data.encoded_plane.data = buf_pos;
@@ -1646,31 +1643,6 @@ static void *_camera_msg_recv_func(gpointer data)
 						g_atomic_int_set(&cb_info->msg_recv_running, 0);
 						LOGD("camera destroy done. close client cb handler");
 					}
-				} else if (api == MUSE_CAMERA_API_START_PREVIEW) {
-					int prev_state = CAMERA_STATE_NONE;
-					gchar caps[MUSE_CAMERA_MSG_MAX_LENGTH] = {'\0',};
-
-					muse_camera_msg_get(prev_state, parse_str[i]);
-
-					cb_info->prev_state = prev_state;
-					if (prev_state == CAMERA_STATE_CREATED) {
-						if (cb_info->caps) {
-							g_free(cb_info->caps);
-							cb_info->caps = NULL;
-						}
-
-						muse_camera_msg_get(caps, parse_str[i]);
-						if (strlen(caps) > 0) {
-							cb_info->caps = g_strdup(caps);
-							if (cb_info->caps) {
-								LOGD("caps from server [%s]", cb_info->caps);
-							} else {
-								LOGE("failed to copy caps string");
-							}
-						} else {
-							LOGE("no string for caps");
-						}
-					}
 				}
 
 				g_cond_signal(&cb_info->api_cond[api]);
@@ -1884,10 +1856,6 @@ static void _client_callback_destroy(camera_cb_info_s *cb_info)
 		media_format_unref(cb_info->pkt_fmt);
 		cb_info->pkt_fmt = NULL;
 	}
-	if (cb_info->caps) {
-		g_free(cb_info->caps);
-		cb_info->caps = NULL;
-	}
 
 	g_free(cb_info);
 	cb_info = NULL;
@@ -1944,13 +1912,6 @@ int camera_create(camera_device_e device, camera_h *camera)
 		goto ErrorExit;
 	}
 
-	ret = mm_camcorder_client_create(&pc->client_handle);
-	if (ret != MM_ERROR_NONE) {
-		LOGE("camera client create Failed 0x%x", ret);
-		ret = __convert_camera_error_code(__func__, ret);
-		goto ErrorExit;
-	}
-
 	pc->cb_info = _client_callback_new(sock_fd);
 	if (pc->cb_info == NULL) {
 		LOGE("cb_info alloc failed");
@@ -1973,8 +1934,14 @@ int camera_create(camera_device_e device, camera_h *camera)
 		pc->remote_handle = handle;
 		pc->cb_info->bufmgr = bufmgr;
 
+		ret = camera_set_display((camera_h)pc, CAMERA_DISPLAY_TYPE_NONE, NULL);
+		if (ret != CAMERA_ERROR_NONE) {
+			LOGE("init display failed 0x%x", ret);
+			goto ErrorExit;
+		}
+
 		LOGD("camera create 0x%x", pc->remote_handle);
-		*camera = (camera_h) pc;
+		*camera = (camera_h)pc;
 	} else {
 		goto ErrorExit;
 	}
@@ -1986,10 +1953,6 @@ ErrorExit:
 	bufmgr = NULL;
 
 	if (pc) {
-		if (pc->client_handle) {
-			mm_camcorder_client_destroy(pc->client_handle);
-			pc->client_handle = NULL;
-		}
 		_client_callback_destroy(pc->cb_info);
 		pc->cb_info = NULL;
 		g_free(pc);
@@ -2024,10 +1987,6 @@ int camera_destroy(camera_h camera)
 
 	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
 	if (ret == CAMERA_ERROR_NONE) {
-		if (pc->client_handle) {
-			mm_camcorder_client_destroy(pc->client_handle);
-			pc->client_handle = NULL;
-		}
 		_camera_remove_idle_event_all(pc->cb_info);
 		_client_callback_destroy(pc->cb_info);
 		pc->cb_info = NULL;
@@ -2062,35 +2021,11 @@ int camera_start_preview(camera_h camera)
 
 	sock_fd = pc->cb_info->fd;
 
-	if (pc->client_handle == NULL) {
-		LOGW("set display is not called by application. set NONE type internally");
-		ret = camera_set_display(camera, CAMERA_DISPLAY_TYPE_NONE, NULL);
-		if (ret != CAMERA_ERROR_NONE) {
-			LOGE("Internal camera_set_display failed 0x%x", ret);
-			return ret;
-		}
-	}
-
 	muse_camera_msg_send_longtime(api, sock_fd, pc->cb_info, ret);
 
 	if (ret != CAMERA_ERROR_NONE) {
 		LOGE("start preview failed 0x%x", ret);
 		return ret;
-	}
-
-	if (pc->cb_info->prev_state == CAMERA_STATE_CREATED) {
-		if (pc->display_type != CAMERA_DISPLAY_TYPE_OVERLAY) {
-			if (pc->cb_info->caps == NULL) {
-				LOGE("caps string is NULL");
-				goto _START_PREVIEW_ERROR;
-			}
-
-			ret = mm_camcorder_client_realize(pc->client_handle, pc->cb_info->caps);
-			if (ret != MM_ERROR_NONE) {
-				LOGE("client realize failed 0x%x", ret);
-				goto _START_PREVIEW_ERROR;
-			}
-		}
 	}
 
 	LOGD("ret : 0x%x", ret);
@@ -2106,7 +2041,6 @@ _START_PREVIEW_ERROR:
 int camera_stop_preview(camera_h camera)
 {
 	int ret = CAMERA_ERROR_NONE;
-	int client_ret = MM_ERROR_NONE;
 	int sock_fd = 0;
 	camera_cli_s *pc = NULL;
 	muse_camera_api_e api = MUSE_CAMERA_API_STOP_PREVIEW;
@@ -2127,27 +2061,8 @@ int camera_stop_preview(camera_h camera)
 
 	LOGD("Enter");
 
-	/* destroy client pipeline first */
-	if (pc->display_type != CAMERA_DISPLAY_TYPE_OVERLAY) {
-		if (pc->client_handle != NULL) {
-			client_ret = mm_camcorder_client_unrealize(pc->client_handle);
-		} else {
-			LOGW("client handle is NULL");
-		}
-	}
-
 	/* send stop preview message */
 	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
-
-	if (ret == MM_ERROR_NONE && client_ret != MM_ERROR_NONE) {
-		LOGE("client unrealize failed, restart preview");
-		muse_camera_msg_send_longtime(MUSE_CAMERA_API_START_PREVIEW, sock_fd, pc->cb_info, ret);
-		ret = CAMERA_ERROR_INVALID_OPERATION;
-	} else if (ret != MM_ERROR_NONE && client_ret == MM_ERROR_NONE) {
-		LOGE("stop preview failed, realize client again");
-		mm_camcorder_client_realize(pc->client_handle, pc->cb_info->caps);
-		ret = CAMERA_ERROR_INVALID_OPERATION;
-	}
 
 	LOGD("ret : 0x%x", ret);
 
@@ -2509,13 +2424,17 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 	int set_surface = MM_DISPLAY_SURFACE_OVERLAY;
 	Evas_Object *obj = NULL;
 	const char *object_type = NULL;
-	char socket_path[MUSE_CAMERA_MSG_MAX_LENGTH] = {0,};
 #ifdef HAVE_WAYLAND
-	MMCamWaylandInfo *wl_info = NULL;
+	camera_wl_info_s *wl_info = NULL;
 #endif /* HAVE_WAYLAND */
 
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	if (type < CAMERA_DISPLAY_TYPE_OVERLAY || type > CAMERA_DISPLAY_TYPE_NONE) {
+		LOGE("invalid type %d", type);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
@@ -2573,57 +2492,29 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 		}
 	}
 
-	pc->display_type = type;
 	pc->display_handle = (intptr_t)set_display_handle;
 
-#ifdef HAVE_WAYLAND
 	if (type == CAMERA_DISPLAY_TYPE_OVERLAY) {
+#ifdef HAVE_WAYLAND
 		wl_info = &pc->wl_info;
 		muse_camera_msg_send_array_and_value(api, sock_fd, pc->cb_info, ret,
 			wl_info, 5, sizeof(int), INT, type);
 
-		return __convert_camera_error_code(__func__, ret);
-	} else
+		LOGD("wayland parent id : %d, window %d,%d,%dx%d",
+			wl_info->parent_id, wl_info->window_x, wl_info->window_y,
+			wl_info->window_width, wl_info->window_height);
+#else /* HAVE_WAYLAND */
+		muse_camera_msg_send2(api, sock_fd, pc->cb_info, ret, INT, type, INT, set_display_handle);
+
+		LOGD("x id : %d", (int)set_display_handle);
 #endif /* HAVE_WAYLAND */
-		muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
+	} else
+		muse_camera_msg_send1(api, sock_fd, pc->cb_info, ret, INT, type);
 
-	if (ret == CAMERA_ERROR_NONE) {
-		if (muse_camera_msg_get_string(socket_path, pc->cb_info->recv_msg) == FALSE) {
-			LOGE("failed to get socket path");
-			return CAMERA_ERROR_INVALID_OPERATION;
-		}
+	if (ret != CAMERA_ERROR_NONE)
+		LOGE("set display error 0x%x", ret);
 
-		LOGD("socket path : %s", socket_path);
-
-		ret = mm_camcorder_client_set_socket_path(pc->client_handle, socket_path);
-		if (ret != MM_ERROR_NONE) {
-			LOGE("failed to set socket path 0x%x", ret);
-			return __convert_camera_error_code(__func__, ret);
-		}
-
-		ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
-			MMCAM_DISPLAY_SURFACE, set_surface,
-			NULL);
-		if (ret != MM_ERROR_NONE) {
-			LOGE("set display surface failed 0x%x", ret);
-			return __convert_camera_error_code(__func__, ret);
-		}
-
-		if (type != CAMERA_DISPLAY_TYPE_NONE) {
-			ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
-				MMCAM_DISPLAY_HANDLE, set_display_handle, sizeof(void *),
-				NULL);
-			if (ret != MM_ERROR_NONE) {
-				LOGE("set display handle failed 0x%x", ret);
-				return __convert_camera_error_code(__func__, ret);
-			}
-		}
-
-		return CAMERA_ERROR_NONE;;
-	} else {
-		LOGE("set display error - 0x%x");
-		return ret;
-	}
+	return ret;
 }
 
 int camera_set_preview_resolution(camera_h camera,  int width, int height)
@@ -2775,28 +2666,15 @@ int camera_set_display_rotation(camera_h camera, camera_rotation_e rotation)
 
 	pc = (camera_cli_s *)camera;
 
-	if (pc->display_type == CAMERA_DISPLAY_TYPE_OVERLAY) {
-		if (pc->cb_info == NULL) {
-			LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-			return CAMERA_ERROR_INVALID_PARAMETER;
-		}
-
-		muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_ROTATION,
-			pc->cb_info->fd, pc->cb_info, ret, INT, set_rotation);
-
-		return ret;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (pc->client_handle == NULL) {
-		LOGE("client handle is NULL");
-		return CAMERA_ERROR_INVALID_OPERATION;
-	}
+	muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_ROTATION,
+		pc->cb_info->fd, pc->cb_info, ret, INT, set_rotation);
 
-	ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
-		MMCAM_DISPLAY_ROTATION, rotation,
-		NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	return ret;
 }
 
 int camera_get_display_rotation(camera_h camera, camera_rotation_e *rotation)
@@ -2812,33 +2690,20 @@ int camera_get_display_rotation(camera_h camera, camera_rotation_e *rotation)
 
 	pc = (camera_cli_s *)camera;
 
-	if (pc->display_type == CAMERA_DISPLAY_TYPE_OVERLAY) {
-		if (pc->cb_info == NULL) {
-			LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-			return CAMERA_ERROR_INVALID_PARAMETER;
-		}
-
-		muse_camera_msg_send(MUSE_CAMERA_API_GET_DISPLAY_ROTATION,
-			pc->cb_info->fd, pc->cb_info, ret);
-
-		if (ret == CAMERA_ERROR_NONE) {
-			muse_camera_msg_get(get_rotation, pc->cb_info->recv_msg);
-			*rotation = (camera_rotation_e)get_rotation;
-		}
-
-		return ret;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (pc->client_handle == NULL) {
-		LOGE("client handle is NULL");
-		return CAMERA_ERROR_INVALID_OPERATION;
+	muse_camera_msg_send(MUSE_CAMERA_API_GET_DISPLAY_ROTATION,
+		pc->cb_info->fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get(get_rotation, pc->cb_info->recv_msg);
+		*rotation = (camera_rotation_e)get_rotation;
 	}
 
-	ret = mm_camcorder_get_attributes(pc->client_handle, NULL,
-		MMCAM_DISPLAY_ROTATION, rotation,
-		NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	return ret;
 }
 
 int camera_set_display_flip(camera_h camera, camera_flip_e flip)
@@ -2858,27 +2723,15 @@ int camera_set_display_flip(camera_h camera, camera_flip_e flip)
 
 	pc = (camera_cli_s *)camera;
 
-	if (pc->display_type == CAMERA_DISPLAY_TYPE_OVERLAY) {
-		if (pc->cb_info == NULL) {
-			LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-			return CAMERA_ERROR_INVALID_PARAMETER;
-		}
-
-		muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_FLIP,
-			pc->cb_info->fd, pc->cb_info, ret, INT, set_flip);
-
-		return ret;
-	}
-	if (pc->client_handle == NULL) {
-		LOGE("client handle is NULL");
-		return CAMERA_ERROR_INVALID_OPERATION;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
-		MMCAM_DISPLAY_FLIP, flip,
-		NULL);
+	muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_FLIP,
+		pc->cb_info->fd, pc->cb_info, ret, INT, set_flip);
 
-	return __convert_camera_error_code(__func__, ret);
+	return ret;
 }
 
 int camera_get_display_flip(camera_h camera, camera_flip_e *flip)
@@ -2894,32 +2747,20 @@ int camera_get_display_flip(camera_h camera, camera_flip_e *flip)
 
 	pc = (camera_cli_s *)camera;
 
-	if (pc->display_type == CAMERA_DISPLAY_TYPE_OVERLAY) {
-		if (pc->cb_info == NULL) {
-			LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-			return CAMERA_ERROR_INVALID_PARAMETER;
-		}
-
-		muse_camera_msg_send(MUSE_CAMERA_API_GET_DISPLAY_FLIP,
-			pc->cb_info->fd, pc->cb_info, ret);
-
-		if (ret == CAMERA_ERROR_NONE) {
-			muse_camera_msg_get(get_flip, pc->cb_info->recv_msg);
-			*flip = (camera_flip_e)get_flip;
-		}
-
-		return ret;
-	}
-	if (pc->client_handle == NULL) {
-		LOGE("client handle is NULL");
-		return CAMERA_ERROR_INVALID_OPERATION;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	ret = mm_camcorder_get_attributes(pc->client_handle, NULL,
-		MMCAM_DISPLAY_FLIP, flip,
-		NULL);
+	muse_camera_msg_send(MUSE_CAMERA_API_GET_DISPLAY_FLIP,
+		pc->cb_info->fd, pc->cb_info, ret);
 
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get(get_flip, pc->cb_info->recv_msg);
+		*flip = (camera_flip_e)get_flip;
+	}
+
+	return ret;
 }
 
 int camera_set_display_visible(camera_h camera, bool visible)
@@ -2935,28 +2776,15 @@ int camera_set_display_visible(camera_h camera, bool visible)
 
 	pc = (camera_cli_s *)camera;
 
-	if (pc->display_type == CAMERA_DISPLAY_TYPE_OVERLAY) {
-		if (pc->cb_info == NULL) {
-			LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-			return CAMERA_ERROR_INVALID_PARAMETER;
-		}
-
-		muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_VISIBLE,
-			pc->cb_info->fd, pc->cb_info, ret, INT, set_visible);
-
-		return ret;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (pc->client_handle == NULL) {
-		LOGE("client handle is NULL");
-		return CAMERA_ERROR_INVALID_OPERATION;
-	}
+	muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_VISIBLE,
+		pc->cb_info->fd, pc->cb_info, ret, INT, set_visible);
 
-	ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
-		MMCAM_DISPLAY_VISIBLE, visible,
-		NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	return ret;
 }
 
 int camera_is_display_visible(camera_h camera, bool *visible)
@@ -2972,33 +2800,20 @@ int camera_is_display_visible(camera_h camera, bool *visible)
 
 	pc = (camera_cli_s *)camera;
 
-	if (pc->display_type == CAMERA_DISPLAY_TYPE_OVERLAY) {
-		if (pc->cb_info == NULL) {
-			LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-			return CAMERA_ERROR_INVALID_PARAMETER;
-		}
-
-		muse_camera_msg_send(MUSE_CAMERA_API_IS_DISPLAY_VISIBLE,
-			pc->cb_info->fd, pc->cb_info, ret);
-
-		if (ret == CAMERA_ERROR_NONE) {
-			muse_camera_msg_get(get_visible, pc->cb_info->recv_msg);
-			*visible = (bool)get_visible;
-		}
-
-		return ret;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (pc->client_handle == NULL) {
-		LOGE("client handle is NULL");
-		return CAMERA_ERROR_INVALID_OPERATION;
+	muse_camera_msg_send(MUSE_CAMERA_API_IS_DISPLAY_VISIBLE,
+		pc->cb_info->fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get(get_visible, pc->cb_info->recv_msg);
+		*visible = (bool)get_visible;
 	}
 
-	ret = mm_camcorder_get_attributes(pc->client_handle, NULL,
-		MMCAM_DISPLAY_VISIBLE, visible,
-		NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	return ret;
 }
 
 int camera_set_display_mode(camera_h camera, camera_display_mode_e mode)
@@ -3018,28 +2833,15 @@ int camera_set_display_mode(camera_h camera, camera_display_mode_e mode)
 
 	pc = (camera_cli_s *)camera;
 
-	if (pc->display_type == CAMERA_DISPLAY_TYPE_OVERLAY) {
-		if (pc->cb_info == NULL) {
-			LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-			return CAMERA_ERROR_INVALID_PARAMETER;
-		}
-
-		muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_MODE,
-			pc->cb_info->fd, pc->cb_info, ret, INT, set_mode);
-
-		return ret;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (pc->client_handle == NULL) {
-		LOGE("client handle is NULL");
-		return CAMERA_ERROR_INVALID_OPERATION;
-	}
+	muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_MODE,
+		pc->cb_info->fd, pc->cb_info, ret, INT, set_mode);
 
-	ret = mm_camcorder_set_attributes(pc->client_handle, NULL,
-		MMCAM_DISPLAY_GEOMETRY_METHOD, mode,
-		NULL);
-
-	return __convert_camera_error_code(__func__, ret);
+	return ret;
 }
 
 int camera_get_display_mode(camera_h camera, camera_display_mode_e *mode)
@@ -3055,32 +2857,20 @@ int camera_get_display_mode(camera_h camera, camera_display_mode_e *mode)
 
 	pc = (camera_cli_s *)camera;
 
-	if (pc->display_type == CAMERA_DISPLAY_TYPE_OVERLAY) {
-		if (pc->cb_info == NULL) {
-			LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
-			return CAMERA_ERROR_INVALID_PARAMETER;
-		}
-
-		muse_camera_msg_send(MUSE_CAMERA_API_GET_DISPLAY_MODE,
-			pc->cb_info->fd, pc->cb_info, ret);
-
-		if (ret == CAMERA_ERROR_NONE) {
-			muse_camera_msg_get(get_mode, pc->cb_info->recv_msg);
-			*mode = (camera_display_mode_e)get_mode;
-		}
-
-		return ret;
-	}
-	if (pc->client_handle == NULL) {
-		LOGE("client handle is NULL");
-		return CAMERA_ERROR_INVALID_OPERATION;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	ret = mm_camcorder_get_attributes(pc->client_handle, NULL,
-		MMCAM_DISPLAY_GEOMETRY_METHOD, mode,
-		NULL);
+	muse_camera_msg_send(MUSE_CAMERA_API_GET_DISPLAY_MODE,
+		pc->cb_info->fd, pc->cb_info, ret);
 
-	return __convert_camera_error_code(__func__, ret);
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get(get_mode, pc->cb_info->recv_msg);
+		*mode = (camera_display_mode_e)get_mode;
+	}
+
+	return ret;
 }
 
 int camera_get_capture_resolution(camera_h camera, int *width, int *height)
@@ -5078,7 +4868,6 @@ int camera_get_flash_state(camera_device_e device, camera_flash_state_e *state)
 	int sock_fd = -1;
 	char *sndMsg;
 	int ret = CAMERA_ERROR_NONE;
-	int pid = 0;
 	camera_cli_s *pc = NULL;
 	int get_flash_state = 0;
 

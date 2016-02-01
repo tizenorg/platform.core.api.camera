@@ -23,14 +23,58 @@
 #include <camera.h>
 #include <muse_core.h>
 #include <muse_camera.h>
-#include <mm_camcorder.h>
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#ifdef BUFFER_MAX_PLANE_NUM
+#undef BUFFER_MAX_PLANE_NUM
+#endif /* BUFFER_MAX_PLANE_NUM */
+
+#define BUFFER_MAX_PLANE_NUM    4
 #define CAMERA_PARSE_STRING_SIZE 20
+
+
+typedef struct _camera_stream_data_s {
+	union {
+		struct {
+			unsigned char *yuv;
+			unsigned int length_yuv;
+		} yuv420, yuv422;
+		struct {
+			unsigned char *y;
+			unsigned int length_y;
+			unsigned char *uv;
+			unsigned int length_uv;
+		} yuv420sp;
+		struct {
+			unsigned char *y;
+			unsigned int length_y;
+			unsigned char *u;
+			unsigned int length_u;
+			unsigned char *v;
+			unsigned int length_v;
+		} yuv420p, yuv422p;
+		struct {
+			unsigned char *data;
+			unsigned int length_data;
+		} encoded;
+	} data;                         /**< pointer of captured stream */
+	int data_type;                  /**< data type */
+	unsigned int length_total;      /**< total length of stream buffer (in byte)*/
+	unsigned int num_planes;        /**< number of planes */
+	MMPixelFormatType format;       /**< image format */
+	int width;                      /**< width of video buffer */
+	int height;                     /**< height of video buffer */
+	unsigned int timestamp;         /**< timestamp of stream buffer (msec)*/
+	void *bo[BUFFER_MAX_PLANE_NUM]; /**< TBM buffer object */
+	void *internal_buffer;          /**< Internal buffer pointer */
+	int stride[BUFFER_MAX_PLANE_NUM];    /**< Stride of each plane */
+	int elevation[BUFFER_MAX_PLANE_NUM]; /**< Elevation of each plane */
+} camera_stream_data_s;
+
 
 typedef struct _camera_cb_info_s {
 	gint fd;
@@ -52,8 +96,6 @@ typedef struct _camera_cb_info_s {
 	gint *api_activating;
 	gint *api_ret;
 	tbm_bufmgr bufmgr;
-	gint prev_state;
-	gchar *caps;
 	media_format_h pkt_fmt;
 } camera_cb_info_s;
 
@@ -69,14 +111,23 @@ typedef struct _camera_idle_event_s {
 	GMutex event_mutex;
 } camera_idle_event_s;
 
+#ifdef HAVE_WAYLAND
+typedef struct _camera_wl_info_s {
+	int parent_id;
+	int window_x;
+	int window_y;
+	int window_width;
+	int window_height;
+	void *evas_obj;
+} camera_wl_info_s;
+#endif /* HAVE_WAYLAND */
+
 typedef struct _camera_cli_s {
 	intptr_t remote_handle;
-	MMHandleType client_handle;
-	int display_type;
 	intptr_t display_handle;
 	camera_cb_info_s *cb_info;
 #ifdef HAVE_WAYLAND
-	MMCamWaylandInfo wl_info;
+	camera_wl_info_s wl_info;
 #endif /* HAVE_WAYLAND */
 } camera_cli_s;
 

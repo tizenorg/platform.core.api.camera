@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <glib.h>
-#include <gst/gst.h>
 #include <sys/time.h>
 #include <dlog.h>
 #include <camera.h>
@@ -44,7 +43,6 @@ Evas_Object *rect;
 GMainLoop *g_loop;
 GIOChannel *stdin_channel;
 camera_device_e cam_info;
-GstCaps *filtercaps;
 int resolution_set;
 int g_current_state;
 int src_w, src_h;
@@ -1411,10 +1409,6 @@ int main(int argc, char **argv)
 #endif
 
 	timer = g_timer_new();
-
-	gst_init(&argc, &argv);
-
-	LOGD("gst_init() : %12.6lfs", g_timer_elapsed(timer, NULL));
 
 	hcamcorder = (cam_handle_t *) g_malloc0(sizeof(cam_handle_t));
 	camera_state = CAMERA_STATE_NONE;
