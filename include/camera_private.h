@@ -138,10 +138,27 @@ typedef struct _camera_media_packet_data {
 	int num_buffer_key;
 } camera_media_packet_data;
 
+typedef struct _camera_preview_buf_s {
+	int tbm_key;
+	int buffer_key[BUFFER_MAX_PLANE_NUM];
+	tbm_bo bo;
+	tbm_bo buffer_bo[BUFFER_MAX_PLANE_NUM];
+	int num_buffer_key;
+} camera_preview_buf_s;
+
+typedef int (*camera_preview_buf_cb) (camera_cb_info_s *cb_info, camera_preview_buf_s *preview_data, int error_code);
+
+typedef enum _camera_preview_buf_ret_e {
+	CAMERA_PREVIEW_BUF_ERROR_NONE = 0,
+	CAMERA_PREVIEW_BUF_ERROR_TBM_KEY_IMPORT_FAIL,
+	CAMERA_PREVIEW_BUF_ERROR_TBM_BUFFER_KEY_IMPORT_FAIL,
+} camera_preview_buf_ret_e;
+
 
 int _camera_get_tbm_surface_format(int in_format, uint32_t *out_format);
 int _camera_get_media_packet_mimetype(int in_format, media_format_mimetype_e *mimetype);
 int _camera_media_packet_finalize(media_packet_h pkt, int error_code, void *user_data);
+void _camera_preview2_buffer_release(camera_cb_info_s *cb_info, camera_preview_buf_s *preview_buf, int error_code);
 
 #ifdef __cplusplus
 }
