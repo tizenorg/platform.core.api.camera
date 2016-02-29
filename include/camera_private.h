@@ -136,7 +136,7 @@ typedef struct _camera_media_packet_data {
 	tbm_bo bo;
 	tbm_bo buffer_bo[BUFFER_MAX_PLANE_NUM];
 	int num_buffer_key;
-} camera_media_packet_data;
+} camera_media_packet_data, camera_preview_buf_s;
 
 
 int _camera_get_tbm_surface_format(int in_format, uint32_t *out_format);
