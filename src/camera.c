@@ -43,7 +43,7 @@
 #undef LOG_TAG
 #endif
 #define LOG_TAG "TIZEN_N_CAMERA"
-
+#define EVAS_RENDERING_TEST
 
 #ifdef HAVE_WAYLAND
 static void __global(void *data, struct wl_registry *registry,
@@ -478,6 +478,74 @@ int _camera_media_packet_finalize(media_packet_h pkt, int error_code, void *user
 	return MEDIA_PACKET_FINALIZE;
 }
 
+void _camera_evas_surface_rendering_test(camera_preview_buf_s *preview_buf, camera_preview_buf_cb callback, void *user_data)
+{
+	int i = 0;
+	tbm_bo bo = NULL;
+	tbm_bo_handle bo_handle = {NULL, };
+	tbm_bo buffer_bo[BUFFER_MAX_PLANE_NUM] = {NULL, };
+	tbm_bo_handle buffer_bo_handle[BUFFER_MAX_PLANE_NUM] = {{.ptr = NULL}, };
+
+	/* import tbm bo and get virtual address */
+	if (!_import_tbm_key(preview_buf->bufmgr, preview_buf->tbm_key, &bo, &bo_handle)) {
+		LOGE("failed to import key %d", preview_buf->tbm_key);
+
+		callback(preview_buf, CAMERA_PREVIEW_BUF_ERROR_TBM_KEY_IMPORT_FAIL, user_data);
+
+		return;
+	}
+
+	for (i = 0 ; i < preview_buf->num_buffer_key ; i++) {
+		/* import buffer bo and get virtual address */
+		if (!_import_tbm_key(preview_buf->bufmgr, preview_buf->buffer_key[i], &buffer_bo[i], &buffer_bo_handle[i])) {
+			LOGE("failed to import buffer key %d", preview_buf->buffer_key[i]);
+
+			/* send return buffer */
+			callback(preview_buf, CAMERA_PREVIEW_BUF_ERROR_TBM_BUFFER_KEY_IMPORT_FAIL, user_data);
+
+			return;
+		}
+	}
+
+	/* do evas surface rendering */
+
+
+	/* release buffer */
+	preview_buf->bo = bo;
+	for (i = 0 ; i < preview_buf->num_buffer_key ; i++)
+		preview_buf->buffer_bo[i] = buffer_bo[i];
+
+	callback(preview_buf, CAMERA_PREVIEW_BUF_ERROR_NONE, user_data);
+}
+
+void _camera_preview2_buffer_release(camera_preview_buf_s *preview_buf, int error_code, void *user_data)
+{
+	LOGD("Enter");
+
+	int i = 0;
+	int tbm_key = 0;
+	camera_cb_info_s *cb_info = NULL;
+
+	tbm_key = preview_buf->tbm_key;
+	cb_info = (camera_cb_info_s *)user_data;
+
+	if (error_code != CAMERA_PREVIEW_BUF_ERROR_TBM_KEY_IMPORT_FAIL) {
+		/* release imported bo */
+		for (i = 0 ; i < preview_buf->num_buffer_key ; i++)
+			_release_imported_bo(&preview_buf->buffer_bo[i]);
+
+		/* unmap and unref tbm bo */
+		_release_imported_bo(&preview_buf->bo);
+	}
+
+	/* return buffer */
+	muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
+		cb_info->fd, cb_info, INT, tbm_key);
+
+	g_free(preview_buf);
+	preview_buf = NULL;
+}
+
 static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, muse_camera_event_e event)
 {
 	int param1 = 0;
@@ -497,6 +565,11 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 		if (cb_info->user_cb[MUSE_CAMERA_EVENT_TYPE_PREVIEW] == NULL &&
 			cb_info->user_cb[MUSE_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW] == NULL) {
 			LOGW("all preview callback from user are NULL");
+			return;
+		}
+	} else if (event == MUSE_CAMERA_EVENT_TYPE_PREVIEW2) {
+		if (cb_info->user_cb[MUSE_CAMERA_EVENT_TYPE_PREVIEW2] == NULL) {
+			LOGW("preview2 callback from user are NULL");
 			return;
 		}
 	} else if (cb_info->user_cb[event] == NULL) {
@@ -538,6 +611,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 		((camera_capture_completed_cb)cb_info->user_cb[event])(cb_info->user_data[event]);
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_PREVIEW:
+	case MUSE_CAMERA_EVENT_TYPE_PREVIEW2:
 	case MUSE_CAMERA_EVENT_TYPE_MEDIA_PACKET_PREVIEW:
 		{
 			camera_preview_data_s frame;
@@ -562,35 +636,37 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 				break;
 			}
 
-			/* import tbm bo and get virtual address */
-			if (!_import_tbm_key(cb_info->bufmgr, tbm_key, &bo, &bo_handle)) {
-				LOGE("failed to import key %d", tbm_key);
+			if (event != MUSE_CAMERA_EVENT_TYPE_PREVIEW2) {
+				/* import tbm bo and get virtual address */
+				if (!_import_tbm_key(cb_info->bufmgr, tbm_key, &bo, &bo_handle)) {
+					LOGE("failed to import key %d", tbm_key);
 
-				muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
-					cb_info->fd, cb_info, INT, tbm_key);
-				break;
-			}
-
-			buf_pos = (unsigned char *)bo_handle.ptr;
-
-			/* get stream info */
-			stream = (camera_stream_data_s *)buf_pos;
-
-			for (i = 0 ; i < num_buffer_key ; i++) {
-				/* import buffer bo and get virtual address */
-				if (!_import_tbm_key(cb_info->bufmgr, buffer_key[i], &buffer_bo[i], &buffer_bo_handle[i])) {
-					LOGE("failed to import buffer key %d", buffer_key[i]);
-
-					/* release imported bo */
-					for (i -= 1 ; i >= 0 ; i--)
-						_release_imported_bo(&buffer_bo[i]);
-
-					_release_imported_bo(&bo);
-
-					/* send return buffer */
 					muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
 						cb_info->fd, cb_info, INT, tbm_key);
-					return;
+					break;
+				}
+
+				buf_pos = (unsigned char *)bo_handle.ptr;
+
+				/* get stream info */
+				stream = (camera_stream_data_s *)buf_pos;
+
+				for (i = 0 ; i < num_buffer_key ; i++) {
+					/* import buffer bo and get virtual address */
+					if (!_import_tbm_key(cb_info->bufmgr, buffer_key[i], &buffer_bo[i], &buffer_bo_handle[i])) {
+						LOGE("failed to import buffer key %d", buffer_key[i]);
+
+						/* release imported bo */
+						for (i -= 1 ; i >= 0 ; i--)
+							_release_imported_bo(&buffer_bo[i]);
+
+						_release_imported_bo(&bo);
+
+						/* send return buffer */
+						muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
+							cb_info->fd, cb_info, INT, tbm_key);
+						return;
+					}
 				}
 			}
 
@@ -854,21 +930,37 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 			}
 
 			/* send message for preview callback return */
-			muse_camera_msg_send_no_return(MUSE_CAMERA_API_PREVIEW_CB_RETURN, cb_info->fd, cb_info);
+				muse_camera_msg_send_no_return(MUSE_CAMERA_API_PREVIEW_CB_RETURN, cb_info->fd, cb_info);
 
-			if (mp_data == NULL) {
-				/* release imported bo */
+			if (event == MUSE_CAMERA_EVENT_TYPE_PREVIEW) {
+				if (mp_data == NULL) {
+					/* release imported bo */
+					for (i = 0 ; i < num_buffer_key ; i++)
+						_release_imported_bo(&buffer_bo[i]);
+
+					/* unmap and unref tbm bo */
+					_release_imported_bo(&bo);
+
+					/* return buffer */
+					muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
+						cb_info->fd, cb_info, INT, tbm_key);
+
+					/*LOGD("return buffer Done");*/
+				}
+			} else {
+				camera_preview_buf_s *preview_buf = NULL;
+				preview_buf = g_new0(camera_preview_buf_s, 1);
+
+				preview_buf->bufmgr = cb_info->bufmgr;
+				preview_buf->tbm_key = tbm_key;
+				preview_buf->num_buffer_key = num_buffer_key;
+
 				for (i = 0 ; i < num_buffer_key ; i++)
-					_release_imported_bo(&buffer_bo[i]);
+					preview_buf->buffer_key[i] = buffer_key[i];
 
-				/* unmap and unref tbm bo */
-				_release_imported_bo(&bo);
-
-				/* return buffer */
-				muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
-					cb_info->fd, cb_info, INT, tbm_key);
-
-				/*LOGD("return buffer Done");*/
+			#ifdef EVAS_RENDERING_TEST
+				_camera_evas_surface_rendering_test(preview_buf, _camera_preview2_buffer_release, (void *)cb_info);
+			#endif
 			}
 		}
 		break;
@@ -2408,6 +2500,11 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 
 		LOGD("x id : %d", (int)set_display_handle);
 #endif /* HAVE_WAYLAND */
+	} else if (type == CAMERA_DISPLAY_TYPE_EVAS) {
+		pc->cb_info->user_cb[MUSE_CAMERA_EVENT_TYPE_PREVIEW2] = _camera_preview2_buffer_release;
+		pc->cb_info->user_data[MUSE_CAMERA_EVENT_TYPE_PREVIEW2] = NULL;
+
+		muse_camera_msg_send1(api, sock_fd, pc->cb_info, ret, INT, type);
 	} else
 		muse_camera_msg_send1(api, sock_fd, pc->cb_info, ret, INT, type);
 
