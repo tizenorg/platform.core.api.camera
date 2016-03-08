@@ -179,6 +179,8 @@ int _get_wl_info(Evas_Object *obj, camera_wl_info_s *wl_info)
 	wl_display_roundtrip(display);
 
 	if (wl_info->parent_id > 0) {
+		int rotation = 0;
+		Ecore_Evas *ecore_evas = NULL;
 		ret = CAMERA_ERROR_NONE;
 
 		wl_info->evas_obj = obj;
@@ -186,8 +188,23 @@ int _get_wl_info(Evas_Object *obj, camera_wl_info_s *wl_info)
 		evas_object_geometry_get(obj, &wl_info->window_x, &wl_info->window_y,
 			&wl_info->window_width, &wl_info->window_height);
 
-		LOGD("evas object : %p, parent id : %u, window : %d,%d,%dx%d",
-			wl_info->evas_obj, wl_info->parent_id,
+		ecore_evas = ecore_evas_ecore_evas_get(evas_object_evas_get(obj));
+		if (ecore_evas) {
+			rotation = ecore_evas_rotation_get(ecore_evas);
+			if (rotation == 90 || rotation == 270) {
+				int temp = wl_info->window_width;
+
+				LOGD("swap width and height %d, %d", wl_info->window_width, wl_info->window_height);
+
+				wl_info->window_width = wl_info->window_height;
+				wl_info->window_height = temp;
+			}
+		} else {
+			LOGW("failed to get ecore_evas.. skip rotation check");
+		}
+
+		LOGD("evas object : %p, rotation : %d, parent id : %u, window : %d,%d,%dx%d",
+			wl_info->evas_obj, rotation, wl_info->parent_id,
 			wl_info->window_x, wl_info->window_y,
 			wl_info->window_width, wl_info->window_height);
 	} else {
