@@ -1829,6 +1829,7 @@ int camera_create(camera_device_e device, camera_h *camera)
 		ret = camera_set_display((camera_h)pc, CAMERA_DISPLAY_TYPE_NONE, NULL);
 		if (ret != CAMERA_ERROR_NONE) {
 			LOGE("init display failed 0x%x", ret);
+			g_atomic_int_set(&pc->cb_info->msg_recv_running, 0);
 			goto ErrorExit;
 		}
 
@@ -4701,7 +4702,6 @@ int camera_attr_get_geotag(camera_h camera, double *latitude , double *longitude
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
-	int valid = 0;
 	LOGD("Enter, remote_handle : %x", pc->remote_handle);
 	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
 
@@ -4710,8 +4710,6 @@ int camera_attr_get_geotag(camera_h camera, double *latitude , double *longitude
 		*latitude = get_geotag[0];
 		*longitude = get_geotag[1];
 		*altitude = get_geotag[2];
-	} else {
-		LOGE("Returned value is not valid : 0x%x", valid);
 	}
 
 	LOGD("ret : 0x%x", ret);

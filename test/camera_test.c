@@ -97,7 +97,7 @@ GTimeVal res;
 #define EXT_AMR                         "amr"
 #define EXT_MKV                         "mkv"
 
-#define TARGET_FILENAME_PATH            "/opt/usr/media/"
+#define TARGET_FILENAME_PATH            "/home/owner/content/"
 #define STILL_CAPTURE_FILE_PATH_NAME    TARGET_FILENAME_PATH"StillshotCapture"
 #define MULTI_CAPTURE_FILE_PATH_NAME    TARGET_FILENAME_PATH"MultishotCapture"
 #define IMAGE_CAPTURE_THUMBNAIL_PATH    TARGET_FILENAME_PATH"thumbnail.jpg"
@@ -610,10 +610,10 @@ void capturing_cb(camera_image_data_s* image, camera_image_data_s* postview, cam
 {
 	char m_filename[CAPTURE_FILENAME_LEN];
 
-	if (hcamcorder->isMultishot)
-		snprintf(m_filename, CAPTURE_FILENAME_LEN, "/opt/usr/media/Stillshot%03d.jpg", hcamcorder->multishot_count++);
+	if (!hcamcorder->isMultishot)
+		snprintf(m_filename, CAPTURE_FILENAME_LEN, "/home/owner/content/Stillshot%03d.jpg", hcamcorder->multishot_count++);
 	else
-		snprintf(m_filename, CAPTURE_FILENAME_LEN, "/opt/usr/media/Multishot%03d.jpg", hcamcorder->stillshot_count++);
+		snprintf(m_filename, CAPTURE_FILENAME_LEN, "/home/owner/content/Multishot%03d.jpg", hcamcorder->stillshot_count++);
 
 	/* main image */
 	if (image)
@@ -708,6 +708,7 @@ static void main_menu(gchar buf)
 	if (hcamcorder->mode == MODE_VIDEO_CAPTURE) {
 		switch (buf) {
 		case '1': /* Capture */
+			hcamcorder->isMultishot = FALSE;
 			camera_get_state(hcamcorder->camera, &capi_state);
 			camera_attr_set_image_quality(hcamcorder->camera, 100);
 			camera_set_capture_format(hcamcorder->camera, CAMERA_PIXEL_FORMAT_JPEG);
@@ -1319,7 +1320,7 @@ static gboolean mode_change()
 
 	if (err != 0) {
 		LOGE("mmcamcorder_create = %x", err);
-		return -1;
+		return FALSE;
 	} else {
 		camera_state = CAMERA_STATE_NONE;
 	}
