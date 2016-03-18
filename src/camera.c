@@ -4768,6 +4768,11 @@ int camera_attr_get_flash_mode(camera_h camera,  camera_attr_flash_mode_e *mode)
 
 int camera_get_flash_state(camera_device_e device, camera_flash_state_e *state)
 {
+	if ((device != CAMERA_DEVICE_CAMERA0 && device != CAMERA_DEVICE_CAMERA1) || state == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
 	int sock_fd = -1;
 	char *sndMsg;
 	int ret = CAMERA_ERROR_NONE;
