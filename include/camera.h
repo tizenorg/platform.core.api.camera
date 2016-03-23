@@ -2006,7 +2006,7 @@ int camera_attr_foreach_supported_fps(camera_h camera, camera_attr_supported_fps
 
 /**
  * @brief Retrieves all supported FPS modes by invoking the callback function once for each supported FPS mode.
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  * @param[in] camera The handle to the camera
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
@@ -3008,7 +3008,7 @@ int camera_attr_remove_geotag(camera_h camera);
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
- * @remarks Since 2.4, while setting the flash mode, if the flash was preempted by other APIs,\n
+ * @remarks Since @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif, while setting the flash mode, if the flash was preempted by other APIs,\n
  *          then this function returns #CAMERA_ERROR_DEVICE_BUSY error.
  * @param[in] camera The handle to the camera
  * @param[in] mode The flash mode
