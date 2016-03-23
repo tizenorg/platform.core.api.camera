@@ -1241,7 +1241,7 @@ IDLE_EVENT_CALLBACK_DONE:
 	g_mutex_unlock(&cam_idle_event->event_mutex);
 	g_mutex_clear(&cam_idle_event->event_mutex);
 
-	free(cam_idle_event);
+	g_free(cam_idle_event);
 	cam_idle_event = NULL;
 
 	return false;
@@ -1325,7 +1325,7 @@ static void *_camera_msg_handler_func(gpointer data)
 				_client_user_callback(cb_info, cam_msg->recv_msg, event);
 				break;
 			case MUSE_CAMERA_EVENT_CLASS_THREAD_MAIN:
-				cam_idle_event = (camera_idle_event_s *)malloc(sizeof(camera_idle_event_s));
+				cam_idle_event = g_new0(camera_idle_event_s, 1);
 				if (cam_idle_event == NULL) {
 					LOGE("cam_idle_event alloc failed");
 					break;
@@ -1355,7 +1355,7 @@ static void *_camera_msg_handler_func(gpointer data)
 			LOGE("unknown camera api[%d] message[%s]", api, cam_msg->recv_msg);
 		}
 
-		free(cam_msg);
+		g_free(cam_msg);
 		cam_msg = NULL;
 
 		g_mutex_lock(&cb_info->msg_handler_mutex);
@@ -1423,7 +1423,7 @@ static void _camera_remove_idle_event_all(camera_cb_info_s *cb_info)
 					if (ret == TRUE) {
 						g_mutex_clear(&cam_idle_event->event_mutex);
 
-						free(cam_idle_event);
+						g_free(cam_idle_event);
 						cam_idle_event = NULL;
 
 						LOGD("remove idle event done");
@@ -1527,8 +1527,11 @@ static void *_camera_msg_recv_func(gpointer data)
 				continue;
 			}
 
-			if (muse_camera_msg_get(api_class, parse_str[i]))
-				LOGD("camera api_class[%d]", api_class);
+			if (api != MUSE_CAMERA_CB_EVENT) {
+				LOGD("check api_class");
+				if (muse_camera_msg_get(api_class, parse_str[i]))
+					LOGD("camera api_class[%d]", api_class);
+			}
 
 			if (api_class == MUSE_CAMERA_API_CLASS_IMMEDIATE) {
 				g_mutex_lock(&cb_info->api_mutex[api]);
@@ -4718,8 +4721,9 @@ int camera_attr_get_geotag(camera_h camera, double *latitude , double *longitude
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	sock_fd = pc->cb_info->fd;
-	int valid = 0;
+
 	LOGD("Enter, remote_handle : %x", pc->remote_handle);
+
 	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
 
 	if (ret == CAMERA_ERROR_NONE) {
@@ -4727,11 +4731,11 @@ int camera_attr_get_geotag(camera_h camera, double *latitude , double *longitude
 		*latitude = get_geotag[0];
 		*longitude = get_geotag[1];
 		*altitude = get_geotag[2];
-	} else {
-		LOGE("Returned value is not valid : 0x%x", valid);
-	}
 
-	LOGD("ret : 0x%x", ret);
+		LOGD("ret : 0x%x", ret);
+	} else {
+		LOGE("Returned value is not valid : 0x%x", ret);
+	}
 
 	return ret;
 }
