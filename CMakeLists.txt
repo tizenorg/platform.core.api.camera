@@ -3,13 +3,13 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 # project
 SET(project_prefix "capi")
 SET(prefix "/usr")
-SET(maintainer "Jeongmo Yang<jm80.yang>, Hyuntae Kim<ht1211.kim@samsung.com>, Seokhoon Lee<andy.shlee@samsung.com>, Taeyoung Chung <ty83.chung@samsung.com>, Sejong Park<sejong123.park@samsung.com")
+SET(maintainer "Jeongmo Yang<jm80.yang@samsung.com>, Hyuntae Kim<ht1211.kim@samsung.com>, Seokhoon Lee<andy.shlee@samsung.com>, Taeyoung Chung <ty83.chung@samsung.com>, Sejong Park<sejong123.park@samsung.com, Haesu Gwon<haesu.gwon@samsung.com")
 SET(description "A Camera library in Tizen Native API")
 SET(service "media")
 SET(submodule "camera")
 
 # for package file
-SET(dependents "libtbm dlog mm-common capi-base-common capi-media-tool ecore elementary mmsvc-camera tizen-extension-client")
+SET(dependents "libtbm dlog mm-common capi-base-common capi-media-tool ecore elementary mmsvc-camera tizen-extension-client mm-evas-renderer")
 SET(pc_dependents "capi-base-common capi-media-tool libtbm evas ecore elementary")
 SET(fw_name "${project_prefix}-${service}-${submodule}")
 
@@ -43,6 +43,7 @@ ENDIF(X11_SUPPORT)
 
 ADD_DEFINITIONS("-DPREFIX=\"${CMAKE_INSTALL_PREFIX}\"")
 ADD_DEFINITIONS("-DTIZEN_DEBUG")
+ADD_DEFINITIONS("-DHAVE_EVAS_RENDERER")
 
 SET(CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed -Wl,--rpath=${LIB_INSTALL_DIR}")
 
