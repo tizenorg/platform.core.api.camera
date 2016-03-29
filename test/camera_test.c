@@ -38,6 +38,7 @@
 
 
 Evas_Object *eo;
+Evas_Object *win;
 Evas_Object *bg;
 Evas_Object *rect;
 GMainLoop *g_loop;
@@ -1047,11 +1048,11 @@ static void setting_menu(gchar buf)
 			err = scanf("%d", &idx);
 			bret = camera_attr_set_flash_mode(hcamcorder->camera, idx);
 			break;
-		case 'S' : // Setting > flash state
+		case 'S': /* Setting > flash state */
 			g_print("*flash state\n");
 			err = camera_get_flash_state(cam_info, (camera_flash_state_e *)&idx);
 			if (CAMERA_ERROR_NONE == err)
-				g_print("Current flash state = %s\n", idx?"ON":"OFF");
+				g_print("Current flash state = %s\n", idx ? "ON" : "OFF");
 			else
 				g_print("* Error : %d\n", err);
 			break;
@@ -1267,6 +1268,7 @@ static gboolean mode_change()
 	int err = 0;
 	char media_type = '\0';
 	bool check = FALSE;
+	camera_display_type_e display_type = CAMERA_DISPLAY_TYPE_EVAS;
 
 	init_handle();
 	while (!check) {
@@ -1327,7 +1329,8 @@ static gboolean mode_change()
 
 	camera_set_state_changed_cb(hcamcorder->camera, _camera_state_changed_cb, NULL);
 	camera_set_interrupted_cb(hcamcorder->camera, _camera_interrupted_cb, NULL);
-	camera_set_display(hcamcorder->camera, CAMERA_DISPLAY_TYPE_OVERLAY, GET_DISPLAY(eo));
+	camera_set_display(hcamcorder->camera, display_type,
+		(display_type == CAMERA_DISPLAY_TYPE_OVERLAY)?GET_DISPLAY(win):GET_DISPLAY(eo));
 	camera_set_display_mode(hcamcorder->camera, CAMERA_DISPLAY_MODE_LETTER_BOX);
 	/*camera_set_display_rotation(hcamcorder->camera, CAMERA_ROTATION_90);*/
 	/*camera_set_display_flip(hcamcorder->camera, CAMERA_FLIP_VERTICAL);*/
@@ -1360,24 +1363,24 @@ int main(int argc, char **argv)
 	int w, h;
 	elm_init(argc, argv);
 
-	eo = elm_win_add(NULL, "VIDEO OVERLAY", ELM_WIN_BASIC);
-	if (eo) {
-		elm_win_title_set(eo, "TITLE");
-		elm_win_borderless_set(eo, EINA_TRUE);
-		elm_win_screen_size_get(eo, NULL, NULL, &w, &h);
-		evas_object_resize(eo, w, h);
-		elm_win_autodel_set(eo, EINA_TRUE);
+	win = elm_win_add(NULL, "VIDEO OVERLAY", ELM_WIN_BASIC);
+	if (win) {
+		elm_win_title_set(win, "TITLE");
+		elm_win_borderless_set(win, EINA_TRUE);
+		elm_win_screen_size_get(win, NULL, NULL, &w, &h);
+		evas_object_resize(win, w, h);
+		elm_win_autodel_set(win, EINA_TRUE);
 #ifdef HAVE_WAYLAND
-		elm_win_alpha_set(eo, EINA_TRUE);
+		elm_win_alpha_set(win, EINA_TRUE);
 #endif /* HAVE_WAYLAND */
 	} else {
 		g_print("\n\tfailed to get window\n\n");
 		return 1;
 	}
 
-	bg = elm_bg_add(eo);
+	bg = elm_bg_add(win);
 	if (bg) {
-		elm_win_resize_object_add(eo, bg);
+		elm_win_resize_object_add(win, bg);
 		evas_object_size_hint_weight_set(bg, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 		evas_object_show(bg);
 	} else {
@@ -1385,7 +1388,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	rect = evas_object_rectangle_add(evas_object_evas_get(eo));
+	rect = evas_object_rectangle_add(evas_object_evas_get(win));
 	if (rect) {
 		evas_object_color_set(rect, 0, 0, 0, 0);
 		evas_object_render_op_set(rect, EVAS_RENDER_COPY);
@@ -1394,11 +1397,20 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	elm_win_resize_object_add(eo, rect);
+	elm_win_resize_object_add(win, rect);
 	evas_object_size_hint_weight_set(rect, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 	evas_object_show(rect);
-	elm_win_activate(eo);
-	evas_object_show(eo);
+	elm_win_activate(win);
+	evas_object_show(win);
+
+	/* Create evas image object for EVAS surface */
+	eo = evas_object_image_add(evas_object_evas_get(win));
+	evas_object_image_size_set(eo, 960, 720);
+	evas_object_image_fill_set(eo, 0, 0, 960, 720);
+	evas_object_resize(eo, 960, 720);
+
+	elm_win_activate(win);
+	evas_object_show(win);
 
 #if !GLIB_CHECK_VERSION(2, 35, 0)
 	if (!g_thread_supported())
