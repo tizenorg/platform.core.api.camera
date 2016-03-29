@@ -25,6 +25,7 @@ BuildRequires:  pkgconfig(ecore-wayland)
 %endif
 BuildRequires:  pkgconfig(libtbm)
 BuildRequires:  pkgconfig(tizen-extension-client)
+BuildRequires:  pkgconfig(mm-evas-renderer)
 
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
