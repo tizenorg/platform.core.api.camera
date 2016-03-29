@@ -24,7 +24,6 @@
 #include <muse_core.h>
 #include <muse_camera.h>
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -35,6 +34,13 @@ extern "C" {
 
 #define BUFFER_MAX_PLANE_NUM    4
 #define CAMERA_PARSE_STRING_SIZE 20
+
+#define PREVIEW_CB_TYPE_USER 0x0000000F
+#define PREVIEW_CB_TYPE_EVAS 0x000000F0
+
+#define CHECK_PREVIEW_CB(cb_info, cb_type) ((cb_info)->preview_cb_flag & cb_type)
+#define SET_PREVIEW_CB_TYPE(cb_info, cb_type) ((cb_info)->preview_cb_flag |= cb_type)
+#define UNSET_PREVIEW_CB_TYPE(cb_info, cb_type) ((cb_info)->preview_cb_flag &= ~cb_type)
 
 
 typedef struct _camera_stream_data_s {
@@ -75,7 +81,6 @@ typedef struct _camera_stream_data_s {
 	int elevation[BUFFER_MAX_PLANE_NUM]; /**< Elevation of each plane */
 } camera_stream_data_s;
 
-
 typedef struct _camera_cb_info_s {
 	gint fd;
 	GThread *msg_recv_thread;
@@ -97,6 +102,9 @@ typedef struct _camera_cb_info_s {
 	gint *api_ret;
 	tbm_bufmgr bufmgr;
 	media_format_h pkt_fmt;
+	int preview_cb_flag;
+	GMutex mp_data_mutex;
+	void *evas_info;
 } camera_cb_info_s;
 
 typedef struct _camera_message_s {
@@ -136,6 +144,7 @@ typedef struct _camera_media_packet_data {
 	tbm_bo bo;
 	tbm_bo buffer_bo[BUFFER_MAX_PLANE_NUM];
 	int num_buffer_key;
+	int ref_cnt;
 } camera_media_packet_data;
 
 
