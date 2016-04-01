@@ -176,7 +176,7 @@
 /**
  * @ingroup CAPI_MEDIA_CAMERA_MODULE
  * @defgroup CAPI_MEDIA_CAMERA_ATTRIBUTES_MODULE Attributes
- * @brief The @ref CAPI_MEDIA_CAMERA_ATTRIBUTES_MODULE API provides functions to fetch camera attributes. 
+ * @brief The @ref CAPI_MEDIA_CAMERA_ATTRIBUTES_MODULE API provides functions to fetch camera attributes.
  *
  * @section CAPI_MEDIA_CAMERA_ATTRIBUTES_MODULE_HEADER Required Header
  *   \#include <camera.h>
