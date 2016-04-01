@@ -69,9 +69,8 @@ static void __global(void *data, struct wl_registry *registry,
 		LOGD("binding tizen surface for wayland");
 
 		*tz_surface = wl_registry_bind(registry, name, &tizen_surface_interface, version);
-		if (*tz_surface == NULL) {
+		if (*tz_surface == NULL)
 			LOGE("failed to bind");
-		}
 
 		LOGD("done");
 	}
@@ -85,8 +84,7 @@ static void __global_remove(void *data, struct wl_registry *wl_registry, uint32_
 	return;
 }
 
-static const struct wl_registry_listener _camera_wl_registry_listener =
-{
+static const struct wl_registry_listener _camera_wl_registry_listener = {
 	__global,
 	__global_remove
 };
@@ -100,13 +98,12 @@ void __parent_id_getter(void *data, struct tizen_resource *tizen_resource, uint3
 
 	*((unsigned int *)data) = id;
 
-    LOGD("[CLIENT] got parent_id [%u] from server", id);
+	LOGD("[CLIENT] got parent_id [%u] from server", id);
 
 	return;
 }
 
-static const struct tizen_resource_listener _camera_tz_resource_listener =
-{
+static const struct tizen_resource_listener _camera_tz_resource_listener = {
 	__parent_id_getter
 };
 

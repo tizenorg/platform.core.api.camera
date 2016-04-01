@@ -1047,7 +1047,7 @@ static void setting_menu(gchar buf)
 			err = scanf("%d", &idx);
 			bret = camera_attr_set_flash_mode(hcamcorder->camera, idx);
 			break;
-		case 'S' : // Setting > flash state
+		case 'S': /* Setting > flash state */
 			g_print("*flash state\n");
 			err = camera_get_flash_state(cam_info, (camera_flash_state_e *)&idx);
 			if (CAMERA_ERROR_NONE == err)
