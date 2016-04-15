@@ -105,6 +105,8 @@ typedef struct _camera_cb_info_s {
 	int preview_cb_flag;
 	GMutex mp_data_mutex;
 	void *evas_info;
+	GMutex evas_mutex;
+	gboolean run_evas_render;
 } camera_cb_info_s;
 
 typedef struct _camera_message_s {
