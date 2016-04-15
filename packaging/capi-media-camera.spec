@@ -3,7 +3,7 @@
 
 Name:       capi-media-camera
 Summary:    A Camera API
-Version:    0.2.49
+Version:    0.2.50
 Release:    0
 Group:      Multimedia/API
 License:    Apache-2.0
@@ -91,5 +91,6 @@ cp LICENSE.APLv2 %{buildroot}%{_datadir}/license/%{name}
 
 %files devel
 %{_includedir}/media/camera.h
+%{_includedir}/media/camera_internal.h
 %{_libdir}/pkgconfig/*.pc
 %{_libdir}/libcapi-media-camera.so

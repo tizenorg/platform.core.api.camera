@@ -105,6 +105,8 @@ typedef struct _camera_cb_info_s {
 	int preview_cb_flag;
 	GMutex mp_data_mutex;
 	void *evas_info;
+	GMutex evas_mutex;
+	gboolean run_evas_render;
 } camera_cb_info_s;
 
 typedef struct _camera_message_s {
@@ -151,6 +153,7 @@ typedef struct _camera_media_packet_data {
 int _camera_get_tbm_surface_format(int in_format, uint32_t *out_format);
 int _camera_get_media_packet_mimetype(int in_format, media_format_mimetype_e *mimetype);
 int _camera_media_packet_finalize(media_packet_h pkt, int error_code, void *user_data);
+int _camera_set_evas_rendering(camera_h camera, bool enable);
 
 #ifdef __cplusplus
 }
