@@ -30,18 +30,36 @@
 #include <camera.h>
 #include <Ecore.h>
 #include <Elementary.h>
+#include <appcore-efl.h>
 
 /*-----------------------------------------------------------------------
 |    GLOBAL VARIABLE DEFINITIONS:                                       |
 -----------------------------------------------------------------------*/
 #define EXPORT_API __attribute__((__visibility__("default")))
 
+#ifdef PACKAGE
+#undef PACKAGE
+#endif
+#define PACKAGE "camera_test"
 
-Evas_Object *eo;
-Evas_Object *win;
-Evas_Object *bg;
-Evas_Object *rect;
-GMainLoop *g_loop;
+
+static int app_create(void *data);
+static int app_terminate(void *data);
+
+struct _appdata {
+	Evas_Object *win;
+	Evas_Object *eo;
+	Evas_Object *bg;
+	Evas_Object *rect;
+};
+typedef struct _appdata appdata;
+
+struct appcore_ops ops = {
+	.create = app_create,
+	.terminate = app_terminate,
+};
+
+appdata ad;
 GIOChannel *stdin_channel;
 camera_device_e cam_info;
 int resolution_set;
@@ -148,6 +166,7 @@ enum {
 };
 
 enum {
+	MENU_STATE_INIT,
 	MENU_STATE_MAIN,
 	MENU_STATE_SETTING,
 	MENU_STATE_NUM,
@@ -419,7 +438,7 @@ const char *facing_direction[] = {
   ---------------------------------------------------------------------------*/
 static void print_menu();
 static gboolean cmd_input(GIOChannel *channel);
-static gboolean mode_change();
+static gboolean mode_change(gchar buf);
 int camcordertest_set_attr_int(const char* attr_subcategory, int value);
 bool preview_resolution_cb(int width, int height, void *user_data);
 
@@ -635,6 +654,17 @@ void capture_completed_cb(void *user_data)
 static void print_menu()
 {
 	switch (hcamcorder->menu_state) {
+	case MENU_STATE_INIT:
+		g_print("\n\t=======================================\n");
+		g_print("\t   CAMERA_TESTSUITE\n");
+		g_print("\t=======================================\n");
+		g_print("\t   '1' Video Capture - Front Camera\n");
+		g_print("\t   '2' Video Capture - Rear Camera\n");
+		g_print("\t   'q' Exit\n");
+		g_print("\t=======================================\n");
+
+		g_print("\t  Enter the media type:\n\t");
+		break;
 	case MENU_STATE_MAIN:
 		if (hcamcorder->mode == MODE_VIDEO_CAPTURE) {
 			g_print("\n\t=======================================\n");
@@ -694,7 +724,7 @@ static void print_menu()
 		g_print("\t=======================================\n");
 		break;
 	default:
-		LOGE("unknow menu state !!\n");
+		g_print("\n\tunknow menu state !!\n");
 		break;
 	}
 
@@ -737,8 +767,8 @@ static void main_menu(gchar buf)
 			camera_stop_preview(hcamcorder->camera);
 			camera_destroy(hcamcorder->camera);
 			hcamcorder->camera = NULL;
-			hcamcorder->menu_state = MENU_STATE_MAIN;
-			mode_change();
+			hcamcorder->menu_state = MENU_STATE_INIT;
+			print_menu();
 			break;
 		default:
 			g_print("\t Invalid input \n");
@@ -746,8 +776,8 @@ static void main_menu(gchar buf)
 		}
 	} else {
 		g_print("\t Invalid mode, back to upper menu \n");
-		hcamcorder->menu_state = MENU_STATE_MAIN;
-		mode_change();
+		hcamcorder->menu_state = MENU_STATE_INIT;
+		print_menu();
 	}
 
 	return;
@@ -1168,11 +1198,11 @@ static gboolean cmd_input(GIOChannel *channel)
 	gsize read_size;
 	GError *g_error = NULL;
 
-	LOGD("ENTER");
+	g_print("\n\tENTER\n");
 
 	g_io_channel_read_line(channel, &buf, &read_size, NULL, &g_error);
 	if (g_error) {
-		LOGD("g_io_channel_read_chars error");
+		g_print("\n\tg_io_channel_read_chars error\n");
 		g_error_free(g_error);
 		g_error = NULL;
 	}
@@ -1180,8 +1210,11 @@ static gboolean cmd_input(GIOChannel *channel)
 	if (buf) {
 		g_strstrip(buf);
 
-		LOGD("Menu Status : %d", hcamcorder->menu_state);
+		g_print("\n\tMenu Status : %d\n", hcamcorder->menu_state);
 		switch (hcamcorder->menu_state) {
+		case MENU_STATE_INIT:
+			mode_change(buf[0]);
+			break;
 		case MENU_STATE_MAIN:
 			main_menu(buf[0]);
 			break;
@@ -1197,7 +1230,7 @@ static gboolean cmd_input(GIOChannel *channel)
 
 		print_menu();
 	} else {
-		LOGD("No read input");
+		g_print("\n\tNo read input\n");
 	}
 
 	return TRUE;
@@ -1211,7 +1244,7 @@ static gboolean init_handle()
 	hcamcorder->multishot_count = 0;        /* total multishot count */
 	hcamcorder->stillshot_filename = STILL_CAPTURE_FILE_PATH_NAME;  /* stored filename of  stillshot  */
 	hcamcorder->multishot_filename = MULTI_CAPTURE_FILE_PATH_NAME;  /* stored filename of  multishot  */
-	hcamcorder->menu_state = MENU_STATE_MAIN;
+	hcamcorder->menu_state = MENU_STATE_INIT;
 	hcamcorder->isMute = FALSE;
 	hcamcorder->elapsed_time = 0;
 	multishot_num = IMAGE_CAPTURE_COUNT_MULTI;
@@ -1257,38 +1290,20 @@ void _preview_cb(camera_preview_data_s *frame, void *user_data)
 /**
  * This function is to change camcorder mode.
  *
- * @param   type    [in]    image(capture)/video(recording) mode
+ * @param   buf    [in]    user input
  *
  * @return  This function returns TRUE/FALSE
  * @remark
  * @see     other functions
  */
-static gboolean mode_change()
+static gboolean mode_change(gchar buf)
 {
 	int err = 0;
-	char media_type = '\0';
+	char display_type = '\0';
 	bool check = FALSE;
-	camera_display_type_e display_type = CAMERA_DISPLAY_TYPE_EVAS;
 
-	init_handle();
 	while (!check) {
-		g_print("\n\t=======================================\n");
-		g_print("\t   CAMERA_TESTSUITE\n");
-		g_print("\t=======================================\n");
-		g_print("\t   '1' Video Capture - Front Camera\n");
-		g_print("\t   '2' Video Capture - Rear Camera\n");
-		g_print("\t   'q' Exit\n");
-		g_print("\t=======================================\n");
-
-		g_print("\t  Enter the media type:\n\t");
-
-		err = scanf("%c", &media_type);
-		if (err == EOF) {
-			g_print("\t!!!read input error!!!\n");
-			continue;
-		}
-
-		switch (media_type) {
+		switch (buf) {
 		case '1':
 			hcamcorder->mode = MODE_VIDEO_CAPTURE;
 			cam_info = CAMERA_DEVICE_CAMERA1;
@@ -1302,72 +1317,129 @@ static gboolean mode_change()
 		case 'q':
 			g_print("\t Quit Camcorder Testsuite!!\n");
 			hcamcorder->mode = -1;
-			if (g_main_loop_is_running(g_loop))
-				g_main_loop_quit(g_loop);
-
+			elm_exit();
 			return FALSE;
 		default:
-			g_print("\t Invalid media type(%d)\n", media_type);
+			g_print("\t Invalid media type(%c)\n", buf);
+			break;
+		}
+
+		if (check) {
+			break;
+		}
+
+		g_print("\n\t=======================================\n");
+		g_print("\t   CAMERA_TESTSUITE\n");
+		g_print("\t=======================================\n");
+		g_print("\t   '1' Video Capture - Front Camera\n");
+		g_print("\t   '2' Video Capture - Rear Camera\n");
+		g_print("\t   'q' Exit\n");
+		g_print("\t=======================================\n");
+
+		g_print("\t  Enter the media type:\n\t");
+
+		err = scanf("%c", &buf);
+		if (err == EOF) {
+			g_print("\t!!!read input error!!!\n");
 			continue;
 		}
 	}
 
-	LOGD("camcorder_create");
+	g_print("\n[camcorder_create - type %d]\n", cam_info);
+
 	g_get_current_time(&previous_time);
+
 	g_timer_reset(timer);
 
 	err = camera_create(cam_info, &hcamcorder->camera);
-	LOGD("camera_create()  : %12.6lfs", g_timer_elapsed(timer, NULL));
+
+	g_print("[camera_create()  : %12.6lfs]\n", g_timer_elapsed(timer, NULL));
 
 	if (err != 0) {
-		LOGE("mmcamcorder_create = %x", err);
+		g_print("\n\tmmcamcorder_create = 0x%x\n", err);
 		return -1;
-	} else {
-		camera_state = CAMERA_STATE_NONE;
 	}
+
 	camera_print_state = CAMERA_STATE_CREATED;
+
+	check = FALSE;
+	while (!check) {
+		g_print("\n\tEnter the Display Type\n");
+		g_print("\t'1' OVERLAY surface\n");
+		g_print("\t'2' EVAS surface\n");
+		g_print("\t'3' NONE surface\n");
+
+		err = scanf("%c", &display_type);
+		if (err == EOF) {
+			g_print("\t!!!read input error!!!\n");
+			continue;
+		}
+
+		switch (display_type) {
+		case '1':
+			camera_set_display(hcamcorder->camera, CAMERA_DISPLAY_TYPE_OVERLAY, GET_DISPLAY(ad.win));
+			check = TRUE;
+			break;
+		case '2':
+			camera_set_display(hcamcorder->camera, CAMERA_DISPLAY_TYPE_EVAS, GET_DISPLAY(ad.eo));
+			check = TRUE;
+			break;
+		case '3':
+			camera_set_display(hcamcorder->camera, CAMERA_DISPLAY_TYPE_NONE, NULL);
+			check = TRUE;
+			break;
+		default:
+			g_print("\t Invalid display type(%c)\n", display_type);
+			break;
+		}
+	}
 
 	camera_set_state_changed_cb(hcamcorder->camera, _camera_state_changed_cb, NULL);
 	camera_set_interrupted_cb(hcamcorder->camera, _camera_interrupted_cb, NULL);
-	camera_set_display(hcamcorder->camera, display_type,
-		(display_type == CAMERA_DISPLAY_TYPE_OVERLAY)?GET_DISPLAY(win):GET_DISPLAY(eo));
 	camera_set_display_mode(hcamcorder->camera, CAMERA_DISPLAY_MODE_LETTER_BOX);
 	/*camera_set_display_rotation(hcamcorder->camera, CAMERA_ROTATION_90);*/
 	/*camera_set_display_flip(hcamcorder->camera, CAMERA_FLIP_VERTICAL);*/
-
 	/*camera_set_preview_cb(hcamcorder->camera, _preview_cb, hcamcorder->camera);*/
 
 	camera_start_preview(hcamcorder->camera);
+
 	g_get_current_time(&current_time);
 	timersub(&current_time, &previous_time, &res);
-	LOGD("Camera Starting Time  : %ld.%lds", res.tv_sec, res.tv_usec);
+
+	g_print("\n\tCamera Starting Time  : %ld.%lds\n", res.tv_sec, res.tv_usec);
+
 	camera_print_state = CAMERA_STATE_PREVIEW;
+	hcamcorder->menu_state = MENU_STATE_MAIN;
+
+	print_menu();
 
 	return TRUE;
 }
 
-
-/**
- * This function is the example main function for mmcamcorder API.
- *
- * @param
- *
- * @return  This function returns 0.
- * @remark
- * @see     other functions
- */
-int main(int argc, char **argv)
+static int app_create(void *data)
 {
+	appdata *app_data = data;
+	int w = 0;
+	int h = 0;
+	Evas_Object *win = NULL;
+	Evas_Object *eo = NULL;
+	Evas_Object *bg = NULL;
+	Evas_Object *rect = NULL;
 
-	int bret;
-	int w, h;
-	elm_init(argc, argv);
+	if (app_data == NULL) {
+		g_print("\t\nappdata is NULL\n");
+		return 0;
+	}
 
-	win = elm_win_add(NULL, "VIDEO OVERLAY", ELM_WIN_BASIC);
+	/* use gl backend */
+	elm_config_accel_preference_set("opengl");
+
+	win = elm_win_add(NULL, "camera_test", ELM_WIN_BASIC);
 	if (win) {
-		elm_win_title_set(win, "TITLE");
+		elm_win_title_set(win, "camera_test");
 		elm_win_borderless_set(win, EINA_TRUE);
 		elm_win_screen_size_get(win, NULL, NULL, &w, &h);
+		g_print("\n\tscreen size %dx%d\n\n", w, h);
 		evas_object_resize(win, w, h);
 		elm_win_autodel_set(win, EINA_TRUE);
 #ifdef HAVE_WAYLAND
@@ -1400,57 +1472,78 @@ int main(int argc, char **argv)
 	elm_win_resize_object_add(win, rect);
 	evas_object_size_hint_weight_set(rect, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 	evas_object_show(rect);
-	elm_win_activate(win);
-	evas_object_show(win);
 
 	/* Create evas image object for EVAS surface */
 	eo = evas_object_image_add(evas_object_evas_get(win));
-	evas_object_image_size_set(eo, 960, 720);
-	evas_object_image_fill_set(eo, 0, 0, 960, 720);
-	evas_object_resize(eo, 960, 720);
+	evas_object_image_size_set(eo, w, h);
+	evas_object_image_fill_set(eo, 0, 0, w, h);
+	evas_object_resize(eo, w, h);
+	evas_object_show(eo);
 
 	elm_win_activate(win);
 	evas_object_show(win);
 
-#if !GLIB_CHECK_VERSION(2, 35, 0)
-	if (!g_thread_supported())
-		g_thread_init(NULL);
-#endif
+	app_data->win = win;
+	app_data->eo = eo;
 
 	timer = g_timer_new();
-
-	hcamcorder = (cam_handle_t *) g_malloc0(sizeof(cam_handle_t));
-	camera_state = CAMERA_STATE_NONE;
-
 	g_timer_reset(timer);
 
-	bret = mode_change();
-	if (!bret)
-		return bret;
+	init_handle();
 
 	print_menu();
 
-	g_loop = g_main_loop_new(NULL, FALSE);
+	return 0;
+}
 
-	stdin_channel = g_io_channel_unix_new(fileno(stdin));/* read from stdin */
-	g_io_add_watch(stdin_channel, G_IO_IN, (GIOFunc)cmd_input, NULL);
+static int app_terminate(void *data)
+{
+	appdata *app_data = data;
 
-	LOGD("RUN main loop");
-
-	g_main_loop_run(g_loop);
-
-	LOGD("STOP main loop");
+	if (app_data == NULL) {
+		g_print("\n\tappdata is NULL\n");
+		return 0;
+	}
 
 	if (timer) {
 		g_timer_stop(timer);
 		g_timer_destroy(timer);
 		timer = NULL;
 	}
+
+	return 0;
+}
+
+
+/**
+ * This function is the example main function for mmcamcorder API.
+ *
+ * @param
+ *
+ * @return  This function returns 0.
+ * @remark
+ * @see     other functions
+ */
+int main(int argc, char **argv)
+{
+	int bret;
+
+	hcamcorder = (cam_handle_t *) g_malloc0(sizeof(cam_handle_t));
+	camera_state = CAMERA_STATE_NONE;
+
+	stdin_channel = g_io_channel_unix_new(fileno(stdin));/* read from stdin */
+	g_io_add_watch(stdin_channel, G_IO_IN, (GIOFunc)cmd_input, NULL);
+
+	memset(&ad, 0x0, sizeof(appdata));
+	ops.data = &ad;
+
+	bret = appcore_efl_main(PACKAGE, &argc, &argv, &ops);
+
+	g_print("\n\treturn appcore_efl : %d\n\n", bret);
+
 	g_free(hcamcorder);
-	g_main_loop_unref(g_loop);
 	g_io_channel_unref(stdin_channel);
 
 	return bret;
 }
-
 /*EOF*/
