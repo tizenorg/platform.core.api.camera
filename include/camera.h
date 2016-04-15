@@ -974,6 +974,7 @@ int camera_cancel_focusing(camera_h camera);
  * @retval #CAMERA_ERROR_NONE Successful
  * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
  * @retval #CAMERA_ERROR_INVALID_STATE Invalid state
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Invalid operation
  * @retval #CAMERA_ERROR_PERMISSION_DENIED The access to the resources can not be granted
  * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
  * @pre The camera state must be set to #CAMERA_STATE_CREATED.
