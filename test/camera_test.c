@@ -712,6 +712,7 @@ static void print_menu()
 		g_print("\t     't' Color tone \n");
 		g_print("\t     'd' WDR \n");
 		g_print("\t     'e' EV program mode \n");
+		g_print("\t     'R' Display ROI area \n");
 		g_print("\t  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> [etc.]\n");
 		g_print("\t     'z' Strobe (Flash) \n");
 		g_print("\t     'S' Strobe (Flash) state\n");
@@ -720,6 +721,7 @@ static void print_menu()
 		g_print("\t     'k' Anti-handshake \n");
 		g_print("\t     'K' Video-stabilization \n");
 		g_print("\t     'u' Touch AF area \n");
+
 		g_print("\t     'b' back\n");
 		g_print("\t=======================================\n");
 		break;
@@ -1067,6 +1069,21 @@ static void setting_menu(gchar buf)
 			flush_stdin();
 			err = scanf("%d", &idx);
 			bret = camera_attr_set_scene_mode(hcamcorder->camera, idx);
+			break;
+		case 'R': /* Setting > Display ROI area */
+			g_print("* Set display roi area. Select x y width height \n");
+			flush_stdin();
+			err = scanf("%d %d %d %d", &x, &y, &width, &height);
+			camera_set_display_mode(hcamcorder->camera, CAMERA_DISPLAY_MODE_CUSTOM_ROI);
+			err = camera_attr_set_display_roi_area(hcamcorder->camera, x, y, width, height);
+			if (CAMERA_ERROR_NONE != err)
+				g_print("* Error : %d\n", err);
+
+			err = camera_attr_get_display_roi_area(hcamcorder->camera, &x, &y, &width, &height);
+			if (CAMERA_ERROR_NONE == err)
+				g_print("Current display roi area : x %d, y %d, width %d, height %d\n", x, y, width, height);
+			else
+				g_print("* Error : %d\n", err);
 			break;
 
 			/* ext. setting */
