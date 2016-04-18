@@ -284,8 +284,9 @@ typedef void *camera_display_h;
 typedef enum {
 	CAMERA_DISPLAY_MODE_LETTER_BOX = 0,    /**< Letter box */
 	CAMERA_DISPLAY_MODE_ORIGIN_SIZE,       /**< Origin size */
-	CAMERA_DISPLAY_MODE_FULL,	       /**< Full screen */
+	CAMERA_DISPLAY_MODE_FULL,              /**< Full screen */
 	CAMERA_DISPLAY_MODE_CROPPED_FULL,      /**< Cropped full screen */
+	CAMERA_DISPLAY_MODE_CUSTOM_ROI,        /**< Custom ROI */
 } camera_display_mode_e;
 
 /**
@@ -481,6 +482,15 @@ typedef enum {
 	CAMERA_ATTR_HDR_MODE_ENABLE,       /**< Enable HDR capture */
 	CAMERA_ATTR_HDR_MODE_KEEP_ORIGINAL /**< Enable HDR capture and keep original image data */
 } camera_attr_hdr_mode_e;
+
+/**
+ * @brief Enumeration for PTZ(Pan Tilt Zoom) movement type.
+ * @since_tizen 3.0
+ */
+typedef enum {
+	CAMERA_ATTR_PTZ_MOVE_ABSOLUTE = 0,  /**< Move to a specific coordinate position */
+	CAMERA_ATTR_PTZ_MOVE_RELATIVE       /**< Move a specific distance from the current position */
+} camera_attr_ptz_move_type_e;
 
 
 /**
@@ -3506,6 +3516,134 @@ bool camera_attr_is_supported_auto_contrast(camera_h camera);
  * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
  */
 int camera_attr_disable_shutter_sound(camera_h camera, bool disable);
+
+/**
+ * @brief Sets the position to move horizontally.
+ * @since_tizen 3.0
+ * @param[in] camera The handle to the camera
+ * @param[in] move_type The PTZ(Pan Tilt Zoom) move type
+ * @param[in] pan_degree The degree to move the camera
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Internal error
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
+ * @see camera_attr_get_pan()
+ * @see camera_attr_get_pan_range()
+ */
+int camera_attr_set_pan(camera_h camera, camera_attr_ptz_move_type_e move_type, int pan_degree);
+
+/**
+ * @brief Gets the current position of the camera.
+ * @since_tizen 3.0
+ * @param[in] camera The handle to the camera
+ * @param[out] pan_degree The current horizontal coordinate of the camera
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Internal error
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
+ * @see camera_attr_set_pan()
+ * @see camera_attr_get_pan_range()
+ */
+int camera_attr_get_pan(camera_h camera, int *pan_degree);
+
+/**
+ * @brief Gets lower limit and upper limit for pan position.
+ * @since_tizen 3.0
+ * @param[in] camera The handle to the camera
+ * @param[out] min lower limit for pan
+ * @param[out] max upper limit for pan
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Internal error
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
+ * @see camera_attr_set_pan()
+ * @see camera_attr_get_pan()
+ */
+int camera_attr_get_pan_range(camera_h camera, int *min, int *max);
+
+/**
+ * @brief Sets the position to move vertically.
+ * @since_tizen 3.0
+ * @param[in] camera The handle to the camera
+ * @param[in] move_type The PTZ(Pan Tilt Zoom) move type
+ * @param[in] tilt_degree The degree to move the camera
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Internal error
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
+ * @see camera_attr_get_tilt()
+ * @see camera_attr_get_tilt_range()
+ */
+int camera_attr_set_tilt(camera_h camera, camera_attr_ptz_move_type_e move_type, int tilt_degree);
+
+/**
+ * @brief Gets the camera's flash state.
+ * @since_tizen 3.0
+ * @param[in] camera The handle to the camera
+ * @param[out] tilt_degree The current vertical coordinate of the camera
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Internal error
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
+ * @see camera_attr_set_tilt()
+ * @see camera_attr_get_tilt_range()
+ */
+int camera_attr_get_tilt(camera_h camera, int *tilt_degree);
+
+/**
+ * @brief Gets lower limit and upper limit for tilt position.
+ * @since_tizen 3.0
+ * @param[in] camera The handle to the camera
+ * @param[out] min lower limit for tilt
+ * @param[out] max upper limit for tilt
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Internal error
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
+ * @see camera_attr_set_tilt()
+ * @see camera_attr_get_tilt()
+ */
+int camera_attr_get_tilt_range(camera_h camera, int *min, int *max);
+
+/**
+ * @brief Sets the ROI area of display.
+ * @since_tizen 3.0
+ * @param[in] camera The handle to the camera
+ * @param[in] x X coordinate of area
+ * @param[in] y Y coordinate of area
+ * @param[in] width width of area
+ * @param[in] height height of area
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Internal error
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
+ * @see camera_attr_get_display_roi_area()
+ */
+int camera_attr_set_display_roi_area(camera_h camera, int x, int y, int width, int height);
+
+/**
+ * @brief Gets the ROI area of display.
+ * @since_tizen 3.0
+ * @param[in] camera The handle to the camera
+ * @param[out] x X coordinate of area
+ * @param[out] y Y coordinate of area
+ * @param[out] width width of area
+ * @param[out] height height of area
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Internal error
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
+ * @see camera_attr_set_display_roi_area()
+ */
+int camera_attr_get_display_roi_area(camera_h camera, int *x, int *y, int *width, int *height);
 
 /**
  * @}
