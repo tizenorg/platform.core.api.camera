@@ -3083,7 +3083,7 @@ int camera_set_display_mode(camera_h camera, camera_display_mode_e mode)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (mode < CAMERA_DISPLAY_MODE_LETTER_BOX || mode > CAMERA_DISPLAY_MODE_CROPPED_FULL) {
+	if (mode < CAMERA_DISPLAY_MODE_LETTER_BOX || mode > CAMERA_DISPLAY_MODE_CUSTOM_ROI) {
 		LOGE("Invalid mode %d", mode);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
@@ -5151,6 +5151,7 @@ int camera_attr_get_flash_mode(camera_h camera,  camera_attr_flash_mode_e *mode)
 	return ret;
 }
 
+
 int camera_get_flash_state(camera_device_e device, camera_flash_state_e *state)
 {
 	int sock_fd = -1;
@@ -5215,6 +5216,7 @@ Exit:
 
 	return ret;
 }
+
 
 int camera_attr_foreach_supported_af_mode(camera_h camera, camera_attr_supported_af_mode_cb foreach_cb, void *user_data)
 {
@@ -6028,5 +6030,255 @@ int camera_attr_disable_shutter_sound(camera_h camera, bool disable)
 	LOGD("Enter, remote_handle : %x", pc->remote_handle);
 	muse_camera_msg_send1(api, sock_fd, pc->cb_info, ret, INT, set_disable);
 	LOGD("ret : 0x%x", ret);
+	return ret;
+}
+
+
+int camera_attr_set_pan(camera_h camera, camera_attr_ptz_move_type_e move_type, int pan_degree)
+{
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	int ret = CAMERA_ERROR_NONE;
+	int sock_fd = pc->cb_info->fd;
+	int set_move_type = (int)move_type;
+	int set_pan_degree = pan_degree;
+	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_PAN;
+
+	LOGD("Enter, remote_handle : %x", pc->remote_handle);
+	muse_camera_msg_send2(api, sock_fd, pc->cb_info, ret, INT, set_move_type, INT, set_pan_degree);
+	LOGD("ret : 0x%x", ret);
+	return ret;
+}
+
+
+int camera_attr_get_pan(camera_h camera, int *pan_degree)
+{
+	if (camera == NULL || pan_degree == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	int ret = CAMERA_ERROR_NONE;
+	int sock_fd = pc->cb_info->fd;
+	int get_pan_degree;
+	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_PAN;
+
+	LOGD("Enter, remote_handle : %x", pc->remote_handle);
+	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get(get_pan_degree, pc->cb_info->recv_msg);
+		*pan_degree = get_pan_degree;
+	}
+	LOGD("ret : 0x%x", ret);
+	return ret;
+}
+
+
+int camera_attr_get_pan_range(camera_h camera, int *min, int *max)
+{
+	if (camera == NULL || min == NULL || max == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	int ret = CAMERA_ERROR_NONE;
+	int sock_fd = pc->cb_info->fd;
+	int get_min;
+	int get_max;
+	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_PAN_RANGE;
+
+	LOGD("Enter, remote_handle : %x", pc->remote_handle);
+	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get(get_min, pc->cb_info->recv_msg);
+		muse_camera_msg_get(get_max, pc->cb_info->recv_msg);
+		*min = get_min;
+		*max = get_max;
+	}
+	LOGD("ret : 0x%x", ret);
+	return ret;
+}
+
+
+int camera_attr_set_tilt(camera_h camera, camera_attr_ptz_move_type_e move_type, int tilt_degree)
+{
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	int ret = CAMERA_ERROR_NONE;
+	int sock_fd = pc->cb_info->fd;
+	int set_move_type = (int)move_type;
+	int set_tilt_degree = tilt_degree;
+	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_TILT;
+
+	LOGD("Enter, remote_handle : %x", pc->remote_handle);
+	muse_camera_msg_send2(api, sock_fd, pc->cb_info, ret, INT, set_move_type, INT, set_tilt_degree);
+	LOGD("ret : 0x%x", ret);
+	return ret;
+}
+
+
+int camera_attr_get_tilt(camera_h camera, int *tilt_degree)
+{
+	if (camera == NULL || tilt_degree == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	int ret = CAMERA_ERROR_NONE;
+	int sock_fd = pc->cb_info->fd;
+	int get_tilt_degree;
+	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_TILT;
+
+	LOGD("Enter, remote_handle : %x", pc->remote_handle);
+	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get(get_tilt_degree, pc->cb_info->recv_msg);
+		*tilt_degree = get_tilt_degree;
+	}
+	LOGD("ret : 0x%x", ret);
+	return ret;
+}
+
+
+int camera_attr_get_tilt_range(camera_h camera, int *min, int *max)
+{
+	if (camera == NULL || min == NULL || max == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	int ret = CAMERA_ERROR_NONE;
+	int sock_fd = pc->cb_info->fd;
+	int get_min;
+	int get_max;
+	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_GET_TILT_RANGE;
+
+	LOGD("Enter, remote_handle : %x", pc->remote_handle);
+	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get(get_min, pc->cb_info->recv_msg);
+		muse_camera_msg_get(get_max, pc->cb_info->recv_msg);
+		*min = get_min;
+		*max = get_max;
+	}
+	LOGD("ret : 0x%x", ret);
+	return ret;
+}
+
+
+int camera_attr_set_display_roi_area(camera_h camera, int x, int y, int width, int height)
+{
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	int ret = CAMERA_ERROR_NONE;
+	int sock_fd = pc->cb_info->fd;
+	int set_display_roi_area[4] = {x, y, width, height};
+	muse_camera_api_e api = MUSE_CAMERA_API_SET_DISPLAY_ROI_AREA;
+
+	if(CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
+		/* This will be updated in later patch. */
+	} else {
+		LOGD("Enter, remote_handle : %x", pc->remote_handle);
+		muse_camera_msg_send_array(api, sock_fd, pc->cb_info, ret,
+			set_display_roi_area, sizeof(set_display_roi_area), sizeof(int));
+		LOGD("ret : 0x%x", ret);
+	}
+
+	return ret;
+}
+
+
+int camera_attr_get_display_roi_area(camera_h camera, int *x, int *y, int *width, int *height)
+{
+	if (camera == NULL || x == NULL || y == NULL || width == NULL || height == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	int ret = CAMERA_ERROR_NONE;
+	int sock_fd = pc->cb_info->fd;
+	int get_display_roi_area[4] = {0,};
+	muse_camera_api_e api = MUSE_CAMERA_API_GET_DISPLAY_ROI_AREA;
+
+	if(CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
+		/* This will be updated in later patch. */
+	} else {
+		LOGD("Enter, remote_handle : %x", pc->remote_handle);
+		muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
+
+		if (ret == CAMERA_ERROR_NONE) {
+			muse_camera_msg_get_array(get_display_roi_area, pc->cb_info->recv_msg);
+			*x = get_display_roi_area[0];
+			*y = get_display_roi_area[1];
+			*width = get_display_roi_area[2];
+			*height = get_display_roi_area[3];
+
+			LOGD("ret : 0x%x", ret);
+		} else {
+			LOGE("Returned value is not valid : 0x%x", ret);
+		}
+	}
+
 	return ret;
 }
