@@ -2669,7 +2669,8 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 					LOGD("current setting : flip %d, mode %d, rotation %d, visible %d",
 						flip, mode, rotation, visible);
 
-					ret = mm_evas_renderer_set_geometry(cb_info->evas_info, mode);
+					ret = mm_evas_renderer_set_flip(cb_info->evas_info, flip);
+					ret |= mm_evas_renderer_set_geometry(cb_info->evas_info, mode);
 					ret |= mm_evas_renderer_set_rotation(cb_info->evas_info, rotation);
 					ret |= mm_evas_renderer_set_visible(cb_info->evas_info, visible);
 				}
@@ -2958,6 +2959,19 @@ int camera_set_display_flip(camera_h camera, camera_flip_e flip)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
+	if (CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
+		g_mutex_lock(&pc->cb_info->evas_mutex);
+
+		ret = mm_evas_renderer_set_flip(pc->cb_info->evas_info, flip);
+
+		g_mutex_unlock(&pc->cb_info->evas_mutex);
+
+		if (ret!= MM_ERROR_NONE) {
+			LOGE("failed to set flip for evas surface 0x%x", ret);
+			return CAMERA_ERROR_INVALID_OPERATION;
+		}
+	}
+
 	muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_FLIP,
 		pc->cb_info->fd, pc->cb_info, ret, INT, set_flip);
 
@@ -2982,12 +2996,25 @@ int camera_get_display_flip(camera_h camera, camera_flip_e *flip)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	muse_camera_msg_send(MUSE_CAMERA_API_GET_DISPLAY_FLIP,
-		pc->cb_info->fd, pc->cb_info, ret);
+	if (CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
+		g_mutex_lock(&pc->cb_info->evas_mutex);
 
-	if (ret == CAMERA_ERROR_NONE) {
-		muse_camera_msg_get(get_flip, pc->cb_info->recv_msg);
-		*flip = (camera_flip_e)get_flip;
+		ret = mm_evas_renderer_get_flip(pc->cb_info->evas_info, (int *)flip);
+
+		g_mutex_unlock(&pc->cb_info->evas_mutex);
+
+		if (ret != MM_ERROR_NONE) {
+			LOGE("failed to get flip for evas surface 0x%x", ret);
+			return CAMERA_ERROR_INVALID_OPERATION;
+		}
+	} else {
+		muse_camera_msg_send(MUSE_CAMERA_API_GET_DISPLAY_FLIP,
+			pc->cb_info->fd, pc->cb_info, ret);
+
+		if (ret == CAMERA_ERROR_NONE) {
+			muse_camera_msg_get(get_flip, pc->cb_info->recv_msg);
+			*flip = (camera_flip_e)get_flip;
+		}
 	}
 
 	return ret;
