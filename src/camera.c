@@ -4329,8 +4329,8 @@ int camera_attr_set_whitebalance(camera_h camera, camera_attr_whitebalance_e wb)
 	}
 
 	if (wb < CAMERA_ATTR_WHITE_BALANCE_NONE || wb > CAMERA_ATTR_WHITE_BALANCE_CUSTOM) {
-		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_NOT_SUPPORTED);
-		return CAMERA_ERROR_NOT_SUPPORTED;
+		LOGE("invalid white balance %d", wb);
+		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
 	int ret = CAMERA_ERROR_NONE;
@@ -5190,6 +5190,11 @@ int camera_get_flash_state(camera_device_e device, camera_flash_state_e *state)
 	muse_core_api_module_e muse_module = MUSE_CAMERA;
 	int device_type = (int)device;
 
+	if (state == NULL) {
+		LOGE("invalid pointer for state");
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
 	sock_fd = muse_core_client_new();
 	if (sock_fd < 0) {
 		LOGE("muse_core_client_new failed - returned fd %d", sock_fd);
@@ -5681,8 +5686,8 @@ int camera_attr_get_hdr_mode(camera_h camera, camera_attr_hdr_mode_e *mode)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	if (mode == NULL) {
-		LOGE("CAMERA_ERROR_NOT_SUPPORTED(0x%08x) - mode", CAMERA_ERROR_NOT_SUPPORTED);
-		return CAMERA_ERROR_NOT_SUPPORTED;
+		LOGE("INVALID_PARAMETER(0x%08x) - mode", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
 	camera_cli_s *pc = (camera_cli_s *)camera;
@@ -5732,31 +5737,39 @@ bool camera_attr_is_supported_hdr_capture(camera_h camera)
 
 int camera_attr_set_hdr_capture_progress_cb(camera_h camera, camera_attr_hdr_progress_cb callback, void *user_data)
 {
+	int ret = CAMERA_ERROR_NONE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_HDR_CAPTURE_PROGRESS_CB;
+	int sock_fd;
+
 	if (camera == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x) - handle", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
-	if (callback == NULL) {
-		LOGE("CAMERA_ERROR_NOT_SUPPORTED(0x%08x) - callback", CAMERA_ERROR_NOT_SUPPORTED);
-		return CAMERA_ERROR_NOT_SUPPORTED;
-	}
-	int ret = CAMERA_ERROR_NONE;
 
-	camera_cli_s *pc = (camera_cli_s *)camera;
-	muse_camera_api_e api = MUSE_CAMERA_API_ATTR_SET_HDR_CAPTURE_PROGRESS_CB;
-	int sock_fd;
 	if (pc->cb_info == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
+
 	sock_fd = pc->cb_info->fd;
+
 	LOGD("Enter, handle :%x", pc->remote_handle);
 
-	pc->cb_info->user_cb[MUSE_CAMERA_EVENT_TYPE_HDR_PROGRESS] = callback;
-	pc->cb_info->user_data[MUSE_CAMERA_EVENT_TYPE_HDR_PROGRESS] = user_data;
-
 	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		if (callback == NULL) {
+			LOGE("INVALID_PARAMETER(0x%08x) - callback", CAMERA_ERROR_INVALID_PARAMETER);
+			return CAMERA_ERROR_INVALID_PARAMETER;
+		}
+
+		pc->cb_info->user_cb[MUSE_CAMERA_EVENT_TYPE_HDR_PROGRESS] = callback;
+		pc->cb_info->user_data[MUSE_CAMERA_EVENT_TYPE_HDR_PROGRESS] = user_data;
+	}
+
 	LOGD("ret : 0x%x", ret);
+
 	return ret;
 }
 
@@ -5822,7 +5835,7 @@ int camera_attr_is_enabled_anti_shake(camera_h camera , bool *enabled)
 	}
 	if (enabled == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x) - enabled", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_NOT_SUPPORTED;
+		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
 	camera_cli_s *pc = (camera_cli_s *)camera;
@@ -5904,7 +5917,7 @@ int camera_attr_is_enabled_video_stabilization(camera_h camera, bool *enabled)
 	}
 	if (enabled == NULL) {
 		LOGE("INVALID_PARAMETER(0x%08x) - enabled", CAMERA_ERROR_INVALID_PARAMETER);
-		return CAMERA_ERROR_NOT_SUPPORTED;
+		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 	int ret = CAMERA_ERROR_NONE;
 	camera_cli_s *pc = (camera_cli_s *)camera;
