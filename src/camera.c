@@ -2711,11 +2711,10 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 	} else
 		muse_camera_msg_send1(api, sock_fd, cb_info, ret, INT, type);
 
-	if (ret != CAMERA_ERROR_NONE) {
+	if (ret != CAMERA_ERROR_NONE)
 		LOGE("set display error 0x%x", ret);
-	} else if (type == CAMERA_DISPLAY_TYPE_EVAS) {
+	else if (type == CAMERA_DISPLAY_TYPE_EVAS)
 		SET_PREVIEW_CB_TYPE(cb_info, PREVIEW_CB_TYPE_EVAS);
-	}
 
 	return ret;
 }
@@ -2882,7 +2881,7 @@ int camera_set_display_rotation(camera_h camera, camera_rotation_e rotation)
 
 		g_mutex_unlock(&pc->cb_info->evas_mutex);
 
-		if (ret!= MM_ERROR_NONE) {
+		if (ret != MM_ERROR_NONE) {
 			LOGE("failed to set rotation for evas surface 0x%x", ret);
 			return CAMERA_ERROR_INVALID_OPERATION;
 		}
@@ -2966,7 +2965,7 @@ int camera_set_display_flip(camera_h camera, camera_flip_e flip)
 
 		g_mutex_unlock(&pc->cb_info->evas_mutex);
 
-		if (ret!= MM_ERROR_NONE) {
+		if (ret != MM_ERROR_NONE) {
 			LOGE("failed to set flip for evas surface 0x%x", ret);
 			return CAMERA_ERROR_INVALID_OPERATION;
 		}
