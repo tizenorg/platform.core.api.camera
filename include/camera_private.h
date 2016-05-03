@@ -146,6 +146,7 @@ typedef struct _camera_media_packet_data {
 	tbm_bo bo;
 	tbm_bo buffer_bo[BUFFER_MAX_PLANE_NUM];
 	int num_buffer_key;
+	tbm_bo data_bo;
 	int ref_cnt;
 } camera_media_packet_data;
 
