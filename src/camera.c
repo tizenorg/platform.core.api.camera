@@ -937,6 +937,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 			/* import tbm bo and get virtual address */
 			if (!_import_tbm_key(cb_info->bufmgr, tbm_key, &bo, &bo_handle)) {
 				LOGE("failed to import key %d", tbm_key);
+				_release_imported_bo(&data_bo);
 				muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
 					cb_info->fd, cb_info, INT, tbm_key);
 				break;
@@ -1029,6 +1030,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 					_release_imported_bo(&buffer_bo[i]);
 
 				/* unmap and unref tbm bo */
+				_release_imported_bo(&data_bo);
 				_release_imported_bo(&bo);
 
 				/* return buffer */
