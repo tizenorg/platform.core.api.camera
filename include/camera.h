@@ -2576,6 +2576,8 @@ int camera_attr_foreach_supported_theater_mode(camera_h camera, camera_attr_supp
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/camera
+ * @remarks If the min value is greater than the max value from camera_attr_get_brightness_range(), \n
+ *          it means that this feature is not supported.
  * @param[in] camera The handle to the camera
  * @param[in] level The brightness level
  * @return @c 0 on success, otherwise a negative error value
