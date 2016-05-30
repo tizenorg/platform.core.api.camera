@@ -9,7 +9,11 @@ SET(service "media")
 SET(submodule "camera")
 
 # for package file
+IF(EVAS_RENDERER_SUPPORT)
 SET(dependents "libtbm dlog mm-common capi-base-common capi-media-tool ecore elementary mmsvc-camera tizen-extension-client mm-evas-renderer")
+ELSE(EVAS_RENDERER_SUPPORT)
+SET(dependents "libtbm dlog mm-common capi-base-common capi-media-tool ecore elementary mmsvc-camera tizen-extension-client")
+ENDIF(EVAS_RENDERER_SUPPORT)
 SET(pc_dependents "capi-base-common capi-media-tool libtbm evas ecore elementary")
 SET(fw_name "${project_prefix}-${service}-${submodule}")
 
@@ -40,6 +44,9 @@ ENDIF(WAYLAND_SUPPORT)
 IF(X11_SUPPORT)
     ADD_DEFINITIONS("-DHAVE_X11")
 ENDIF(X11_SUPPORT)
+IF(EVAS_RENDERER_SUPPORT)
+    ADD_DEFINITIONS("-DEVAS_RENDERER_SUPPORT")
+ENDIF(EVAS_RENDERER_SUPPORT)
 
 ADD_DEFINITIONS("-DPREFIX=\"${CMAKE_INSTALL_PREFIX}\"")
 ADD_DEFINITIONS("-DTIZEN_DEBUG")
