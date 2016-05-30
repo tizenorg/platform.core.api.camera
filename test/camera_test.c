@@ -630,7 +630,7 @@ void capturing_cb(camera_image_data_s* image, camera_image_data_s* postview, cam
 {
 	char m_filename[CAPTURE_FILENAME_LEN];
 
-	if (hcamcorder->isMultishot)
+	if (!hcamcorder->isMultishot)
 		snprintf(m_filename, CAPTURE_FILENAME_LEN, "/opt/usr/media/Stillshot%03d.jpg", hcamcorder->multishot_count++);
 	else
 		snprintf(m_filename, CAPTURE_FILENAME_LEN, "/opt/usr/media/Multishot%03d.jpg", hcamcorder->stillshot_count++);
@@ -741,6 +741,7 @@ static void main_menu(gchar buf)
 	if (hcamcorder->mode == MODE_VIDEO_CAPTURE) {
 		switch (buf) {
 		case '1': /* Capture */
+			hcamcorder->isMultishot = FALSE;
 			camera_get_state(hcamcorder->camera, &capi_state);
 			camera_attr_set_image_quality(hcamcorder->camera, 100);
 			camera_set_capture_format(hcamcorder->camera, CAMERA_PIXEL_FORMAT_JPEG);
