@@ -35,10 +35,12 @@
 #include <Ecore_Wayland.h>
 #include <wayland-client.h>
 #include <tizen-extension-client-protocol.h>
-#else
+#else /* HAVE_WAYLAND */
 #include <Ecore.h>
-#endif
+#endif /* HAVE_WAYLAND */
+#ifdef EVAS_RENDERER_SUPPORT
 #include <mm_evas_renderer.h>
+#endif /* EVAS_RENDERER_SUPPORT */
 
 #ifdef LOG_TAG
 #undef LOG_TAG
@@ -995,6 +997,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 
 			/* call evas renderer */
 			if (CHECK_PREVIEW_CB(cb_info, PREVIEW_CB_TYPE_EVAS)) {
+#ifdef EVAS_RENDERER_SUPPORT
 				ret = _camera_media_packet_data_create(tbm_key, num_buffer_key, bo, buffer_bo, data_bo, &mp_data);
 
 				if (ret == CAMERA_ERROR_NONE) {
@@ -1018,6 +1021,9 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 						mp_data = NULL;
 					}
 				}
+#else /* EVAS_RENDERER_SUPPORT */
+				LOGW("evas renderer is not supported");
+#endif /* EVAS_RENDERER_SUPPORT */
 			}
 
 			/* send message for preview callback return */
@@ -1836,7 +1842,9 @@ static camera_cb_info_s *_client_callback_new(gint sockfd)
 	g_mutex_init(&cb_info->idle_event_mutex);
 	g_cond_init(&cb_info->idle_event_cond);
 	g_mutex_init(&cb_info->mp_data_mutex);
+#ifdef EVAS_RENDERER_SUPPORT
 	g_mutex_init(&cb_info->evas_mutex);
+#endif /* EVAS_RENDERER_SUPPORT */
 
 	for (i = 0 ; i < MUSE_CAMERA_API_MAX ; i++) {
 		g_mutex_init(&cb_info->api_mutex[i]);
@@ -1873,7 +1881,9 @@ static camera_cb_info_s *_client_callback_new(gint sockfd)
 	cb_info->api_activating = tmp_activating;
 	cb_info->api_ret = tmp_ret;
 	cb_info->preview_cb_flag = 0;
+#ifdef EVAS_RENDERER_SUPPORT
 	cb_info->evas_info = NULL;
+#endif /* EVAS_RENDERER_SUPPORT */
 
 	g_atomic_int_set(&cb_info->msg_recv_running, 1);
 	cb_info->msg_recv_thread = g_thread_try_new("camera_msg_recv",
@@ -1908,7 +1918,9 @@ ErrorExit:
 		g_mutex_clear(&cb_info->idle_event_mutex);
 		g_cond_clear(&cb_info->idle_event_cond);
 		g_mutex_clear(&cb_info->mp_data_mutex);
+#ifdef EVAS_RENDERER_SUPPORT
 		g_mutex_clear(&cb_info->evas_mutex);
+#endif /* EVAS_RENDERER_SUPPORT */
 
 		if (cb_info->msg_queue) {
 			g_queue_free(cb_info->msg_queue);
@@ -1967,7 +1979,9 @@ static void _client_callback_destroy(camera_cb_info_s *cb_info)
 	g_mutex_clear(&cb_info->idle_event_mutex);
 	g_cond_clear(&cb_info->idle_event_cond);
 	g_mutex_clear(&cb_info->mp_data_mutex);
+#ifdef EVAS_RENDERER_SUPPORT
 	g_mutex_clear(&cb_info->evas_mutex);
+#endif /* EVAS_RENDERER_SUPPORT */
 
 	LOGD("event thread removed");
 
@@ -1993,8 +2007,10 @@ static void _client_callback_destroy(camera_cb_info_s *cb_info)
 		cb_info->pkt_fmt = NULL;
 	}
 
+#ifdef EVAS_RENDERER_SUPPORT
 	if (cb_info->evas_info)
 		mm_evas_renderer_destroy(&cb_info->evas_info);
+#endif /* EVAS_RENDERER_SUPPORT */
 
 	cb_info->preview_cb_flag = 0;
 
@@ -2027,6 +2043,7 @@ int _camera_start_evas_rendering(camera_h camera)
 		return CAMERA_ERROR_NONE;
 	}
 
+#ifdef EVAS_RENDERER_SUPPORT
 	g_mutex_lock(&pc->cb_info->evas_mutex);
 
 	/* set evas render flag as RUN */
@@ -2034,6 +2051,9 @@ int _camera_start_evas_rendering(camera_h camera)
 	ret = CAMERA_ERROR_NONE;
 
 	g_mutex_unlock(&pc->cb_info->evas_mutex);
+#else /* EVAS_RENDERER_SUPPORT */
+	LOGW("evas renderer is not supported");
+#endif /* EVAS_RENDERER_SUPPORT */
 
 	return ret;
 }
@@ -2061,10 +2081,12 @@ int _camera_stop_evas_rendering(camera_h camera, bool keep_screen)
 		return CAMERA_ERROR_NONE;
 	}
 
+#ifdef EVAS_RENDERER_SUPPORT
 	g_mutex_lock(&pc->cb_info->evas_mutex);
 
 	/* set evas render flag as STOP and release buffers */
 	pc->cb_info->run_evas_render = false;
+
 	ret = mm_evas_renderer_retrieve_all_packets(pc->cb_info->evas_info, keep_screen);
 	if (ret != MM_ERROR_NONE) {
 		LOGE("mm_evas_renderer_retrieve_all_packets failed 0x%x", ret);
@@ -2072,6 +2094,9 @@ int _camera_stop_evas_rendering(camera_h camera, bool keep_screen)
 	}
 
 	g_mutex_unlock(&pc->cb_info->evas_mutex);
+#else /* EVAS_RENDERER_SUPPORT */
+	LOGW("evas renderer is not supported");
+#endif /* EVAS_RENDERER_SUPPORT */
 
 	return ret;
 }
@@ -2721,6 +2746,7 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 				set_display_handle = (void *)display;
 				LOGD("display type EVAS : handle %p", set_display_handle);
 
+#ifdef EVAS_RENDERER_SUPPORT
 				g_mutex_lock(&cb_info->evas_mutex);
 
 				if (cb_info->evas_info) {
@@ -2740,19 +2766,25 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 					camera_display_mode_e mode = CAMERA_DISPLAY_MODE_LETTER_BOX;
 					camera_rotation_e rotation = CAMERA_ROTATION_NONE;
 					bool visible = 0;
+					int x = 0;
+					int y = 0;
+					int width = 0;
+					int height = 0;
 
 					camera_get_display_flip(camera, &flip);
 					camera_get_display_mode(camera, &mode);
 					camera_get_display_rotation(camera, &rotation);
 					camera_is_display_visible(camera, &visible);
+					camera_attr_get_display_roi_area(camera, &x, &y, &width, &height);
 
-					LOGD("current setting : flip %d, mode %d, rotation %d, visible %d",
-						flip, mode, rotation, visible);
+					LOGD("current setting : flip %d, mode %d, rotation %d, visible %d, roi %d,%d,%dx%d",
+						flip, mode, rotation, visible, x, y, width, height);
 
 					ret = mm_evas_renderer_set_flip(cb_info->evas_info, flip);
 					ret |= mm_evas_renderer_set_geometry(cb_info->evas_info, mode);
 					ret |= mm_evas_renderer_set_rotation(cb_info->evas_info, rotation);
 					ret |= mm_evas_renderer_set_visible(cb_info->evas_info, visible);
+					ret |= mm_evas_renderer_set_roi_area(cb_info->evas_info, x, y, width, height);
 				}
 
 				g_mutex_unlock(&cb_info->evas_mutex);
@@ -2761,7 +2793,10 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 					LOGE("mm_evas_renderer error 0x%x", ret);
 					return CAMERA_ERROR_INVALID_OPERATION;
 				}
-
+#else /* EVAS_RENDERER_SUPPORT */
+				LOGE("EVAS surface is not supported");
+				return CAMERA_ERROR_NOT_SUPPORTED;
+#endif /* EVAS_RENDERER_SUPPORT */
 			} else {
 				LOGE("unknown evas object [%p,%s] or type [%d] mismatch", obj, object_type, type);
 				return CAMERA_ERROR_INVALID_PARAMETER;
@@ -2954,6 +2989,7 @@ int camera_set_display_rotation(camera_h camera, camera_rotation_e rotation)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
+#ifdef EVAS_RENDERER_SUPPORT
 	if (CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
 		g_mutex_lock(&pc->cb_info->evas_mutex);
 
@@ -2966,6 +3002,7 @@ int camera_set_display_rotation(camera_h camera, camera_rotation_e rotation)
 			return CAMERA_ERROR_INVALID_OPERATION;
 		}
 	}
+#endif /* EVAS_RENDERER_SUPPORT */
 
 	muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_ROTATION,
 		pc->cb_info->fd, pc->cb_info, ret, INT, set_rotation);
@@ -2991,25 +3028,12 @@ int camera_get_display_rotation(camera_h camera, camera_rotation_e *rotation)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
-		g_mutex_lock(&pc->cb_info->evas_mutex);
+	muse_camera_msg_send(MUSE_CAMERA_API_GET_DISPLAY_ROTATION,
+		pc->cb_info->fd, pc->cb_info, ret);
 
-		ret = mm_evas_renderer_get_rotation(pc->cb_info->evas_info, (int *)rotation);
-
-		g_mutex_unlock(&pc->cb_info->evas_mutex);
-
-		if (ret != MM_ERROR_NONE) {
-			LOGE("failed to get rotation for evas surface 0x%x", ret);
-			return CAMERA_ERROR_INVALID_OPERATION;
-		}
-	} else {
-		muse_camera_msg_send(MUSE_CAMERA_API_GET_DISPLAY_ROTATION,
-			pc->cb_info->fd, pc->cb_info, ret);
-
-		if (ret == CAMERA_ERROR_NONE) {
-			muse_camera_msg_get(get_rotation, pc->cb_info->recv_msg);
-			*rotation = (camera_rotation_e)get_rotation;
-		}
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get(get_rotation, pc->cb_info->recv_msg);
+		*rotation = (camera_rotation_e)get_rotation;
 	}
 
 	return ret;
@@ -3038,6 +3062,7 @@ int camera_set_display_flip(camera_h camera, camera_flip_e flip)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
+#ifdef EVAS_RENDERER_SUPPORT
 	if (CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
 		g_mutex_lock(&pc->cb_info->evas_mutex);
 
@@ -3050,6 +3075,7 @@ int camera_set_display_flip(camera_h camera, camera_flip_e flip)
 			return CAMERA_ERROR_INVALID_OPERATION;
 		}
 	}
+#endif /* EVAS_RENDERER_SUPPORT */
 
 	muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_FLIP,
 		pc->cb_info->fd, pc->cb_info, ret, INT, set_flip);
@@ -3075,25 +3101,12 @@ int camera_get_display_flip(camera_h camera, camera_flip_e *flip)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
-		g_mutex_lock(&pc->cb_info->evas_mutex);
+	muse_camera_msg_send(MUSE_CAMERA_API_GET_DISPLAY_FLIP,
+		pc->cb_info->fd, pc->cb_info, ret);
 
-		ret = mm_evas_renderer_get_flip(pc->cb_info->evas_info, (int *)flip);
-
-		g_mutex_unlock(&pc->cb_info->evas_mutex);
-
-		if (ret != MM_ERROR_NONE) {
-			LOGE("failed to get flip for evas surface 0x%x", ret);
-			return CAMERA_ERROR_INVALID_OPERATION;
-		}
-	} else {
-		muse_camera_msg_send(MUSE_CAMERA_API_GET_DISPLAY_FLIP,
-			pc->cb_info->fd, pc->cb_info, ret);
-
-		if (ret == CAMERA_ERROR_NONE) {
-			muse_camera_msg_get(get_flip, pc->cb_info->recv_msg);
-			*flip = (camera_flip_e)get_flip;
-		}
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get(get_flip, pc->cb_info->recv_msg);
+		*flip = (camera_flip_e)get_flip;
 	}
 
 	return ret;
@@ -3117,6 +3130,7 @@ int camera_set_display_visible(camera_h camera, bool visible)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
+#ifdef EVAS_RENDERER_SUPPORT
 	if (CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
 		g_mutex_lock(&pc->cb_info->evas_mutex);
 
@@ -3129,6 +3143,7 @@ int camera_set_display_visible(camera_h camera, bool visible)
 			return CAMERA_ERROR_INVALID_OPERATION;
 		}
 	}
+#endif /* EVAS_RENDERER_SUPPORT */
 
 	muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_VISIBLE,
 		pc->cb_info->fd, pc->cb_info, ret, INT, set_visible);
@@ -3154,25 +3169,12 @@ int camera_is_display_visible(camera_h camera, bool *visible)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
-		g_mutex_lock(&pc->cb_info->evas_mutex);
+	muse_camera_msg_send(MUSE_CAMERA_API_IS_DISPLAY_VISIBLE,
+		pc->cb_info->fd, pc->cb_info, ret);
 
-		ret = mm_evas_renderer_get_visible(pc->cb_info->evas_info, visible);
-
-		g_mutex_unlock(&pc->cb_info->evas_mutex);
-
-		if (ret != MM_ERROR_NONE) {
-			LOGE("failed to get visible for evas surface 0x%x", ret);
-			return CAMERA_ERROR_INVALID_OPERATION;
-		}
-	} else {
-		muse_camera_msg_send(MUSE_CAMERA_API_IS_DISPLAY_VISIBLE,
-			pc->cb_info->fd, pc->cb_info, ret);
-
-		if (ret == CAMERA_ERROR_NONE) {
-			muse_camera_msg_get(get_visible, pc->cb_info->recv_msg);
-			*visible = (bool)get_visible;
-		}
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get(get_visible, pc->cb_info->recv_msg);
+		*visible = (bool)get_visible;
 	}
 
 	return ret;
@@ -3201,6 +3203,7 @@ int camera_set_display_mode(camera_h camera, camera_display_mode_e mode)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
+#ifdef EVAS_RENDERER_SUPPORT
 	if (CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
 		g_mutex_lock(&pc->cb_info->evas_mutex);
 
@@ -3213,6 +3216,7 @@ int camera_set_display_mode(camera_h camera, camera_display_mode_e mode)
 			return CAMERA_ERROR_INVALID_OPERATION;
 		}
 	}
+#endif /* EVAS_RENDERER_SUPPORT */
 
 	muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_MODE,
 		pc->cb_info->fd, pc->cb_info, ret, INT, set_mode);
@@ -3238,25 +3242,12 @@ int camera_get_display_mode(camera_h camera, camera_display_mode_e *mode)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-	if (CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
-		g_mutex_lock(&pc->cb_info->evas_mutex);
+	muse_camera_msg_send(MUSE_CAMERA_API_GET_DISPLAY_MODE,
+		pc->cb_info->fd, pc->cb_info, ret);
 
-		ret = mm_evas_renderer_get_geometry(pc->cb_info->evas_info, (int *)mode);
-
-		g_mutex_unlock(&pc->cb_info->evas_mutex);
-
-		if (ret != MM_ERROR_NONE) {
-			LOGE("failed to get geometry for evas surface 0x%x", ret);
-			return CAMERA_ERROR_INVALID_OPERATION;
-		}
-	} else {
-		muse_camera_msg_send(MUSE_CAMERA_API_GET_DISPLAY_MODE,
-			pc->cb_info->fd, pc->cb_info, ret);
-
-		if (ret == CAMERA_ERROR_NONE) {
-			muse_camera_msg_get(get_mode, pc->cb_info->recv_msg);
-			*mode = (camera_display_mode_e)get_mode;
-		}
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get(get_mode, pc->cb_info->recv_msg);
+		*mode = (camera_display_mode_e)get_mode;
 	}
 
 	return ret;
@@ -6400,6 +6391,9 @@ int camera_attr_set_display_roi_area(camera_h camera, int x, int y, int width, i
 	int set_display_roi_area[4] = {x, y, width, height};
 	muse_camera_api_e api = MUSE_CAMERA_API_SET_DISPLAY_ROI_AREA;
 
+	LOGD("Enter, remote_handle : %x", pc->remote_handle);
+
+#ifdef EVAS_RENDERER_SUPPORT
 	if(CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
 		g_mutex_lock(&pc->cb_info->evas_mutex);
 
@@ -6411,12 +6405,13 @@ int camera_attr_set_display_roi_area(camera_h camera, int x, int y, int width, i
 			LOGE("mm_evas_renderer_set_roi_area error 0x%x", ret);
 			return CAMERA_ERROR_INVALID_OPERATION;
 		}
-	} else {
-		LOGD("Enter, remote_handle : %x", pc->remote_handle);
-		muse_camera_msg_send_array(api, sock_fd, pc->cb_info, ret,
-			set_display_roi_area, sizeof(set_display_roi_area), sizeof(int));
-		LOGD("ret : 0x%x", ret);
 	}
+#endif /* EVAS_RENDERER_SUPPORT */
+
+	muse_camera_msg_send_array(api, sock_fd, pc->cb_info, ret,
+		set_display_roi_area, sizeof(set_display_roi_area), sizeof(int));
+
+	LOGD("ret : 0x%x", ret);
 
 	return ret;
 }
@@ -6440,32 +6435,21 @@ int camera_attr_get_display_roi_area(camera_h camera, int *x, int *y, int *width
 	int get_display_roi_area[4] = {0,};
 	muse_camera_api_e api = MUSE_CAMERA_API_GET_DISPLAY_ROI_AREA;
 
-	if(CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
-		g_mutex_lock(&pc->cb_info->evas_mutex);
+	LOGD("Enter, remote_handle : %x", pc->remote_handle);
 
-		ret = mm_evas_renderer_get_roi_area(pc->cb_info->evas_info, x, y, width, height);
+	muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
 
-		g_mutex_unlock(&pc->cb_info->evas_mutex);
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get_array(get_display_roi_area, pc->cb_info->recv_msg);
 
-		if (ret != MM_ERROR_NONE) {
-			LOGE("mm_evas_renderer_get_roi_area error 0x%x", ret);
-			return CAMERA_ERROR_INVALID_OPERATION;
-		}
+		*x = get_display_roi_area[0];
+		*y = get_display_roi_area[1];
+		*width = get_display_roi_area[2];
+		*height = get_display_roi_area[3];
+
+		LOGD("ret : 0x%x", ret);
 	} else {
-		LOGD("Enter, remote_handle : %x", pc->remote_handle);
-		muse_camera_msg_send(api, sock_fd, pc->cb_info, ret);
-
-		if (ret == CAMERA_ERROR_NONE) {
-			muse_camera_msg_get_array(get_display_roi_area, pc->cb_info->recv_msg);
-			*x = get_display_roi_area[0];
-			*y = get_display_roi_area[1];
-			*width = get_display_roi_area[2];
-			*height = get_display_roi_area[3];
-
-			LOGD("ret : 0x%x", ret);
-		} else {
-			LOGE("Returned value is not valid : 0x%x", ret);
-		}
+		LOGE("Returned value is not valid : 0x%x", ret);
 	}
 
 	return ret;
