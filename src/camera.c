@@ -2785,7 +2785,9 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 					ret |= mm_evas_renderer_set_geometry(cb_info->evas_info, mode);
 					ret |= mm_evas_renderer_set_rotation(cb_info->evas_info, rotation);
 					ret |= mm_evas_renderer_set_visible(cb_info->evas_info, visible);
-					ret |= mm_evas_renderer_set_roi_area(cb_info->evas_info, x, y, width, height);
+
+					if (mode == CAMERA_DISPLAY_MODE_CUSTOM_ROI)
+						ret |= mm_evas_renderer_set_roi_area(cb_info->evas_info, x, y, width, height);
 				}
 
 				g_mutex_unlock(&cb_info->evas_mutex);
@@ -2814,7 +2816,7 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 #ifdef HAVE_WAYLAND
 		wl_info = &pc->wl_info;
 		muse_camera_msg_send_array_and_value(api, sock_fd, cb_info, ret,
-			wl_info, 5, sizeof(int), INT, type);
+			wl_info, sizeof(camera_wl_info_s), sizeof(int), INT, type);
 
 		LOGD("wayland parent id : %d, window %d,%d,%dx%d",
 			wl_info->parent_id, wl_info->window_x, wl_info->window_y,

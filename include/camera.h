@@ -987,6 +987,7 @@ int camera_cancel_focusing(camera_h camera);
  *
  * @since_tizen @if MOBILE 2.3 @elseif WEARABLE 2.3.1 @endif
  * @remarks This function must be called before previewing (see camera_start_preview()).
+ *          In Custom ROI display mode, camera_attr_set_display_roi_area() function must be called before calling this function.
  * @param[in] camera The handle to the camera
  * @param[in] type The display type
  * @param[in] display The display handle from #GET_DISPLAY
@@ -3695,6 +3696,7 @@ int camera_attr_foreach_supported_ptz_type(camera_h camera, camera_attr_supporte
  * @brief Sets the ROI(Region Of Interest) area of display.
  * @since_tizen 3.0
  * @remarks Before set display ROI area, #CAMERA_DISPLAY_MODE_CUSTOM_ROI should be set with camera_set_display_mode().
+ *          The minimum value of width and height are 1.
  * @param[in] camera The handle to the camera
  * @param[in] x X coordinate of area
  * @param[in] y Y coordinate of area
