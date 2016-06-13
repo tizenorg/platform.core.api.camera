@@ -284,7 +284,7 @@ static int _client_wait_for_cb_return(muse_camera_api_e api, camera_cb_info_s *c
 	int ret = CAMERA_ERROR_NONE;
 	gint64 end_time;
 
-	LOGD("Enter api : %d", api);
+	/*LOGD("Enter api : %d", api);*/
 
 	g_mutex_lock(&(cb_info->api_mutex[api]));
 
@@ -294,7 +294,7 @@ static int _client_wait_for_cb_return(muse_camera_api_e api, camera_cb_info_s *c
 			ret = cb_info->api_ret[api];
 			cb_info->api_activating[api] = 0;
 
-			LOGD("return value : 0x%x", ret);
+			/*LOGD("return value : 0x%x", ret);*/
 		} else {
 			ret = CAMERA_ERROR_INVALID_OPERATION;
 
@@ -304,7 +304,7 @@ static int _client_wait_for_cb_return(muse_camera_api_e api, camera_cb_info_s *c
 		ret = cb_info->api_ret[api];
 		cb_info->api_activating[api] = 0;
 
-		LOGD("condition is already checked for the api[%d], return[0x%x]", api, ret);
+		/*LOGD("condition is already checked for the api[%d], return[0x%x]", api, ret);*/
 	}
 
 	g_mutex_unlock(&(cb_info->api_mutex[api]));
@@ -1490,9 +1490,9 @@ static void *_camera_msg_handler_func(gpointer data)
 
 	while (g_atomic_int_get(&cb_info->msg_handler_running)) {
 		if (g_queue_is_empty(cb_info->msg_queue)) {
-			LOGD("signal wait...");
+			/*LOGD("signal wait...");*/
 			g_cond_wait(&cb_info->msg_handler_cond, &cb_info->msg_handler_mutex);
-			LOGD("signal received");
+			/*LOGD("signal received");*/
 
 			if (g_atomic_int_get(&cb_info->msg_handler_running) == 0) {
 				LOGD("stop event thread");
@@ -1519,7 +1519,7 @@ static void *_camera_msg_handler_func(gpointer data)
 				cb_info->api_ret[api] = ret;
 				cb_info->api_activating[api] = 1;
 
-				LOGD("camera api %d - return 0x%x", ret);
+				/*LOGD("camera api %d - return 0x%x", ret);*/
 
 				g_cond_signal(&cb_info->api_cond[api]);
 			} else {
@@ -1558,7 +1558,7 @@ static void *_camera_msg_handler_func(gpointer data)
 				g_mutex_init(&cam_idle_event->event_mutex);
 				memcpy(cam_idle_event->recv_msg, cam_msg->recv_msg, sizeof(cam_idle_event->recv_msg));
 
-				LOGD("add camera event[%d, %p] to IDLE", event, cam_idle_event);
+				/*LOGD("add camera event[%d, %p] to IDLE", event, cam_idle_event);*/
 
 				g_mutex_lock(&cb_info->idle_event_mutex);
 				cb_info->idle_event_list = g_list_append(cb_info->idle_event_list, (gpointer)cam_idle_event);
@@ -1726,7 +1726,7 @@ static void *_camera_msg_recv_func(gpointer data)
 			if (recv_msg[str_pos] == '}') {
 				memset(parse_str[num_token], 0x0, sizeof(char) * MUSE_CAMERA_MSG_MAX_LENGTH);
 				strncpy(parse_str[num_token], recv_msg + prev_pos, str_pos - prev_pos + 1);
-				LOGD("splitted msg : [%s], Index : %d", parse_str[num_token], num_token);
+				/*LOGD("splitted msg : [%s], Index : %d", parse_str[num_token], num_token);*/
 				prev_pos = str_pos+1;
 				num_token++;
 			}
@@ -1750,12 +1750,18 @@ static void *_camera_msg_recv_func(gpointer data)
 			}
 
 			if (api != MUSE_CAMERA_CB_EVENT) {
-				LOGD("check api_class");
-				if (muse_camera_msg_get(api_class, parse_str[i]))
-					LOGD("camera api_class[%d]", api_class);
+				if (!muse_camera_msg_get(api_class, parse_str[i])) {
+					LOGE("failed to get camera api_class");
+					continue;
+				}
 			}
 
 			if (api_class == MUSE_CAMERA_API_CLASS_IMMEDIATE) {
+				if (api >= MUSE_CAMERA_API_MAX) {
+					LOGE("invalid api %d", api);
+					continue;
+				}
+
 				g_mutex_lock(&cb_info->api_mutex[api]);
 
 				if (!muse_camera_msg_get(ret, parse_str[i])) {
@@ -1791,7 +1797,7 @@ static void *_camera_msg_recv_func(gpointer data)
 				cam_msg->api = api;
 				memcpy(cam_msg->recv_msg, parse_str[i], sizeof(cam_msg->recv_msg));
 
-				LOGD("add camera message to queue : api %d", api);
+				/*LOGD("add camera message to queue : api %d", api);*/
 
 				g_mutex_lock(&cb_info->msg_handler_mutex);
 				g_queue_push_tail(cb_info->msg_queue, (gpointer)cam_msg);
@@ -6397,7 +6403,7 @@ int camera_attr_set_display_roi_area(camera_h camera, int x, int y, int width, i
 	LOGD("Enter, remote_handle : %x", pc->remote_handle);
 
 #ifdef EVAS_RENDERER_SUPPORT
-	if(CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
+	if (CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
 		g_mutex_lock(&pc->cb_info->evas_mutex);
 
 		ret = mm_evas_renderer_set_roi_area(pc->cb_info->evas_info, x, y, width, height);
