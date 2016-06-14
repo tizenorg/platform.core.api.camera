@@ -189,26 +189,10 @@ typedef struct _cam_handle {
 } cam_handle_t;
 
 typedef struct {
-	int expected_width;
-	int expected_height;
-	int ispass;
-} preview_test_data;
-
-typedef struct {
 	int width[100];
 	int height[100];
 	int count;
 } resolution_stack;
-
-typedef struct {
-	camera_attr_af_mode_e mode;
-	int count;
-} af_stack;
-
-typedef struct {
-	int expected_mode;
-	int ispass;
-} af_test_data;
 
 typedef struct {
 	camera_attr_exposure_mode_e mode;
@@ -805,17 +789,19 @@ static void setting_menu(gchar buf)
 			g_print("*Select the preview resolution!\n");
 			resolution_stack resolution_list;
 			resolution_list.count = 0;
-			camera_foreach_supported_preview_resolution(hcamcorder->camera, preview_resolution_cb, &resolution_list);
+
+			camera_foreach_supported_preview_resolution(hcamcorder->camera,
+				preview_resolution_cb, &resolution_list);
+
 			flush_stdin();
 			err = scanf("%d", &idx);
 			int result = 0;
-			preview_test_data data;
-			data.ispass = false;
 			if (resolution_list.count > idx && idx >= 0) {
-				data.expected_width = resolution_list.width[idx];
-				data.expected_height = resolution_list.height[idx];
-				printf("-----------------PREVIEW RESOLUTION (%dx%d)---------------------\n", data.expected_width, data.expected_height);
-				result = camera_set_preview_resolution(hcamcorder->camera, data.expected_width, data.expected_height);
+				printf("-----------------PREVIEW RESOLUTION (%dx%d)---------------------\n",
+					resolution_list.width[idx], resolution_list.height[idx]);
+
+				result = camera_set_preview_resolution(hcamcorder->camera,
+					resolution_list.width[idx], resolution_list.height[idx]);
 			} else {
 				printf("invalid input %d\n", idx);
 				result = -1;
@@ -830,16 +816,19 @@ static void setting_menu(gchar buf)
 			g_print("*Select the preview resolution!\n");
 			printf("-----------------CAPTURE RESOLUTION TEST: ---------------------\n");
 			resolution_list.count = 0;
-			camera_foreach_supported_capture_resolution(hcamcorder->camera, capture_resolution_test_cb, &resolution_list);
+
+			camera_foreach_supported_capture_resolution(hcamcorder->camera,
+				capture_resolution_test_cb, &resolution_list);
+
 			flush_stdin();
 			err = scanf("%d", &idx);
-			data.ispass = false;
 			if (resolution_list.count > idx && idx >= 0) {
-				data.expected_width = resolution_list.width[idx];
-				data.expected_height = resolution_list.height[idx];
 
-				result = camera_set_capture_resolution(hcamcorder->camera, data.expected_width, data.expected_height);
-				printf("camera_set_capture_resolution with width =%d, height=%d ret=0x%x\n", data.expected_width, data.expected_height, result);
+				result = camera_set_capture_resolution(hcamcorder->camera,
+					resolution_list.width[idx], resolution_list.height[idx]);
+
+				printf("camera_set_capture_resolution with width =%d, height=%d ret=0x%x\n",
+					resolution_list.width[idx], resolution_list.height[idx], result);
 			} else {
 				printf("invalid input %d\n", idx);
 				result = -1;
@@ -883,12 +872,7 @@ static void setting_menu(gchar buf)
 			break;
 		case '4': /* Setting > AF scan range */
 			g_print("*AF scan range !\n");
-			af_stack af_mode_list;
-			af_mode_list.count = 0;
 			camera_attr_foreach_supported_af_mode(hcamcorder->camera, (camera_attr_supported_af_mode_cb)af_mode_foreach_cb, NULL);
-			af_test_data data1;
-			data1.ispass = false;
-			data1.expected_mode = af_mode_list.mode;
 			flush_stdin();
 			err = scanf("%d", &idx);
 			bret = camera_attr_set_af_mode(hcamcorder->camera, idx);
