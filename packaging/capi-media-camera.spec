@@ -3,7 +3,7 @@
 
 Name:       capi-media-camera
 Summary:    A Camera API
-Version:    0.2.61
+Version:    0.2.62
 Release:    0
 Group:      Multimedia/API
 License:    Apache-2.0
@@ -25,7 +25,7 @@ BuildRequires:  pkgconfig(ecore-wayland)
 %endif
 BuildRequires:  pkgconfig(libtbm)
 BuildRequires:  pkgconfig(tizen-extension-client)
-%if "%{?profile}" == "mobile" || "%{?profile}" == "common"
+%if "%{?profile}" != "tv"
 BuildRequires:  pkgconfig(mm-evas-renderer)
 %endif
 
@@ -64,7 +64,7 @@ MAJORVER=`echo %{version} | awk 'BEGIN {FS="."}{print $1}'`
 %else
 	-DWAYLAND_SUPPORT=Off \
 %endif
-%if "%{?profile}" == "mobile" || "%{?profile}" == "common"
+%if "%{?profile}" != "tv"
 	-DEVAS_RENDERER_SUPPORT=On \
 %else
 	-DEVAS_RENDERER_SUPPORT=Off \
