@@ -66,7 +66,7 @@ static void __global(void *data, struct wl_registry *registry,
 		return;
 	}
 
-	LOGI("interface %s", interface);
+	/*LOGI("interface %s", interface);*/
 
 	if (strcmp(interface, "tizen_surface") == 0) {
 		LOGD("binding tizen surface for wayland");
@@ -846,7 +846,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 		return;
 	}
 
-	LOGD("get camera msg %s, event %d", recv_msg, event);
+	/*LOGD("get camera msg %s, event %d", recv_msg, event);*/
 
 	if (event == MUSE_CAMERA_EVENT_TYPE_PREVIEW) {
 		if (!(CHECK_PREVIEW_CB(cb_info, PREVIEW_CB_TYPE_EVAS)) &&
@@ -1112,7 +1112,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 				muse_camera_msg_send1_no_return(MUSE_CAMERA_API_RETURN_BUFFER,
 					cb_info->fd, cb_info, INT, tbm_key);
 
-				LOGD("return buffer done");
+				/*LOGD("return buffer done");*/
 			} else {
 				LOGE("invalid message - count %d, key %d", count, tbm_key);
 			}
@@ -1136,189 +1136,189 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 		muse_camera_msg_get(param1, recv_msg);
 		muse_camera_msg_get(param2, recv_msg);
 
-		LOGD("SUPPORTED_PREVIEW_RESOLUTION - %d x %d", param1, param2);
+		/*LOGD("SUPPORTED_PREVIEW_RESOLUTION - %d x %d", param1, param2);*/
 
 		if (((camera_supported_preview_resolution_cb)cb_info->user_cb[event])(param1, param2, cb_info->user_data[event]) == false) {
 			cb_info->user_cb[event] = NULL;
 			cb_info->user_data[event] = NULL;
-			LOGD("stop foreach callback for SUPPORTED_PREVIEW_RESOLUTION");
+			LOGW("stop foreach callback for SUPPORTED_PREVIEW_RESOLUTION");
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_CAPTURE_RESOLUTION:
 		muse_camera_msg_get(param1, recv_msg);
 		muse_camera_msg_get(param2, recv_msg);
 
-		LOGD("SUPPORTED_CAPTURE_RESOLUTION - %d x %d", param1, param2);
+		/*LOGD("SUPPORTED_CAPTURE_RESOLUTION - %d x %d", param1, param2);*/
 
 		if (((camera_supported_capture_resolution_cb)cb_info->user_cb[event])(param1, param2, cb_info->user_data[event]) == false) {
 			cb_info->user_cb[event] = NULL;
 			cb_info->user_data[event] = NULL;
-			LOGD("stop foreach callback for SUPPORTED_CAPTURE_RESOLUTION");
+			LOGW("stop foreach callback for SUPPORTED_CAPTURE_RESOLUTION");
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_CAPTURE_FORMAT:
 		muse_camera_msg_get(param1, recv_msg);
 
-		LOGD("SUPPORTED_CAPTURE_FORMAT - %d ", param1);
+		/*LOGD("SUPPORTED_CAPTURE_FORMAT - %d ", param1);*/
 
 		if (((camera_supported_capture_format_cb)cb_info->user_cb[event])((camera_pixel_format_e)param1, cb_info->user_data[event]) == false) {
 			cb_info->user_cb[event] = NULL;
 			cb_info->user_data[event] = NULL;
-			LOGD("stop foreach callback for SUPPORTED_CAPTURE_FORMAT");
+			LOGW("stop foreach callback for SUPPORTED_CAPTURE_FORMAT");
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_PREVIEW_FORMAT:
 		muse_camera_msg_get(param1, recv_msg);
 
-		LOGD("SUPPORTED_PREVIEW_FORMAT - %d ", param1);
+		/*LOGD("SUPPORTED_PREVIEW_FORMAT - %d ", param1);*/
 
 		if (((camera_supported_preview_format_cb)cb_info->user_cb[event])((camera_pixel_format_e)param1, cb_info->user_data[event]) == false) {
 			cb_info->user_cb[event] = NULL;
 			cb_info->user_data[event] = NULL;
-			LOGD("stop foreach callback for SUPPORTED_PREVIEW_FORMAT");
+			LOGW("stop foreach callback for SUPPORTED_PREVIEW_FORMAT");
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_AF_MODE:
 		muse_camera_msg_get(param1, recv_msg);
 
-		LOGD("SUPPORTED_AF_MODE - %d ", param1);
+		/*LOGD("SUPPORTED_AF_MODE - %d ", param1);*/
 
 		if (((camera_attr_supported_af_mode_cb)cb_info->user_cb[event])((camera_attr_af_mode_e)param1, cb_info->user_data[event]) == false) {
 			cb_info->user_cb[event] = NULL;
 			cb_info->user_data[event] = NULL;
-			LOGD("stop foreach callback for SUPPORTED_AF_MODE");
+			LOGW("stop foreach callback for SUPPORTED_AF_MODE");
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_EXPOSURE_MODE:
 		muse_camera_msg_get(param1, recv_msg);
 
-		LOGD("SUPPORTED_EXPOSURE_MODE - %d ", param1);
+		/*LOGD("SUPPORTED_EXPOSURE_MODE - %d ", param1);*/
 
 		if (((camera_attr_supported_exposure_mode_cb)cb_info->user_cb[event])((camera_attr_exposure_mode_e)param1, cb_info->user_data[event]) == false) {
 			cb_info->user_cb[event] = NULL;
 			cb_info->user_data[event] = NULL;
-			LOGD("stop foreach callback for SUPPORTED_EXPOSURE_MODE");
+			LOGW("stop foreach callback for SUPPORTED_EXPOSURE_MODE");
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_ISO:
 		muse_camera_msg_get(param1, recv_msg);
 
-		LOGD("SUPPORTED_ISO - %d ", param1);
+		/*LOGD("SUPPORTED_ISO - %d ", param1);*/
 
 		if (((camera_attr_supported_iso_cb)cb_info->user_cb[event])((camera_attr_iso_e)param1, cb_info->user_data[event]) == false) {
 			cb_info->user_cb[event] = NULL;
 			cb_info->user_data[event] = NULL;
-			LOGD("stop foreach callback for SUPPORTED_ISO");
+			LOGW("stop foreach callback for SUPPORTED_ISO");
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_WHITEBALANCE:
 		muse_camera_msg_get(param1, recv_msg);
 
-		LOGD("SUPPORTED_WHITEBALANCE - %d ", param1);
+		/*LOGD("SUPPORTED_WHITEBALANCE - %d ", param1);*/
 
 		if (((camera_attr_supported_whitebalance_cb)cb_info->user_cb[event])((camera_attr_whitebalance_e)param1, cb_info->user_data[event]) == false) {
 			cb_info->user_cb[event] = NULL;
 			cb_info->user_data[event] = NULL;
-			LOGD("stop foreach callback for SUPPORTED_WHITEBALANCE");
+			LOGW("stop foreach callback for SUPPORTED_WHITEBALANCE");
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_EFFECT:
 		muse_camera_msg_get(param1, recv_msg);
 
-		LOGD("SUPPORTED_EFFECT - %d ", param1);
+		/*LOGD("SUPPORTED_EFFECT - %d ", param1);*/
 
 		if (((camera_attr_supported_effect_cb)cb_info->user_cb[event])((camera_attr_effect_mode_e)param1, cb_info->user_data[event]) == false) {
 			cb_info->user_cb[event] = NULL;
 			cb_info->user_data[event] = NULL;
-			LOGD("stop foreach callback for SUPPORTED_EFFECT");
+			LOGW("stop foreach callback for SUPPORTED_EFFECT");
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_SCENE_MODE:
 		muse_camera_msg_get(param1, recv_msg);
 
-		LOGD("SUPPORTED_SCENE_MODE - %d ", param1);
+		/*LOGD("SUPPORTED_SCENE_MODE - %d ", param1);*/
 
 		if (((camera_attr_supported_scene_mode_cb)cb_info->user_cb[event])((camera_attr_scene_mode_e)param1, cb_info->user_data[event]) == false) {
 			cb_info->user_cb[event] = NULL;
 			cb_info->user_data[event] = NULL;
-			LOGD("stop foreach callback for SUPPORTED_SCENE_MODE");
+			LOGW("stop foreach callback for SUPPORTED_SCENE_MODE");
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FLASH_MODE:
 		muse_camera_msg_get(param1, recv_msg);
 
-		LOGD("SUPPORTED_FLASH_MODE - %d ", param1);
+		/*LOGD("SUPPORTED_FLASH_MODE - %d ", param1);*/
 
 		if (((camera_attr_supported_flash_mode_cb)cb_info->user_cb[event])((camera_attr_flash_mode_e)param1, cb_info->user_data[event]) == false) {
 			cb_info->user_cb[event] = NULL;
 			cb_info->user_data[event] = NULL;
-			LOGD("stop foreach callback for SUPPORTED_FLASH_MODE");
+			LOGW("stop foreach callback for SUPPORTED_FLASH_MODE");
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FPS:
 		muse_camera_msg_get(param1, recv_msg);
 
-		LOGD("SUPPORTED_FPS - %d ", param1);
+		/*LOGD("SUPPORTED_FPS - %d ", param1);*/
 
 		if (((camera_attr_supported_fps_cb)cb_info->user_cb[event])((camera_attr_fps_e)param1, cb_info->user_data[event]) == false) {
 			cb_info->user_cb[event] = NULL;
 			cb_info->user_data[event] = NULL;
-			LOGD("stop foreach callback for SUPPORTED_FPS");
+			LOGW("stop foreach callback for SUPPORTED_FPS");
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_FPS_BY_RESOLUTION:
 		muse_camera_msg_get(param1, recv_msg);
 
-		LOGD("SUPPORTED_FPS_BY_RESOLUTION - %d ", param1);
+		/*LOGD("SUPPORTED_FPS_BY_RESOLUTION - %d ", param1);*/
 
 		if (((camera_attr_supported_fps_cb)cb_info->user_cb[event])((camera_attr_fps_e)param1, cb_info->user_data[event]) == false) {
 			cb_info->user_cb[event] = NULL;
 			cb_info->user_data[event] = NULL;
-			LOGD("stop foreach callback for SUPPORTED_FPS_BY_RESOLUTION");
+			LOGW("stop foreach callback for SUPPORTED_FPS_BY_RESOLUTION");
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_STREAM_FLIP:
 		muse_camera_msg_get(param1, recv_msg);
 
-		LOGD("SUPPORTED_STREAM_FLIP - %d ", param1);
+		/*LOGD("SUPPORTED_STREAM_FLIP - %d ", param1);*/
 
 		if (((camera_attr_supported_stream_flip_cb)cb_info->user_cb[event])((camera_flip_e)param1, cb_info->user_data[event]) == false) {
 			cb_info->user_cb[event] = NULL;
 			cb_info->user_data[event] = NULL;
-			LOGD("stop foreach callback for SUPPORTED_STREAM_FLIP");
+			LOGW("stop foreach callback for SUPPORTED_STREAM_FLIP");
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_STREAM_ROTATION:
 		muse_camera_msg_get(param1, recv_msg);
 
-		LOGD("SUPPORTED_STREAM_ROTATION - %d ", param1);
+		/*LOGD("SUPPORTED_STREAM_ROTATION - %d ", param1);*/
 
 		if (((camera_attr_supported_stream_rotation_cb)cb_info->user_cb[event])((camera_rotation_e)param1, cb_info->user_data[event]) == false) {
 			cb_info->user_cb[event] = NULL;
 			cb_info->user_data[event] = NULL;
-			LOGD("stop foreach callback for SUPPORTED_STREAM_ROTATION");
+			LOGW("stop foreach callback for SUPPORTED_STREAM_ROTATION");
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_THEATER_MODE:
 		muse_camera_msg_get(param1, recv_msg);
 
-		LOGD("SUPPORTED_THEATER_MODE - %d ", param1);
+		/*LOGD("SUPPORTED_THEATER_MODE - %d ", param1);*/
 
 		if (((camera_attr_supported_theater_mode_cb)cb_info->user_cb[event])((camera_attr_theater_mode_e)param1, cb_info->user_data[event]) == false) {
 			cb_info->user_cb[event] = NULL;
 			cb_info->user_data[event] = NULL;
-			LOGD("stop foreach callback for SUPPORTED_THEATER_MODE");
+			LOGW("stop foreach callback for SUPPORTED_THEATER_MODE");
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_FOREACH_SUPPORTED_PTZ_TYPE:
 		muse_camera_msg_get(param1, recv_msg);
 
-		LOGD("SUPPORTED_PTZ_TYPE - %d ", param1);
+		/*LOGD("SUPPORTED_PTZ_TYPE - %d ", param1);*/
 
 		if (((camera_attr_supported_ptz_type_cb)cb_info->user_cb[event])((camera_attr_ptz_type_e)param1, cb_info->user_data[event]) == false) {
 			cb_info->user_cb[event] = NULL;
 			cb_info->user_data[event] = NULL;
-			LOGD("stop foreach callback for SUPPORTED_PTZ_TYPE");
+			LOGW("stop foreach callback for SUPPORTED_PTZ_TYPE");
 		}
 		break;
 	case MUSE_CAMERA_EVENT_TYPE_CAPTURE:
@@ -1341,8 +1341,10 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 			muse_camera_msg_get(tbm_key_post, recv_msg);
 			muse_camera_msg_get(tbm_key_thumb, recv_msg);
 
+			/*
 			LOGD("camera capture callback came in. tbm_key_main %d, tbm_key_post %d, tbm_key_thumb %d",
-			     tbm_key_main, tbm_key_post, tbm_key_thumb);
+				tbm_key_main, tbm_key_post, tbm_key_thumb);
+			*/
 
 			if (tbm_key_main <= 0) {
 				LOGE("invalid tbm_key_main %d", tbm_key_main);
@@ -1357,7 +1359,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 			rImage = (camera_image_data_s *)buf_pos;
 			rImage->data = buf_pos + sizeof(camera_image_data_s);
 
-			LOGD("image info %dx%d, size : %d", rImage->height, rImage->width, rImage->size);
+			LOGD("image info %dx%d, size : %d", rImage->width, rImage->height, rImage->size);
 
 			if (tbm_key_post > 0) {
 				/* import tbm bo and get virtual address */
