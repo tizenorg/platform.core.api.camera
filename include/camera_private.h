@@ -104,10 +104,10 @@ typedef struct _camera_cb_info_s {
 	media_format_h pkt_fmt;
 	int preview_cb_flag;
 	GMutex mp_data_mutex;
-#ifdef EVAS_RENDERER_SUPPORT
+#ifdef TIZEN_FEATURE_EVAS_RENDERER
 	void *evas_info;
 	GMutex evas_mutex;
-#endif /* EVAS_RENDERER_SUPPORT */
+#endif /* TIZEN_FEATURE_EVAS_RENDERER */
 	gboolean run_evas_render;
 } camera_cb_info_s;
 
@@ -123,7 +123,6 @@ typedef struct _camera_idle_event_s {
 	GMutex event_mutex;
 } camera_idle_event_s;
 
-#ifdef HAVE_WAYLAND
 typedef struct _camera_wl_info_s {
 	int parent_id;
 	int window_x;
@@ -132,15 +131,12 @@ typedef struct _camera_wl_info_s {
 	int window_height;
 	void *evas_obj;
 } camera_wl_info_s;
-#endif /* HAVE_WAYLAND */
 
 typedef struct _camera_cli_s {
 	intptr_t remote_handle;
 	intptr_t display_handle;
 	camera_cb_info_s *cb_info;
-#ifdef HAVE_WAYLAND
 	camera_wl_info_s wl_info;
-#endif /* HAVE_WAYLAND */
 } camera_cli_s;
 
 typedef struct _camera_media_packet_data {

@@ -1,9 +1,6 @@
-%bcond_with wayland
-%bcond_with x
-
 Name:       capi-media-camera
 Summary:    A Camera API
-Version:    0.2.63
+Version:    0.2.64
 Release:    0
 Group:      Multimedia/API
 License:    Apache-2.0
@@ -59,20 +56,10 @@ export CFLAGS+=" -DTIZEN_DEBUG_ENABLE"
 %endif
 MAJORVER=`echo %{version} | awk 'BEGIN {FS="."}{print $1}'`
 %cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix} -DFULLVER=%{version} -DMAJORVER=${MAJORVER} \
-%if %{with wayland}
-	-DWAYLAND_SUPPORT=On \
-%else
-	-DWAYLAND_SUPPORT=Off \
-%endif
 %if "%{?profile}" != "tv"
-	-DEVAS_RENDERER_SUPPORT=On \
+	-DTIZEN_FEATURE_EVAS_RENDERER=On
 %else
-	-DEVAS_RENDERER_SUPPORT=Off \
-%endif
-%if %{with x}
-	-DX11_SUPPORT=On
-%else
-	-DX11_SUPPORT=Off
+	-DTIZEN_FEATURE_EVAS_RENDERER=Off
 %endif
 
 make %{?jobs:-j%jobs}

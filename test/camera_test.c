@@ -1422,9 +1422,7 @@ static int app_create(void *data)
 		g_print("\n\tscreen size %dx%d\n\n", w, h);
 		evas_object_resize(win, w, h);
 		elm_win_autodel_set(win, EINA_TRUE);
-#ifdef HAVE_WAYLAND
 		elm_win_alpha_set(win, EINA_TRUE);
-#endif /* HAVE_WAYLAND */
 	} else {
 		g_print("\n\tfailed to get window\n\n");
 		return 1;
