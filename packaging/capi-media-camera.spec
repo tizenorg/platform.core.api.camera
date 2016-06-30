@@ -3,7 +3,7 @@
 
 Name:       capi-media-camera
 Summary:    A Camera API
-Version:    0.2.63
+Version:    0.2.64
 Release:    0
 Group:      Multimedia/API
 License:    Apache-2.0
@@ -65,9 +65,9 @@ MAJORVER=`echo %{version} | awk 'BEGIN {FS="."}{print $1}'`
 	-DWAYLAND_SUPPORT=Off \
 %endif
 %if "%{?profile}" != "tv"
-	-DEVAS_RENDERER_SUPPORT=On \
+	-DTIZEN_FEATURE_EVAS_RENDERER=On \
 %else
-	-DEVAS_RENDERER_SUPPORT=Off \
+	-DTIZEN_FEATURE_EVAS_RENDERER=Off \
 %endif
 %if %{with x}
 	-DX11_SUPPORT=On

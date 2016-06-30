@@ -38,9 +38,9 @@
 #else /* HAVE_WAYLAND */
 #include <Ecore.h>
 #endif /* HAVE_WAYLAND */
-#ifdef EVAS_RENDERER_SUPPORT
+#ifdef TIZEN_FEATURE_EVAS_RENDERER
 #include <mm_evas_renderer.h>
-#endif /* EVAS_RENDERER_SUPPORT */
+#endif /* TIZEN_FEATURE_EVAS_RENDERER */
 
 #ifdef LOG_TAG
 #undef LOG_TAG
@@ -997,7 +997,7 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 
 			/* call evas renderer */
 			if (CHECK_PREVIEW_CB(cb_info, PREVIEW_CB_TYPE_EVAS)) {
-#ifdef EVAS_RENDERER_SUPPORT
+#ifdef TIZEN_FEATURE_EVAS_RENDERER
 				ret = _camera_media_packet_data_create(tbm_key, num_buffer_key, bo, buffer_bo, data_bo, &mp_data);
 
 				if (ret == CAMERA_ERROR_NONE) {
@@ -1021,9 +1021,9 @@ static void _client_user_callback(camera_cb_info_s *cb_info, char *recv_msg, mus
 						mp_data = NULL;
 					}
 				}
-#else /* EVAS_RENDERER_SUPPORT */
+#else /* TIZEN_FEATURE_EVAS_RENDERER */
 				LOGW("evas renderer is not supported");
-#endif /* EVAS_RENDERER_SUPPORT */
+#endif /* TIZEN_FEATURE_EVAS_RENDERER */
 			}
 
 			/* send message for preview callback return */
@@ -1850,9 +1850,9 @@ static camera_cb_info_s *_client_callback_new(gint sockfd)
 	g_mutex_init(&cb_info->idle_event_mutex);
 	g_cond_init(&cb_info->idle_event_cond);
 	g_mutex_init(&cb_info->mp_data_mutex);
-#ifdef EVAS_RENDERER_SUPPORT
+#ifdef TIZEN_FEATURE_EVAS_RENDERER
 	g_mutex_init(&cb_info->evas_mutex);
-#endif /* EVAS_RENDERER_SUPPORT */
+#endif /* TIZEN_FEATURE_EVAS_RENDERER */
 
 	for (i = 0 ; i < MUSE_CAMERA_API_MAX ; i++) {
 		g_mutex_init(&cb_info->api_mutex[i]);
@@ -1889,9 +1889,9 @@ static camera_cb_info_s *_client_callback_new(gint sockfd)
 	cb_info->api_activating = tmp_activating;
 	cb_info->api_ret = tmp_ret;
 	cb_info->preview_cb_flag = 0;
-#ifdef EVAS_RENDERER_SUPPORT
+#ifdef TIZEN_FEATURE_EVAS_RENDERER
 	cb_info->evas_info = NULL;
-#endif /* EVAS_RENDERER_SUPPORT */
+#endif /* TIZEN_FEATURE_EVAS_RENDERER */
 
 	g_atomic_int_set(&cb_info->msg_recv_running, 1);
 	cb_info->msg_recv_thread = g_thread_try_new("camera_msg_recv",
@@ -1926,9 +1926,9 @@ ErrorExit:
 		g_mutex_clear(&cb_info->idle_event_mutex);
 		g_cond_clear(&cb_info->idle_event_cond);
 		g_mutex_clear(&cb_info->mp_data_mutex);
-#ifdef EVAS_RENDERER_SUPPORT
+#ifdef TIZEN_FEATURE_EVAS_RENDERER
 		g_mutex_clear(&cb_info->evas_mutex);
-#endif /* EVAS_RENDERER_SUPPORT */
+#endif /* TIZEN_FEATURE_EVAS_RENDERER */
 
 		if (cb_info->msg_queue) {
 			g_queue_free(cb_info->msg_queue);
@@ -1987,9 +1987,9 @@ static void _client_callback_destroy(camera_cb_info_s *cb_info)
 	g_mutex_clear(&cb_info->idle_event_mutex);
 	g_cond_clear(&cb_info->idle_event_cond);
 	g_mutex_clear(&cb_info->mp_data_mutex);
-#ifdef EVAS_RENDERER_SUPPORT
+#ifdef TIZEN_FEATURE_EVAS_RENDERER
 	g_mutex_clear(&cb_info->evas_mutex);
-#endif /* EVAS_RENDERER_SUPPORT */
+#endif /* TIZEN_FEATURE_EVAS_RENDERER */
 
 	LOGD("event thread removed");
 
@@ -2015,10 +2015,10 @@ static void _client_callback_destroy(camera_cb_info_s *cb_info)
 		cb_info->pkt_fmt = NULL;
 	}
 
-#ifdef EVAS_RENDERER_SUPPORT
+#ifdef TIZEN_FEATURE_EVAS_RENDERER
 	if (cb_info->evas_info)
 		mm_evas_renderer_destroy(&cb_info->evas_info);
-#endif /* EVAS_RENDERER_SUPPORT */
+#endif /* TIZEN_FEATURE_EVAS_RENDERER */
 
 	cb_info->preview_cb_flag = 0;
 
@@ -2051,7 +2051,7 @@ int _camera_start_evas_rendering(camera_h camera)
 		return CAMERA_ERROR_NONE;
 	}
 
-#ifdef EVAS_RENDERER_SUPPORT
+#ifdef TIZEN_FEATURE_EVAS_RENDERER
 	g_mutex_lock(&pc->cb_info->evas_mutex);
 
 	/* set evas render flag as RUN */
@@ -2059,10 +2059,10 @@ int _camera_start_evas_rendering(camera_h camera)
 	ret = CAMERA_ERROR_NONE;
 
 	g_mutex_unlock(&pc->cb_info->evas_mutex);
-#else /* EVAS_RENDERER_SUPPORT */
+#else /* TIZEN_FEATURE_EVAS_RENDERER */
 	LOGW("evas renderer is not supported");
 	ret = CAMERA_ERROR_NOT_SUPPORTED;
-#endif /* EVAS_RENDERER_SUPPORT */
+#endif /* TIZEN_FEATURE_EVAS_RENDERER */
 
 	return ret;
 }
@@ -2090,7 +2090,7 @@ int _camera_stop_evas_rendering(camera_h camera, bool keep_screen)
 		return CAMERA_ERROR_NONE;
 	}
 
-#ifdef EVAS_RENDERER_SUPPORT
+#ifdef TIZEN_FEATURE_EVAS_RENDERER
 	g_mutex_lock(&pc->cb_info->evas_mutex);
 
 	/* set evas render flag as STOP and release buffers */
@@ -2103,10 +2103,10 @@ int _camera_stop_evas_rendering(camera_h camera, bool keep_screen)
 	}
 
 	g_mutex_unlock(&pc->cb_info->evas_mutex);
-#else /* EVAS_RENDERER_SUPPORT */
+#else /* TIZEN_FEATURE_EVAS_RENDERER */
 	LOGW("evas renderer is not supported");
 	ret = CAMERA_ERROR_NOT_SUPPORTED;
-#endif /* EVAS_RENDERER_SUPPORT */
+#endif /* TIZEN_FEATURE_EVAS_RENDERER */
 
 	return ret;
 }
@@ -2755,7 +2755,7 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 				set_display_handle = (void *)display;
 				LOGD("display type EVAS : handle %p", set_display_handle);
 
-#ifdef EVAS_RENDERER_SUPPORT
+#ifdef TIZEN_FEATURE_EVAS_RENDERER
 				g_mutex_lock(&cb_info->evas_mutex);
 
 				if (cb_info->evas_info) {
@@ -2804,10 +2804,10 @@ int camera_set_display(camera_h camera, camera_display_type_e type, camera_displ
 					LOGE("mm_evas_renderer error 0x%x", ret);
 					return CAMERA_ERROR_INVALID_OPERATION;
 				}
-#else /* EVAS_RENDERER_SUPPORT */
+#else /* TIZEN_FEATURE_EVAS_RENDERER */
 				LOGE("EVAS surface is not supported");
 				return CAMERA_ERROR_NOT_SUPPORTED;
-#endif /* EVAS_RENDERER_SUPPORT */
+#endif /* TIZEN_FEATURE_EVAS_RENDERER */
 			} else {
 				LOGE("unknown evas object [%p,%s] or type [%d] mismatch", obj, object_type, type);
 				return CAMERA_ERROR_INVALID_PARAMETER;
@@ -3000,7 +3000,7 @@ int camera_set_display_rotation(camera_h camera, camera_rotation_e rotation)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-#ifdef EVAS_RENDERER_SUPPORT
+#ifdef TIZEN_FEATURE_EVAS_RENDERER
 	if (CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
 		g_mutex_lock(&pc->cb_info->evas_mutex);
 
@@ -3013,7 +3013,7 @@ int camera_set_display_rotation(camera_h camera, camera_rotation_e rotation)
 			return CAMERA_ERROR_INVALID_OPERATION;
 		}
 	}
-#endif /* EVAS_RENDERER_SUPPORT */
+#endif /* TIZEN_FEATURE_EVAS_RENDERER */
 
 	muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_ROTATION,
 		pc->cb_info->fd, pc->cb_info, ret, INT, set_rotation);
@@ -3073,7 +3073,7 @@ int camera_set_display_flip(camera_h camera, camera_flip_e flip)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-#ifdef EVAS_RENDERER_SUPPORT
+#ifdef TIZEN_FEATURE_EVAS_RENDERER
 	if (CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
 		g_mutex_lock(&pc->cb_info->evas_mutex);
 
@@ -3086,7 +3086,7 @@ int camera_set_display_flip(camera_h camera, camera_flip_e flip)
 			return CAMERA_ERROR_INVALID_OPERATION;
 		}
 	}
-#endif /* EVAS_RENDERER_SUPPORT */
+#endif /* TIZEN_FEATURE_EVAS_RENDERER */
 
 	muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_FLIP,
 		pc->cb_info->fd, pc->cb_info, ret, INT, set_flip);
@@ -3141,7 +3141,7 @@ int camera_set_display_visible(camera_h camera, bool visible)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-#ifdef EVAS_RENDERER_SUPPORT
+#ifdef TIZEN_FEATURE_EVAS_RENDERER
 	if (CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
 		g_mutex_lock(&pc->cb_info->evas_mutex);
 
@@ -3154,7 +3154,7 @@ int camera_set_display_visible(camera_h camera, bool visible)
 			return CAMERA_ERROR_INVALID_OPERATION;
 		}
 	}
-#endif /* EVAS_RENDERER_SUPPORT */
+#endif /* TIZEN_FEATURE_EVAS_RENDERER */
 
 	muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_VISIBLE,
 		pc->cb_info->fd, pc->cb_info, ret, INT, set_visible);
@@ -3214,7 +3214,7 @@ int camera_set_display_mode(camera_h camera, camera_display_mode_e mode)
 		return CAMERA_ERROR_INVALID_PARAMETER;
 	}
 
-#ifdef EVAS_RENDERER_SUPPORT
+#ifdef TIZEN_FEATURE_EVAS_RENDERER
 	if (CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
 		g_mutex_lock(&pc->cb_info->evas_mutex);
 
@@ -3227,7 +3227,7 @@ int camera_set_display_mode(camera_h camera, camera_display_mode_e mode)
 			return CAMERA_ERROR_INVALID_OPERATION;
 		}
 	}
-#endif /* EVAS_RENDERER_SUPPORT */
+#endif /* TIZEN_FEATURE_EVAS_RENDERER */
 
 	muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_MODE,
 		pc->cb_info->fd, pc->cb_info, ret, INT, set_mode);
@@ -6404,7 +6404,7 @@ int camera_attr_set_display_roi_area(camera_h camera, int x, int y, int width, i
 
 	LOGD("Enter, remote_handle : %x", pc->remote_handle);
 
-#ifdef EVAS_RENDERER_SUPPORT
+#ifdef TIZEN_FEATURE_EVAS_RENDERER
 	if (CHECK_PREVIEW_CB(pc->cb_info, PREVIEW_CB_TYPE_EVAS)) {
 		g_mutex_lock(&pc->cb_info->evas_mutex);
 
@@ -6417,7 +6417,7 @@ int camera_attr_set_display_roi_area(camera_h camera, int x, int y, int width, i
 			return CAMERA_ERROR_INVALID_OPERATION;
 		}
 	}
-#endif /* EVAS_RENDERER_SUPPORT */
+#endif /* TIZEN_FEATURE_EVAS_RENDERER */
 
 	muse_camera_msg_send_array(api, sock_fd, pc->cb_info, ret,
 		set_display_roi_area, sizeof(set_display_roi_area), sizeof(int));

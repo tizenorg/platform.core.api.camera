@@ -104,10 +104,10 @@ typedef struct _camera_cb_info_s {
 	media_format_h pkt_fmt;
 	int preview_cb_flag;
 	GMutex mp_data_mutex;
-#ifdef EVAS_RENDERER_SUPPORT
+#ifdef TIZEN_FEATURE_EVAS_RENDERER
 	void *evas_info;
 	GMutex evas_mutex;
-#endif /* EVAS_RENDERER_SUPPORT */
+#endif /* TIZEN_FEATURE_EVAS_RENDERER */
 	gboolean run_evas_render;
 } camera_cb_info_s;
 
