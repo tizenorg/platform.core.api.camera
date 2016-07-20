@@ -2207,6 +2207,24 @@ ErrorExit:
 	return ret;
 }
 
+
+int camera_change_device(camera_h camera, camera_device_e device)
+{
+	int ret = CAMERA_ERROR_NONE;
+	muse_camera_api_e api = MUSE_CAMERA_API_CHANGE_DEVICE;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+
+	if (camera == NULL || pc->cb_info == NULL) {
+		LOGE("NULL handle, INVALID_PARAMETER");
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	muse_camera_msg_send1(api, pc->cb_info->fd, pc->cb_info, ret, INT, device);
+
+	return ret;
+}
+
+
 int camera_destroy(camera_h camera)
 {
 	if (camera == NULL) {
@@ -3244,6 +3262,64 @@ int camera_get_display_mode(camera_h camera, camera_display_mode_e *mode)
 
 	return ret;
 }
+
+
+int camera_set_display_reuse_hint(camera_h camera, bool hint)
+{
+	int ret = CAMERA_ERROR_NONE;
+	int set_hint = (int)hint;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+
+	if (camera == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	LOGD("set display reuse hint %d", set_hint);
+
+	muse_camera_msg_send1(MUSE_CAMERA_API_SET_DISPLAY_REUSE_HINT,
+		pc->cb_info->fd, pc->cb_info, ret, INT, set_hint);
+
+	return ret;
+}
+
+
+int camera_get_display_reuse_hint(camera_h camera, bool *hint)
+{
+	int ret = CAMERA_ERROR_NONE;
+	int get_hint = 0;
+	camera_cli_s *pc = (camera_cli_s *)camera;
+	muse_camera_api_e api = MUSE_CAMERA_API_GET_DISPLAY_REUSE_HINT;
+
+	if (camera == NULL || hint == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	if (pc->cb_info == NULL) {
+		LOGE("INVALID_PARAMETER(0x%08x)", CAMERA_ERROR_INVALID_PARAMETER);
+		return CAMERA_ERROR_INVALID_PARAMETER;
+	}
+
+	muse_camera_msg_send(api, pc->cb_info->fd, pc->cb_info, ret);
+
+	if (ret == CAMERA_ERROR_NONE) {
+		muse_camera_msg_get(get_hint, pc->cb_info->recv_msg);
+		*hint = (bool)get_hint;
+
+		LOGD("display reuse hint %d", *hint);
+	} else {
+		LOGE("failed 0x%x", ret);
+	}
+
+	return ret;
+}
+
 
 int camera_get_capture_resolution(camera_h camera, int *width, int *height)
 {
