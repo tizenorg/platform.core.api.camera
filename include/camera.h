@@ -739,9 +739,35 @@ typedef bool (*camera_supported_preview_format_cb)(camera_pixel_format_e format,
  * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
  * @post If it succeeds, the camera state will be #CAMERA_STATE_CREATED.
  *
- * @see	camera_destroy()
+ * @see camera_destroy()
  */
 int camera_create(camera_device_e device, camera_h *camera);
+
+/**
+ * @brief Changes camera device.
+ *
+ * @since_tizen 3.0
+ * @privlevel public
+ * @privilege %http://tizen.org/privilege/camera
+ * @remarks This function can be used to change camera device simply without camera_destroy() and camera_create().\n
+ *          If display reuse hint is set by camera_set_display_reuse_hint() before stop preview,\n
+ *          display handle will be reused and last frame on display can be kept even though camera device is changed.
+ * @param[in] camera The handle to the camera
+ * @param[in] device The hardware camera to access
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_INVALID_STATE Invalid state
+ * @retval #CAMERA_ERROR_OUT_OF_MEMORY Out of memory
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Invalid operation
+ * @retval #CAMERA_ERROR_NOT_SUPPORTED The feature is not supported
+ * @pre    The camera state must be set to #CAMERA_STATE_CREATED.
+ * @post   If it succeeds, the camera attributes and settings will be reset.
+ *
+ * @see camera_set_display_reuse_hint()
+ * @see camera_get_display_reuse_hint()
+ */
+int camera_change_device(camera_h camera, camera_device_e device);
 
 /**
  * @brief Destroys the camera handle and releases all its resources.
@@ -1308,6 +1334,39 @@ int camera_set_display_mode(camera_h camera , camera_display_mode_e mode);
  * @see camera_set_display_mode()
  */
 int camera_get_display_mode(camera_h camera, camera_display_mode_e *mode);
+
+/**
+ * @brief Sets hint for reuse display.
+ * @since_tizen 3.0
+ * @remarks To reuse display, camera_change_device() function should be called for change the camera device,\n
+ *          and #CAMERA_ERROR_INVALID_OPERATION will be returned if current display type is #CAMERA_DISPLAY_TYPE_NONE.
+ * @param[in] camera The handle to the camera
+ * @param[in] hint The hint for reuse display
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_INVALID_STATE Invalid state
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Internal error
+ * @pre    The camera state must be set to #CAMERA_STATE_PREVIEW.
+ * @see camera_get_display_reuse_hint()
+ * @see camera_change_device()
+ */
+int camera_set_display_reuse_hint(camera_h camera, bool hint);
+
+/**
+ * @brief Gets hint for reuse display.
+ * @since_tizen 3.0
+ * @remarks #CAMERA_ERROR_INVALID_OPERATION will be returned if current display type is #CAMERA_DISPLAY_TYPE_NONE.
+ * @param[in] camera The handle to the camera
+ * @param[out] hint The hint for reuse display
+ * @return @c 0 on success, otherwise a negative error value
+ * @retval #CAMERA_ERROR_NONE Successful
+ * @retval #CAMERA_ERROR_INVALID_PARAMETER Invalid parameter
+ * @retval #CAMERA_ERROR_INVALID_OPERATION Internal error
+ * @see camera_get_display_reuse_hint()
+ * @see camera_change_device()
+ */
+int camera_get_display_reuse_hint(camera_h camera, bool *hint);
 
 /**
  * @brief Sets the resolution of the captured image.

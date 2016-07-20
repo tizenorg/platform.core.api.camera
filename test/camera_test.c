@@ -116,7 +116,7 @@ GTimeVal res;
 #define EXT_AMR                         "amr"
 #define EXT_MKV                         "mkv"
 
-#define TARGET_FILENAME_PATH            "/opt/usr/media/"
+#define TARGET_FILENAME_PATH            "/home/owner/content/"
 #define STILL_CAPTURE_FILE_PATH_NAME    TARGET_FILENAME_PATH"StillshotCapture"
 #define MULTI_CAPTURE_FILE_PATH_NAME    TARGET_FILENAME_PATH"MultishotCapture"
 #define IMAGE_CAPTURE_THUMBNAIL_PATH    TARGET_FILENAME_PATH"thumbnail.jpg"
@@ -177,6 +177,7 @@ enum {
   -----------------------------------------------------------------------*/
 typedef struct _cam_handle {
 	camera_h camera;
+	int type;
 	int mode;                       /* image(capture)/video(recording) mode */
 	int isMultishot;               /* flag for multishot mode */
 	int stillshot_count;            /* total stillshot count */
@@ -661,6 +662,7 @@ static void print_menu()
 			g_print("\t   '1' Stillshot test\n");
 			g_print("\t   '2' Multishot test\n");
 			g_print("\t   '3' Setting\n");
+			g_print("\t   '4' Change device (Rear <-> Front)\n");
 			g_print("\t   'b' back\n");
 			g_print("\t=======================================\n");
 		}
@@ -678,6 +680,7 @@ static void print_menu()
 		g_print("\t     '5' Exposure mode \n");
 		g_print("\t     '6' Exposure value \n");
 		g_print("\t     '7' F number \n");
+		g_print("\t     '8' Display reuse hint \n");
 		g_print("\t     'i' ISO \n");
 		g_print("\t     'r' Rotate camera input \n");
 		g_print("\t     'f' Flip camera input \n");
@@ -749,6 +752,21 @@ static void main_menu(gchar buf)
 			break;
 		case '3': /* Setting */
 			hcamcorder->menu_state = MENU_STATE_SETTING;
+			break;
+		case '4': /* Change device (Rear <-> Front) */
+			camera_stop_preview(hcamcorder->camera);
+
+			if (hcamcorder->type == CAMERA_DEVICE_CAMERA0) {
+				hcamcorder->type = CAMERA_DEVICE_CAMERA1;
+			} else {
+				hcamcorder->type = CAMERA_DEVICE_CAMERA0;
+			}
+
+			camera_change_device(hcamcorder->camera, hcamcorder->type);
+
+			camera_set_display_mode(hcamcorder->camera, CAMERA_DISPLAY_MODE_LETTER_BOX);
+
+			camera_start_preview(hcamcorder->camera);
 			break;
 		case 'b': /* back */
 			camera_stop_preview(hcamcorder->camera);
@@ -899,6 +917,22 @@ static void setting_menu(gchar buf)
 			break;
 		case '7': /* Setting > F number */
 			g_print("Not supported !! \n");
+			break;
+		case '8': /* Setting > Display reuse hint */
+			{
+				bool reuse_hint = false;
+
+				err = camera_get_display_reuse_hint(hcamcorder->camera, &reuse_hint);
+				if (err != CAMERA_ERROR_NONE) {
+					g_print("failed to get display reuse hint 0x%x\n", err);
+					break;
+				}
+
+				g_print("*Display reuse hint : current %d -> set %d\n", reuse_hint, !reuse_hint);
+				reuse_hint = !reuse_hint;
+				err = camera_set_display_reuse_hint(hcamcorder->camera, reuse_hint);
+				g_print("set display reuse hint result : 0x%x\n", err);
+			}
 			break;
 		case 'i': /* Setting > ISO */
 			g_print("*ISO !\n");
@@ -1307,12 +1341,12 @@ static gboolean mode_change(gchar buf)
 	switch (buf) {
 	case '1':
 		hcamcorder->mode = MODE_VIDEO_CAPTURE;
-		cam_info = CAMERA_DEVICE_CAMERA1;
+		hcamcorder->type = cam_info = CAMERA_DEVICE_CAMERA1;
 		check = TRUE;
 		break;
 	case '2':
 		hcamcorder->mode = MODE_VIDEO_CAPTURE;
-		cam_info = CAMERA_DEVICE_CAMERA0;
+		hcamcorder->type = cam_info = CAMERA_DEVICE_CAMERA0;
 		check = TRUE;
 		break;
 	case 'q':
